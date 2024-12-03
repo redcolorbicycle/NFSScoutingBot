@@ -53,7 +53,7 @@ async def scout_player(ctx, player_name: str):
             """
             SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
                    SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                   Nerf, Most_Common_Batting_Skill, PR
+                   Nerf, Most_Common_Batting_Skill, PR, last_updated
             FROM Player
             WHERE Name = %s
             """,
