@@ -5,7 +5,7 @@ import os
 from urllib.parse import urlparse
 
 # Parse database URL
-DATABASE_URL = "postgres://u4kqn7e60puiu1:p4a4ecc6673558b8a08d820c48a4456038a4752c358a0f1de9396f15fd58c6945@cd27da2sn4hj7h.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d6p7k4of1m96ql"
+DATABASE_URL = os.getenv("DATABASE_URL")
 result = urlparse(DATABASE_URL)
 connection = psycopg2.connect(
     database=result.path[1:],
@@ -190,4 +190,4 @@ async def add_player(
 
 
 # Run the bot
-bot.run("MTMxMTc0MjYzNjE1OTQwMjA1Nw.GMFFat.ejWIUJ18tiTh6sjndAt8qnSpYnygwBTqh9-CD4")
+bot.run(os.getenv("DISCORD_BOT_TOKEN"))
