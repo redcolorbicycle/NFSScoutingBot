@@ -141,7 +141,7 @@ async def add_player(
     batting_skill: str,
     pr: int,
 ):
-    """Add or update a player in the database."""
+    """Add a new player to the database. Fails if the player already exists."""
     try:
         cursor = connection.cursor()
 
@@ -150,47 +150,18 @@ async def add_player(
         existing_player = cursor.fetchone()
 
         if existing_player:
-            # Update the player's details
-            cursor.execute(
-                """
-                UPDATE Player
-                SET Club_Name = %s, SP1_Name = %s, SP1_Skills = %s,
-                    SP2_Name = %s, SP2_Skills = %s, SP3_Name = %s, SP3_Skills = %s,
-                    SP4_Name = %s, SP4_Skills = %s, SP5_Name = %s, SP5_Skills = %s,
-                    Nerf = %s, Most_Common_Batting_Skill = %s, PR = %s
-                WHERE Name = %s
-                """,
-                (
-                    club_name,
-                    sp1_name,
-                    sp1_skills,
-                    sp2_name,
-                    sp2_skills,
-                    sp3_name,
-                    sp3_skills,
-                    sp4_name,
-                    sp4_skills,
-                    sp5_name,
-                    sp5_skills,
-                    nerf,
-                    batting_skill,
-                    pr,
-                    name,
-                ),
-            )
-            connection.commit()
-            await ctx.send(f"Updated player '{name}' in the database.")
+            await ctx.send(f"The player '{name}' already exists in the database. No changes made.")
         else:
-            # Insert a new player
+            # Insert a new player and set Last_Updated to the current date
             cursor.execute(
                 """
                 INSERT INTO Player (
                     Name, Club_Name, SP1_Name, SP1_Skills,
                     SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
                     SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                    Nerf, Most_Common_Batting_Skill, PR
+                    Nerf, Most_Common_Batting_Skill, PR, Last_Updated
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                 """,
                 (
                     name,
