@@ -159,7 +159,7 @@ async def add_player(
                     Name, Club_Name, SP1_Name, SP1_Skills,
                     SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
                     SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                    Nerf, Most_Common_Batting_Skill, PR, Last_Updated
+                    Nerf, Most_Common_Batting_Skill, PR, Last Updated
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                 """,
