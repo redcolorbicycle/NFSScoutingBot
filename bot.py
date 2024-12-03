@@ -66,7 +66,7 @@ async def scout_player(ctx, player_name: str):
             (
                 name, club, sp1_name, sp1_skills, sp2_name, sp2_skills,
                 sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                nerf, batting_skill, pr
+                nerf, batting_skill, pr, last_updated
             ) = player
 
             details = (
@@ -81,6 +81,7 @@ async def scout_player(ctx, player_name: str):
                 f"**Nerf**: {nerf}\n"
                 f"**Most Common Batting Skill**: {batting_skill}\n"
                 f"**PR**: {pr}\n"
+                f"**Last Updated**: {last_updated}\n"
             )
             await ctx.send(details)
         else:
