@@ -1,23 +1,19 @@
 import psycopg2
+import os
 from urllib.parse import urlparse
+from dotenv import load_dotenv
 
-class Database:
-    """Handles database connection and operations."""
-    def __init__(self, database_url):
-        result = urlparse(database_url)
-        self.connection = psycopg2.connect(
-            database=result.path[1:],
-            user=result.username,
-            password=result.password,
-            host=result.hostname,
-            port=result.port,
-        )
-    
-    def get_cursor(self):
-        return self.connection.cursor()
-    
-    def commit(self):
-        self.connection.commit()
-    
-    def close(self):
-        self.connection.close()
+load_dotenv()
+
+def get_connection():
+    """Establish and return a connection to the PostgreSQL database."""
+    # Parse database URL
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    result = urlparse(DATABASE_URL)
+    connection = psycopg2.connect(
+        database=result.path[1:],
+        user=result.username,
+        password=result.password,
+        host=result.hostname,
+        port=result.port
+    )
