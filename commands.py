@@ -57,9 +57,10 @@ def setup_commands(bot, connection):
                     f"**Nerf**: {nerf}\n"
                     f"**Most Common Batting Skill**: {batting_skill}\n"
                     f"**PR**: {pr}\n"
-                    f"**Last Updated**: {last_updated}\n
-                    f"**Nerf Last Updated**: {last_updated}\n"
+                    f"**Last Updated**: {last_updated}\n"
+                    f"**Nerf Last Updated**: {nerf_updated}\n"
                 )
+
                 await ctx.send(details)
             else:
                 await ctx.send(f"No player found with the name '{player_name}'.")
