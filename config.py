@@ -1,4 +1,0 @@
-import os
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
