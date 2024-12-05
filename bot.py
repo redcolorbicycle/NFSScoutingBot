@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-from database import get_connection
 from commands import setup_commands
+from urllib.parse import urlparse
 import os
 
 # Define intents
@@ -11,9 +11,16 @@ intents.message_content = True       # Allows the bot to read message content
 # Initialize the bot with intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-connection = get_connection()
-if connection is None:
-    print("fuck!")
+DATABASE_URL = os.getenv("DATABASE_URL")
+result = urlparse(DATABASE_URL)
+connection = psycopg2.connect(
+    database=result.path[1:],
+    user=result.username,
+    password=result.password,
+    host=result.hostname,
+    port=result.port
+)
+
 
 @bot.event
 async def on_ready():
