@@ -20,6 +20,7 @@ def setup_commands(bot, connection):
             else:
                 await ctx.send(f"No players found for the club '{club_name}'.")
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
@@ -49,6 +50,7 @@ def setup_commands(bot, connection):
 
             cursor.close()
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
@@ -81,6 +83,7 @@ def setup_commands(bot, connection):
                 connection.commit()
                 await ctx.send(f"Renamed club '{old_name}' to '{new_name}' and updated all associated players.")
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
@@ -136,6 +139,7 @@ def setup_commands(bot, connection):
             else:
                 await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
@@ -230,6 +234,7 @@ def setup_commands(bot, connection):
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
@@ -249,6 +254,7 @@ def setup_commands(bot, connection):
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
