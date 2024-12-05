@@ -5,6 +5,8 @@ import psycopg2
 from urllib.parse import urlparse
 import os
 
+#source ~/.bash_profile    
+
 # Define intents
 intents = discord.Intents.default()  # Default intents include basic events
 intents.message_content = True       # Allows the bot to read message content
