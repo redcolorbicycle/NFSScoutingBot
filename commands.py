@@ -3,6 +3,8 @@ from discord.ext import commands
 def setup_commands(bot, connection):
     """Register all commands for the bot."""
 
+    #club commands
+
     @bot.command()
     async def scout_club(ctx, club_name: str):
         """Fetch all players belonging to a specific club."""
@@ -19,6 +21,75 @@ def setup_commands(bot, connection):
                 await ctx.send(f"No players found for the club '{club_name}'.")
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+
+    @bot.command()
+    async def add_club(ctx, club_name: str):
+        """Add a new club to the database."""
+        try:
+            cursor = connection.cursor()
+
+            # Check if the club already exists
+            cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+            existing_club = cursor.fetchone()
+
+            if existing_club:
+                await ctx.send(f"The club '{club_name}' already exists in the database.")
+            else:
+                # Insert a new club
+                cursor.execute(
+                    """
+                    INSERT INTO Club (Club_Name)
+                    VALUES (%s)
+                    """,
+                    (club_name,),
+                )
+                connection.commit()
+                await ctx.send(f"Added new club '{club_name}' to the database.")
+
+            cursor.close()
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def rename_club(ctx, old_name: str, new_name: str):
+        """Rename an existing club in the database."""
+        try:
+            with connection.cursor() as cursor:
+                # Check if the club with the old name exists
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (old_name,))
+                existing_club = cursor.fetchone()
+
+                if not existing_club:
+                    await ctx.send(f"No club found with the name '{old_name}'.")
+                    return
+
+                # Check if the new name already exists
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (new_name,))
+                new_name_club = cursor.fetchone()
+
+                if new_name_club:
+                    await ctx.send(f"The name '{new_name}' is already taken by another club.")
+                    return
+
+                # Rename the club
+                cursor.execute(
+                    "UPDATE Club SET Club_Name = %s WHERE Club_Name = %s",
+                    (new_name, old_name),
+                )
+
+                connection.commit()
+                await ctx.send(f"Renamed club '{old_name}' to '{new_name}' and updated all associated players.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
+
+
+
+
+
+    #player commands
 
     @bot.command()
     async def scout_player(ctx, player_name: str):
@@ -64,34 +135,6 @@ def setup_commands(bot, connection):
                 await ctx.send(details)
             else:
                 await ctx.send(f"No player found with the name '{player_name}'.")
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-    @bot.command()
-    async def add_club(ctx, club_name: str):
-        """Add a new club to the database."""
-        try:
-            cursor = connection.cursor()
-
-            # Check if the club already exists
-            cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-            existing_club = cursor.fetchone()
-
-            if existing_club:
-                await ctx.send(f"The club '{club_name}' already exists in the database.")
-            else:
-                # Insert a new club
-                cursor.execute(
-                    """
-                    INSERT INTO Club (Club_Name)
-                    VALUES (%s)
-                    """,
-                    (club_name,),
-                )
-                connection.commit()
-                await ctx.send(f"Added new club '{club_name}' to the database.")
-
-            cursor.close()
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
@@ -160,3 +203,51 @@ def setup_commands(bot, connection):
             cursor.close()
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+
+    @bot.command()
+    async def update_nerf(ctx, player_name: str, new_nerf: str):
+        """Update the nerf value for a player and set the nerf last updated date."""
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if player:
+                    # Update the nerf value and nerf_updated date
+                    cursor.execute(
+                        """
+                        UPDATE Player
+                        SET Nerf = %s, nerf_updated = CURRENT_DATE
+                        WHERE Name = %s
+                        """,
+                        (new_nerf, player_name),
+                    )
+                    connection.commit()
+                    await ctx.send(f"Updated nerf for '{player_name}' to '{new_nerf}' and updated the last nerf change date.")
+                else:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def delete_player(ctx, player_name: str):
+        """Delete a player from the database."""
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if player:
+                    # Delete the player
+                    cursor.execute("DELETE FROM Player WHERE Name = %s", (player_name,))
+                    connection.commit()
+                    await ctx.send(f"Player '{player_name}' has been deleted from the database.")
+                else:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
