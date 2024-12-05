@@ -94,24 +94,67 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
-    async def add_player(ctx, name, club_name, sp1_name, sp1_skills, sp2_name, sp2_skills,
-                        sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                        nerf, batting_skill, pr):
-        """Add a new player to the database."""
+    async def add_player(
+        ctx,
+        name: str,
+        club_name: str,
+        sp1_name: str,
+        sp1_skills: str,
+        sp2_name: str,
+        sp2_skills: str,
+        sp3_name: str,
+        sp3_skills: str,
+        sp4_name: str,
+        sp4_skills: str,
+        sp5_name: str,
+        sp5_skills: str,
+        nerf: str,
+        batting_skill: str,
+        pr: int,
+    ):
+        """Add a new player to the database. Fails if the player already exists."""
         try:
             cursor = connection.cursor()
-            
-            # Insert the player without explicitly setting nerf_updated (uses DEFAULT CURRENT_DATE)
-            cursor.execute("""
-                INSERT INTO Player (Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills,
-                                    SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                                    Nerf, Batting_Skill, PR)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (name, club_name, sp1_name, sp1_skills, sp2_name, sp2_skills,
-                sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                nerf, batting_skill, pr))
-            
-            connection.commit()
-            await ctx.send(f"Added new player '{name}' to the database.")
+
+            # Check if the player already exists
+            cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
+            existing_player = cursor.fetchone()
+
+            if existing_player:
+                await ctx.send(f"The player '{name}' already exists in the database. No changes made.")
+            else:
+                # Insert a new player and set Last_Updated to the current date
+                cursor.execute(
+                    """
+                    INSERT INTO Player (
+                        Name, Club_Name, SP1_Name, SP1_Skills,
+                        SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
+                        SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
+                        Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE)
+                    """,
+                    (
+                        name,
+                        club_name,
+                        sp1_name,
+                        sp1_skills,
+                        sp2_name,
+                        sp2_skills,
+                        sp3_name,
+                        sp3_skills,
+                        sp4_name,
+                        sp4_skills,
+                        sp5_name,
+                        sp5_skills,
+                        nerf,
+                        batting_skill,
+                        pr,
+                    ),
+                )
+                connection.commit()
+                await ctx.send(f"Added new player '{name}' to the database.")
+
+            cursor.close()
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
