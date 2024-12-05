@@ -1,9 +1,6 @@
 import psycopg2
 import os
 from urllib.parse import urlparse
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def get_connection():
     """Establish and return a connection to the PostgreSQL database."""
