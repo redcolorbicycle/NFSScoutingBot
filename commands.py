@@ -202,6 +202,7 @@ def setup_commands(bot, connection):
 
             cursor.close()
         except Exception as e:
+            connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
