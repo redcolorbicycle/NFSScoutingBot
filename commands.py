@@ -7,7 +7,7 @@ def setup_commands(bot, connection):
 
     @bot.command()
     async def scout_club(ctx, club_name: str):
-        """Fetch all players belonging to a specific club."""
+        """Fetch all players belonging to a specific club and display their details using scout_player."""
         try:
             cursor = connection.cursor()
             cursor.execute("SELECT Name FROM Player WHERE Club_Name = %s", (club_name,))
@@ -15,13 +15,16 @@ def setup_commands(bot, connection):
             cursor.close()
 
             if players:
-                player_list = "\n".join([player[0] for player in players])
-                await ctx.send(f"Players in {club_name}:\n{player_list}")
+                for player in players:
+                    # Call scout_player for each player in the club
+                    player_name = player[0]
+                    await scout_player(ctx, player_name)  # Call scout_player with ctx and player_name
             else:
                 await ctx.send(f"No players found for the club '{club_name}'.")
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
     @bot.command()
