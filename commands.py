@@ -88,11 +88,36 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+    
+    @bot.command()
+    async def delete_club(ctx, club_name: str):
+        """Delete a club from the database if it has no players."""
+        try:
+            with connection.cursor() as cursor:
+                # Check if the club exists
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+                club = cursor.fetchone()
 
+                if not club:
+                    await ctx.send(f"No club found with the name '{club_name}'.")
+                    return
 
+                # Check if the club has players
+                cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (club_name,))
+                player_count = cursor.fetchone()[0]
 
+                if player_count > 0:
+                    await ctx.send(f"The club '{club_name}' cannot be deleted because it has {player_count} players.")
+                    return
 
-
+                # Delete the club
+                cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (club_name,))
+                connection.commit()
+                await ctx.send(f"Club '{club_name}' has been successfully deleted.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+    
 
 
     #player commands
@@ -259,5 +284,128 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def edit_sp(ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
+        """
+
+        Args:
+            player_name: The name of the player whose SP to edit.
+            sp_number: The SP number (1 to 5) to edit.
+            sp_name: The new name for the SP.
+            sp_skills: The new skills for the SP.
+        """
+        try:
+            # Validate SP number
+            if sp_number < 1 or sp_number > 5:
+                await ctx.send("Invalid SP number. Please specify a number from 1 to 5.")
+                return
+
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Determine the column names for the specified SP
+                sp_name_column = f"SP{sp_number}_Name"
+                sp_skills_column = f"SP{sp_number}_Skills"
+
+                # Update the SP details for the player
+                cursor.execute(
+                    f"""
+                    UPDATE Player
+                    SET {sp_name_column} = %s, {sp_skills_column} = %s
+                    WHERE Name = %s
+                    """,
+                    (sp_name, sp_skills, player_name),
+                )
+                connection.commit()
+                await ctx.send(f"Updated SP{sp_number} for player '{player_name}' to '{sp_name}' ({sp_skills}).")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def update_pr(ctx, player_name: str, new_pr: int):
+        """
+        Update a player's PR (Power Rating).
+        Args:
+            player_name: The name of the player whose PR to update.
+            new_pr: The new PR value.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Update the PR value for the player
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET PR = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_pr, player_name),
+                )
+                connection.commit()
+                await ctx.send(f"Updated PR for '{player_name}' to {new_pr}.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def change_club(ctx, player_name: str, new_club: str):
+        """Change a player's club and update both Player and Club tables."""
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Get the current club of the player
+                current_club = player[1]  # Assuming Club_Name is the second column in the Player table
+
+                # Check if the new club exists, create it if not
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (new_club,))
+                new_club_entry = cursor.fetchone()
+
+                if not new_club_entry:
+                    cursor.execute("INSERT INTO Club (Club_Name) VALUES (%s)", (new_club,))
+
+                # Update the player's club
+                cursor.execute(
+                    "UPDATE Player SET Club_Name = %s WHERE Name = %s",
+                    (new_club, player_name),
+                )
+
+                # Check if the old club is now empty
+                cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (current_club,))
+                old_club_player_count = cursor.fetchone()[0]
+
+                # Delete the old club if it is empty
+                if old_club_player_count == 0:
+                    cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (current_club,))
+
+                connection.commit()
+                await ctx.send(f"Player '{player_name}' has been moved to club '{new_club}'. Old club '{current_club}' has been deleted (if empty).")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+
 
 
