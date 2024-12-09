@@ -55,7 +55,7 @@ def setup_commands(bot, connection):
                             f"**Nerf**: {player[1]}\n"
                             f"**PR**: {player[2]}\n"
                             f"**Last Updated**: {player[3]}\n"
-                            f"**Nerf Last Updated**: {player[4]}"
+                            f"**Nerf Last Updated**: {player[4]}\n"
                             f"**Team Name**: {player[5]}"
                         )
                         for player in players
