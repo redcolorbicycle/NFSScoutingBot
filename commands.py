@@ -25,6 +25,8 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
+            
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_cupcake(ctx, club_name: str):
