@@ -25,7 +25,46 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+    @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def scout_cupcake(ctx, club_name: str):
+        """
+        Fetch and display selected details (Name, Nerf, PR, Last Updated, Nerf Last Updated)
+        of all players belonging to a specific club.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Fetch the desired details for all players in the club
+                cursor.execute(
+                    """
+                    SELECT Name, Nerf, PR, last_updated, nerf_updated
+                    FROM Player
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+                players = cursor.fetchall()
 
+                if players:
+                    # Format details for each player
+                    details_list = [
+                        (
+                            f"**Name**: {player[0]}\n"
+                            f"**Nerf**: {player[1]}\n"
+                            f"**PR**: {player[2]}\n"
+                            f"**Last Updated**: {player[3]}\n"
+                            f"**Nerf Last Updated**: {player[4]}"
+                        )
+                        for player in players
+                    ]
+                    # Send details as separate messages
+                    for details in details_list:
+                        await ctx.send(details)
+                else:
+                    await ctx.send(f"No players found for the club '{club_name}'.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
 
 
     @bot.command()
