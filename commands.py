@@ -525,6 +525,41 @@ def setup_commands(bot, connection):
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+    @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def change_team_name(ctx, player_name: str, new_team_name: str):
+        """
+        Change the team name of a player.
+        Args:
+            player_name: The name of the player whose team name to update.
+            new_team_name: The new team name.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Update the team name for the player
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET team_name = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_team_name, player_name),
+                )
+                connection.commit()
+                await ctx.send(f"Updated team name for '{player_name}' to '{new_team_name}'.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
 
 
 
