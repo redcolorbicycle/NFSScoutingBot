@@ -26,7 +26,7 @@ def setup_commands(bot, connection):
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-            
+
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_cupcake(ctx, club_name: str):
@@ -39,7 +39,7 @@ def setup_commands(bot, connection):
                 # Fetch the desired details for all players in the club
                 cursor.execute(
                     """
-                    SELECT Name, Nerf, PR, last_updated, nerf_updated
+                    SELECT Name, Nerf, PR, last_updated, nerf_updated, team_name
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -56,6 +56,7 @@ def setup_commands(bot, connection):
                             f"**PR**: {player[2]}\n"
                             f"**Last Updated**: {player[3]}\n"
                             f"**Nerf Last Updated**: {player[4]}"
+                            f"**Team Name**: {player[5]}"
                         )
                         for player in players
                     ]
@@ -206,7 +207,7 @@ def setup_commands(bot, connection):
                 """
                 SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
                        SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                       Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated
+                       Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
                 FROM Player
                 WHERE Name = %s
                 """,
@@ -219,7 +220,7 @@ def setup_commands(bot, connection):
                 (
                     name, club, sp1_name, sp1_skills, sp2_name, sp2_skills,
                     sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                    nerf, batting_skill, pr, last_updated, nerf_updated
+                    nerf, batting_skill, pr, last_updated, nerf_updated, team_name
                 ) = player
 
                 details = (
@@ -236,6 +237,7 @@ def setup_commands(bot, connection):
                     f"**PR**: {pr}\n"
                     f"**Last Updated**: {last_updated}\n"
                     f"**Nerf Last Updated**: {nerf_updated}\n"
+                    f"**Team Name**: {team_name}\n"
                 )
 
                 await ctx.send(details)
@@ -264,6 +266,7 @@ def setup_commands(bot, connection):
         nerf: str,
         batting_skill: str,
         pr: int,
+        team_name: str,
     ):
         """Add a new player to the database. Fails if the player already exists."""
         try:
@@ -283,9 +286,9 @@ def setup_commands(bot, connection):
                         Name, Club_Name, SP1_Name, SP1_Skills,
                         SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
                         SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                        Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated
+                        Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
                     """,
                     (
                         name,
@@ -303,6 +306,7 @@ def setup_commands(bot, connection):
                         nerf,
                         batting_skill,
                         pr,
+                        team_name
                     ),
                 )
                 connection.commit()
