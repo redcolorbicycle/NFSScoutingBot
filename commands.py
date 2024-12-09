@@ -558,6 +558,49 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+    
+    @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def rename_player(ctx, old_name: str, new_name: str):
+        """
+        Rename a player in the database.
+        Args:
+            old_name: The current name of the player to rename.
+            new_name: The new name for the player.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player with the old name exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (old_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{old_name}'.")
+                    return
+
+                # Check if the new name already exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (new_name,))
+                new_name_player = cursor.fetchone()
+
+                if new_name_player:
+                    await ctx.send(f"The name '{new_name}' is already taken by another player.")
+                    return
+
+                # Update the player's name
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET Name = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_name, old_name),
+                )
+                connection.commit()
+                await ctx.send(f"Player '{old_name}' has been successfully renamed to '{new_name}'.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
 
 
 
