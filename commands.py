@@ -6,6 +6,7 @@ def setup_commands(bot, connection):
     #club commands
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def scout_club(ctx, club_name: str):
         """Fetch all players belonging to a specific club and display their details using scout_player."""
         try:
@@ -28,7 +29,7 @@ def setup_commands(bot, connection):
 
 
     @bot.command()
-    @commands.has_role("NFS-Scout-1A")
+    @commands.has_role("M16Speed Spy Daddies")
     async def add_club(ctx, club_name: str):
         """Add a new club to the database."""
         try:
@@ -58,6 +59,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def rename_club(ctx, old_name: str, new_name: str):
         """Rename an existing club in the database."""
         try:
@@ -91,6 +93,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
     
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def delete_club(ctx, club_name: str):
         """Delete a club from the database if it has no players."""
         try:
@@ -120,6 +123,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def list_clubs(ctx):
         """List all clubs in the database."""
         try:
@@ -152,6 +156,7 @@ def setup_commands(bot, connection):
     #player commands
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def scout_player(ctx, player_name: str):
         """Fetch all details of a specific player."""
         try:
@@ -200,6 +205,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def add_player(
         ctx,
         name: str,
@@ -268,6 +274,7 @@ def setup_commands(bot, connection):
 
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def update_nerf(ctx, player_name: str, new_nerf: str):
         """Update the nerf value for a player and set the nerf last updated date."""
         try:
@@ -295,6 +302,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def delete_player(ctx, player_name: str):
         """Delete a player from the database."""
         try:
@@ -315,6 +323,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def edit_sp(ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
         """
 
@@ -359,6 +368,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def update_pr(ctx, player_name: str, new_pr: int):
         """
         Update a player's PR (Power Rating).
@@ -392,6 +402,7 @@ def setup_commands(bot, connection):
             await ctx.send(f"An error occurred: {e}")
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def change_club(ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
         try:
@@ -436,6 +447,7 @@ def setup_commands(bot, connection):
 
 
     @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
     async def change_bat(ctx, player_name: str, new_batting_skill: str):
         """
         Update the most common batting skill for a player.
