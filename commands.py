@@ -117,7 +117,35 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    async def list_clubs(ctx):
+        """List all clubs in the database."""
+        try:
+            with connection.cursor() as cursor:
+                # Fetch all clubs from the database
+                cursor.execute("SELECT Club_Name FROM Club")
+                clubs = cursor.fetchall()
+
+                if clubs:
+                    club_list = "\n".join([club[0] for club in clubs])  # Extract club names into a formatted string
+                    await ctx.send(f"**Clubs in the Database:**\n{club_list}")
+                else:
+                    await ctx.send("No clubs found in the database.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
     
+
+    
+
+
+
+
+
+
 
 
     #player commands
@@ -404,6 +432,41 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
+
+    @bot.command()
+    async def change_bat(ctx, player_name: str, new_batting_skill: str):
+        """
+        Update the most common batting skill for a player.
+        Args:
+            player_name: The name of the player whose batting skill to update.
+            new_batting_skill: The new most common batting skill.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Update the batting skill for the player
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET Most_Common_Batting_Skill = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_batting_skill, player_name),
+                )
+                connection.commit()
+                await ctx.send(f"Updated batting skill for '{player_name}' to '{new_batting_skill}'.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
 
 
 
