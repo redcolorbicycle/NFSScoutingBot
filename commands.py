@@ -28,6 +28,7 @@ def setup_commands(bot, connection):
 
 
     @bot.command()
+    @commands.has_role("Admin")
     async def add_club(ctx, club_name: str):
         """Add a new club to the database."""
         try:
