@@ -223,6 +223,10 @@ def setup_commands(bot, connection):
                 table.auto_set_font_size(False)
                 table.set_fontsize(20)  # Increase font size for better readability
                 table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
+                
+                cell_dict = table.get_celld()
+                for (row, col), cell in cell_dict.items():
+                    cell.set_height(0.08)  # Adjust the row height (experiment with values for desired size)
 
                 # Save the table as an image in memory with minimal borders
                 buffer = BytesIO()
