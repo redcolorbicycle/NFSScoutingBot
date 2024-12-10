@@ -29,8 +29,8 @@ bot.connection = connection
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-bot.load_extension("commands.club_commands")
-bot.load_extension("commands.player_commands")
+bot.load_extension("command.club_commands")
+bot.load_extension("command.player_commands")
 
 
 # Run the bot
