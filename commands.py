@@ -209,7 +209,7 @@ def setup_commands(bot, connection):
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(5, len(df) * 0.8 + 1))  # Increase width and dynamic height
+                fig, ax = plt.subplots(figsize=(5, len(df) * 2 + 1))  # Increase width and dynamic height
                 ax.axis("tight")
                 ax.axis("off")
                 table = ax.table(
