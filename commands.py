@@ -187,6 +187,10 @@ def setup_commands(bot, connection):
                 table.set_fontsize(10)
                 table.auto_set_column_width(col=list(range(len(df.columns))))
 
+                cell_dict = table.get_celld()
+                for (row, col), cell in cell_dict.items():
+                    cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
+
                 # Save the table as an image in memory
                 buffer = BytesIO()
                 plt.savefig(buffer, format="png", bbox_inches="tight")
