@@ -5,9 +5,9 @@ from io import BytesIO
 import discord
 
 class PlayerCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, connection):
         self.bot = bot
-        self.connection = bot.connection
+        self.connection = connection
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
@@ -473,5 +473,6 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-def setup(bot):
-    bot.add_cog(PlayerCommands(bot))
+async def setup(bot):
+    connection = bot.connection  # Retrieve the connection from the bot instance
+    await bot.add_cog(PlayerCommands(bot, connection))
