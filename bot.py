@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from commands import setup_commands
 import psycopg2
 from urllib.parse import urlparse
 import os
