@@ -23,6 +23,7 @@ connection = psycopg2.connect(
     port=result.port
 )
 
+bot.connection = connection
 
 @bot.event
 async def on_ready():
