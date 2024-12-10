@@ -10,49 +10,6 @@ def setup_commands(bot, connection):
     #club commands
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scout_cupcake(ctx, club_name: str):
-        """
-        Fetch and display selected details (Name, Nerf, PR, Last Updated, Nerf Last Updated)
-        of all players belonging to a specific club.
-        """
-        try:
-            with connection.cursor() as cursor:
-                # Fetch the desired details for all players in the club
-                cursor.execute(
-                    """
-                    SELECT Name, Nerf, PR, last_updated, nerf_updated, team_name
-                    FROM Player
-                    WHERE Club_Name = %s
-                    """,
-                    (club_name,),
-                )
-                players = cursor.fetchall()
-
-                if players:
-                    # Format details for each player
-                    details_list = [
-                        (
-                            f"**Name**: {player[0]}\n"
-                            f"**Nerf**: {player[1]}\n"
-                            f"**PR**: {player[2]}\n"
-                            f"**Last Updated**: {player[3]}\n"
-                            f"**Nerf Last Updated**: {player[4]}\n"
-                            f"**Team Name**: {player[5]}"
-                        )
-                        for player in players
-                    ]
-                    # Send details as separate messages
-                    for details in details_list:
-                        await ctx.send(details)
-                else:
-                    await ctx.send(f"No players found for the club '{club_name}'.")
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def add_club(ctx, club_name: str):
         """Add a new club to the database."""
         try:
@@ -191,6 +148,63 @@ def setup_commands(bot, connection):
                 # Create a DataFrame from the fetched data
                 columns = ["Name", "SP1 Name", "SP1 Skills", "SP2 Name", "SP2 Skills", "SP3 Name", "SP3 Skills", "SP4 Name", 
                            "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
+                           "Team Deck"]
+                df = pd.DataFrame(players, columns=columns)
+
+                # Plot the table using matplotlib
+                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
+                ax.axis("tight")
+                ax.axis("off")
+                table = ax.table(
+                    cellText=df.values,
+                    colLabels=df.columns,
+                    cellLoc="center",
+                    loc="center",
+                )
+
+                # Adjust table style
+                table.auto_set_font_size(False)
+                table.set_fontsize(10)
+                table.auto_set_column_width(col=list(range(len(df.columns))))
+
+                # Save the table as an image in memory
+                buffer = BytesIO()
+                plt.savefig(buffer, format="png", bbox_inches="tight")
+                buffer.seek(0)
+                plt.close(fig)
+
+                # Send the image to Discord
+                file = discord.File(fp=buffer, filename="club_table.png")
+                await ctx.send(file=file)
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def scout_cupcake(ctx, club_name: str):
+        """
+        Fetch player details for a specific club and return them as a table image.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Fetch player details for the club
+                cursor.execute(
+                    """
+                    SELECT Name, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated, team_name
+                    FROM Player
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+                players = cursor.fetchall()
+
+                if not players:
+                    await ctx.send(f"No players found for the club '{club_name}'.")
+                    return
+
+                # Create a DataFrame from the fetched data
+                columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
                            "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
 
