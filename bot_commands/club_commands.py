@@ -269,11 +269,6 @@ class ClubCommands(commands.Cog):
 
 
 
-
-
-
-
-
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
     await bot.add_cog(ClubCommands(bot, connection))

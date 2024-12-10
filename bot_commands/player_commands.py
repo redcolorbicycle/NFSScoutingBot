@@ -58,65 +58,7 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def scout_player_image(self, ctx, name: str):
-        """
-        Fetch player details for a specific player and return them as a table image.
-        """
-        try:
-            with self.connection.cursor() as cursor:
-                # Fetch player details for the specified name
-                cursor.execute(
-                    """
-                    SELECT Name, Club_name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated, team_name
-                    FROM Player
-                    WHERE Name = %s
-                    """,
-                    (name,),
-                )
-                players = cursor.fetchall()
-
-                if not players:
-                    await ctx.send(f"No players found.")
-                    return
-
-                # Create a DataFrame from the fetched data
-                columns = ["Name", "Club Name", "SP1 Name", "SP1 Skills", "SP2 Name", "SP2 Skills", "SP3 Name", "SP3 Skills", "SP4 Name", 
-                        "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
-                        "Team Deck"]
-                df = pd.DataFrame(players, columns=columns)
-
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
-                )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
-
-                # Save the table as an image in memory
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="player_table.png")
-                await ctx.send(file=file)
-        except Exception as e:
-            self.connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
+            
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
@@ -471,6 +413,7 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
 async def setup(bot):
