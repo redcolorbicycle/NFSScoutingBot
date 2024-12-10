@@ -340,10 +340,16 @@ def setup_commands(bot, connection):
                         "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
 
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(50, len(df) * 2 + 3))  # Increased width and height
+                # Adjust the figure size dynamically for larger tables
+                fig_width = 18  # Fixed width
+                fig_height = max(4, len(df) * 0.7)  # Adjust height based on rows
+                fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+
+                # Hide axes
                 ax.axis("tight")
                 ax.axis("off")
+
+                # Create the table
                 table = ax.table(
                     cellText=df.values,
                     colLabels=df.columns,
@@ -353,12 +359,12 @@ def setup_commands(bot, connection):
 
                 # Adjust table style
                 table.auto_set_font_size(False)
-                table.set_fontsize(24)  # Increased font size
-                table.auto_set_column_width(col=list(range(len(df.columns))))
+                table.set_fontsize(14)  # Large font size
+                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure columns fit
 
                 # Save the table as an image in memory
                 buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight", dpi=200)  # Higher DPI for better quality
+                plt.savefig(buffer, format="png", bbox_inches="tight", dpi=150)  # Higher DPI for better clarity
                 buffer.seek(0)
                 plt.close(fig)
 
@@ -368,6 +374,7 @@ def setup_commands(bot, connection):
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
 
