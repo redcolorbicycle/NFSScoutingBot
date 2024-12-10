@@ -133,7 +133,7 @@ def setup_commands(bot, connection):
                 cursor.execute(
                     """
                     SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated, team_name
+                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -147,8 +147,8 @@ def setup_commands(bot, connection):
 
                 # Create a DataFrame from the fetched data
                 columns = ["Name", "SP1 Name", "SP1 Skills", "SP2 Name", "SP2 Skills", "SP3 Name", "SP3 Skills", "SP4 Name", 
-                           "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
-                           "Team Deck"]
+                           "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated"
+                           \]
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
