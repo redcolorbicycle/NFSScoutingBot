@@ -314,11 +314,11 @@ def setup_commands(bot, connection):
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_player_image(ctx, name: str):
         """
-        Fetch player details for a specific club and return them as a table image.
+        Fetch player details for a specific player and return them as a table image.
         """
         try:
             with connection.cursor() as cursor:
-                # Fetch player details for the club
+                # Fetch player details for the specified name
                 cursor.execute(
                     """
                     SELECT Name, Club_name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
@@ -336,12 +336,12 @@ def setup_commands(bot, connection):
 
                 # Create a DataFrame from the fetched data
                 columns = ["Name", "Club Name", "SP1 Name", "SP1 Skills", "SP2 Name", "SP2 Skills", "SP3 Name", "SP3 Skills", "SP4 Name", 
-                           "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
-                           "Team Deck"]
+                        "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
+                        "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
+                fig, ax = plt.subplots(figsize=(50, len(df) * 2 + 3))  # Increased width and height
                 ax.axis("tight")
                 ax.axis("off")
                 table = ax.table(
@@ -353,21 +353,22 @@ def setup_commands(bot, connection):
 
                 # Adjust table style
                 table.auto_set_font_size(False)
-                table.set_fontsize(10)
+                table.set_fontsize(24)  # Increased font size
                 table.auto_set_column_width(col=list(range(len(df.columns))))
 
                 # Save the table as an image in memory
                 buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
+                plt.savefig(buffer, format="png", bbox_inches="tight", dpi=200)  # Higher DPI for better quality
                 buffer.seek(0)
                 plt.close(fig)
 
                 # Send the image to Discord
-                file = discord.File(fp=buffer, filename="club_table.png")
+                file = discord.File(fp=buffer, filename="player_table.png")
                 await ctx.send(file=file)
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
 
