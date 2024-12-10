@@ -8,29 +8,6 @@ def setup_commands(bot, connection):
     """Register all commands for the bot."""
 
     #club commands
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def scout_club(ctx, club_name: str):
-        """Fetch all players belonging to a specific club and display their details using scout_player."""
-        try:
-            cursor = connection.cursor()
-            cursor.execute("SELECT Name FROM Player WHERE Club_Name = %s", (club_name,))
-            players = cursor.fetchall()
-            cursor.close()
-
-            if players:
-                for player in players:
-                    # Call scout_player for each player in the club
-                    player_name = player[0]
-                    await scout_player(ctx, player_name)  # Call scout_player with ctx and player_name
-            else:
-                await ctx.send(f"No players found for the club '{club_name}'.")
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_cupcake(ctx, club_name: str):
@@ -189,7 +166,7 @@ def setup_commands(bot, connection):
 
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scout_club_image(ctx, club_name: str):
+    async def scout_club(ctx, club_name: str):
         """
         Fetch player details for a specific club and return them as a table image.
         """
@@ -340,16 +317,10 @@ def setup_commands(bot, connection):
                         "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
 
-                # Adjust the figure size dynamically for larger tables
-                fig_width = 18  # Fixed width
-                fig_height = max(4, len(df) * 0.7)  # Adjust height based on rows
-                fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-
-                # Hide axes
+                # Plot the table using matplotlib
+                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
                 ax.axis("tight")
                 ax.axis("off")
-
-                # Create the table
                 table = ax.table(
                     cellText=df.values,
                     colLabels=df.columns,
@@ -359,12 +330,12 @@ def setup_commands(bot, connection):
 
                 # Adjust table style
                 table.auto_set_font_size(False)
-                table.set_fontsize(14)  # Large font size
-                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure columns fit
+                table.set_fontsize(10)
+                table.auto_set_column_width(col=list(range(len(df.columns))))
 
                 # Save the table as an image in memory
                 buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight", dpi=150)  # Higher DPI for better clarity
+                plt.savefig(buffer, format="png", bbox_inches="tight")
                 buffer.seek(0)
                 plt.close(fig)
 
