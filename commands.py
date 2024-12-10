@@ -219,11 +219,6 @@ def setup_commands(bot, connection):
                     loc="center",
                 )
 
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(30)  # Increase font size for better readability
-                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
-
                 # Save the table as an image in memory with minimal borders
                 buffer = BytesIO()
                 plt.savefig(buffer, format="png", bbox_inches="tight", pad_inches=0.1, dpi=200)  # Adjust DPI for higher quality
