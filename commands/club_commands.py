@@ -5,9 +5,9 @@ from io import BytesIO
 import discord
 
 class ClubCommands(commands.Cog):
-    def __init__(self, bot, connection):
+    def __init__(self, bot):
         self.bot = bot
-        self.connection = connection
+        self.connection = bot.connection
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
@@ -274,5 +274,5 @@ class ClubCommands(commands.Cog):
 
 
 
-def setup(bot, connection):
-    bot.add_cog(ClubCommands(bot, connection))
+def setup(bot):
+    bot.add_cog(ClubCommands(bot))

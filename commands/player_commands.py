@@ -7,7 +7,7 @@ import discord
 class PlayerCommands(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
-        self.connection = connection
+        self.connection = bot.connection
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
@@ -473,5 +473,5 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-def setup(bot, connection):
-    bot.add_cog(PlayerCommands(bot, connection))
+def setup(bot):
+    bot.add_cog(PlayerCommands(bot))
