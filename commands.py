@@ -209,7 +209,7 @@ def setup_commands(bot, connection):
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(18, len(df) * 0.8 + 1))  # Increase width and dynamic height
+                fig, ax = plt.subplots(figsize=(30, len(df) * 2 + 1))  # Increase width and dynamic height
                 ax.axis("tight")
                 ax.axis("off")
                 table = ax.table(
@@ -221,7 +221,7 @@ def setup_commands(bot, connection):
 
                 # Adjust table style
                 table.auto_set_font_size(False)
-                table.set_fontsize(14)  # Increase font size for better readability
+                table.set_fontsize(20)  # Increase font size for better readability
                 table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
 
                 # Save the table as an image in memory with minimal borders
