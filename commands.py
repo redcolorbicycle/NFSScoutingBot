@@ -1,4 +1,8 @@
 from discord.ext import commands
+import pandas as pd
+import matplotlib.pyplot as plt
+from io import BytesIO
+import discord
 
 def setup_commands(bot, connection):
     """Register all commands for the bot."""
@@ -179,6 +183,62 @@ def setup_commands(bot, connection):
                     await ctx.send(f"**Clubs in the Database:**\n{club_list}")
                 else:
                     await ctx.send("No clubs found in the database.")
+        except Exception as e:
+            connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+    @bot.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def scout_club_image(ctx, club_name: str):
+        """
+        Fetch player details for a specific club and return them as a table image.
+        """
+        try:
+            with connection.cursor() as cursor:
+                # Fetch player details for the club
+                cursor.execute(
+                    """
+                    SELECT Name, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated
+                    FROM Player
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+                players = cursor.fetchall()
+
+                if not players:
+                    await ctx.send(f"No players found for the club '{club_name}'.")
+                    return
+
+                # Create a DataFrame from the fetched data
+                columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated"]
+                df = pd.DataFrame(players, columns=columns)
+
+                # Plot the table using matplotlib
+                fig, ax = plt.subplots(figsize=(12, len(df) * 0.5 + 1))  # Dynamic height based on rows
+                ax.axis("tight")
+                ax.axis("off")
+                table = ax.table(
+                    cellText=df.values,
+                    colLabels=df.columns,
+                    cellLoc="center",
+                    loc="center",
+                )
+
+                # Adjust table style
+                table.auto_set_font_size(False)
+                table.set_fontsize(10)
+                table.auto_set_column_width(col=list(range(len(df.columns))))
+
+                # Save the table as an image in memory
+                buffer = BytesIO()
+                plt.savefig(buffer, format="png", bbox_inches="tight")
+                buffer.seek(0)
+                plt.close(fig)
+
+                # Send the image to Discord
+                file = discord.File(fp=buffer, filename="club_table.png")
+                await ctx.send(file=file)
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
