@@ -4,284 +4,17 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
 
-def setup_commands(bot, connection):
-    """Register all commands for the bot."""
+class PlayerCommands(commands.Cog):
+    def __init__(self, bot, connection):
+        self.bot = bot
+        self.connection = connection
 
-    #club commands
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def add_club(ctx, club_name: str):
-        """Add a new club to the database."""
-        try:
-            cursor = connection.cursor()
-
-            # Check if the club already exists
-            cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-            existing_club = cursor.fetchone()
-
-            if existing_club:
-                await ctx.send(f"The club '{club_name}' already exists in the database.")
-            else:
-                # Insert a new club
-                cursor.execute(
-                    """
-                    INSERT INTO Club (Club_Name)
-                    VALUES (%s)
-                    """,
-                    (club_name,),
-                )
-                connection.commit()
-                await ctx.send(f"Added new club '{club_name}' to the database.")
-
-            cursor.close()
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def rename_club(ctx, old_name: str, new_name: str):
-        """Rename an existing club in the database."""
-        try:
-            with connection.cursor() as cursor:
-                # Check if the club with the old name exists
-                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (old_name,))
-                existing_club = cursor.fetchone()
-
-                if not existing_club:
-                    await ctx.send(f"No club found with the name '{old_name}'.")
-                    return
-
-                # Check if the new name already exists
-                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (new_name,))
-                new_name_club = cursor.fetchone()
-
-                if new_name_club:
-                    await ctx.send(f"The name '{new_name}' is already taken by another club.")
-                    return
-
-                # Rename the club
-                cursor.execute(
-                    "UPDATE Club SET Club_Name = %s WHERE Club_Name = %s",
-                    (new_name, old_name),
-                )
-
-                connection.commit()
-                await ctx.send(f"Renamed club '{old_name}' to '{new_name}' and updated all associated players.")
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-    
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def delete_club(ctx, club_name: str):
-        """Delete a club from the database if it has no players."""
-        try:
-            with connection.cursor() as cursor:
-                # Check if the club exists
-                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                club = cursor.fetchone()
-
-                if not club:
-                    await ctx.send(f"No club found with the name '{club_name}'.")
-                    return
-
-                # Check if the club has players
-                cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (club_name,))
-                player_count = cursor.fetchone()[0]
-
-                if player_count > 0:
-                    await ctx.send(f"The club '{club_name}' cannot be deleted because it has {player_count} players.")
-                    return
-
-                # Delete the club
-                cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (club_name,))
-                connection.commit()
-                await ctx.send(f"Club '{club_name}' has been successfully deleted.")
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def list_clubs(ctx):
-        """List all clubs in the database."""
-        try:
-            with connection.cursor() as cursor:
-                # Fetch all clubs from the database
-                cursor.execute("SELECT Club_Name FROM Club")
-                clubs = cursor.fetchall()
-
-                if clubs:
-                    club_list = "\n".join([club[0] for club in clubs])  # Extract club names into a formatted string
-                    await ctx.send(f"**Clubs in the Database:**\n{club_list}")
-                else:
-                    await ctx.send("No clubs found in the database.")
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def scout_club(ctx, club_name: str):
-        """
-        Fetch player details for a specific club and return them as a table image.
-        """
-        try:
-            with connection.cursor() as cursor:
-                # Fetch player details for the club
-                cursor.execute(
-                    """
-                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated
-                    FROM Player
-                    WHERE Club_Name = %s
-                    """,
-                    (club_name,),
-                )
-                players = cursor.fetchall()
-
-                if not players:
-                    await ctx.send(f"No players found for the club '{club_name}'.")
-                    return
-
-                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
-                processed_players = [
-                    (
-                        player[0],  # Name
-                        f"{player[1]} ({player[2]})",  # SP1 Info
-                        f"{player[3]} ({player[4]})",  # SP2 Info
-                        f"{player[5]} ({player[6]})",  # SP3 Info
-                        f"{player[7]} ({player[8]})",  # SP4 Info
-                        f"{player[9]} ({player[10]})",  # SP5 Info
-                        player[11],  # Nerf
-                        player[12],  # PR
-                        player[13],  # Batting Skill
-                        player[14],  # Last Updated
-                    )
-                    for player in players
-                ]
-
-                # Define new column headers
-                columns = [
-                    "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
-                    "Nerf", "PR", "Batting Skill", "Last Updated"
-                ]
-
-                # Create a DataFrame from the processed data
-                df = pd.DataFrame(processed_players, columns=columns)
-
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
-                )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
-
-                cell_dict = table.get_celld()
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
-
-                # Save the table as an image in memory
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="club_table.png")
-                await ctx.send(file=file)
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def scout_cupcake(ctx, club_name: str):
-        """
-        Fetch player details for a specific club and return them as a table image.
-        """
-        try:
-            with connection.cursor() as cursor:
-                # Fetch player details for the club
-                cursor.execute(
-                    """
-                    SELECT Name, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated, team_name
-                    FROM Player
-                    WHERE Club_Name = %s
-                    """,
-                    (club_name,),
-                )
-                players = cursor.fetchall()
-
-                if not players:
-                    await ctx.send(f"No players found for the club '{club_name}'.")
-                    return
-
-                # Create a DataFrame from the fetched data
-                columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
-                        "Team Deck"]
-                df = pd.DataFrame(players, columns=columns)
-
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(5, len(df) * 2 + 1))  # Increase width and dynamic height
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
-                )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(20)  # Increase font size for better readability
-                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
-                
-                cell_dict = table.get_celld()
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(0.08)  # Adjust the row height (experiment with values for desired size)
-
-                # Save the table as an image in memory with minimal borders
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight", pad_inches=0.1, dpi=200)  # Adjust DPI for higher quality
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="club_table.png")
-                await ctx.send(file=file)
-        except Exception as e:
-            connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
-
-
-
-
-
-
-
-    #player commands
-
-    @bot.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def scout_player(ctx, player_name: str):
+    async def scout_player(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
         try:
-            cursor = connection.cursor()
+            cursor = self.connection.cursor()
             cursor.execute(
                 """
                 SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
@@ -323,17 +56,17 @@ def setup_commands(bot, connection):
             else:
                 await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scout_player_image(ctx, name: str):
+    async def scout_player_image(self, ctx, name: str):
         """
         Fetch player details for a specific player and return them as a table image.
         """
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Fetch player details for the specified name
                 cursor.execute(
                     """
@@ -382,19 +115,12 @@ def setup_commands(bot, connection):
                 file = discord.File(fp=buffer, filename="player_table.png")
                 await ctx.send(file=file)
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-
-
-
-
-
-
-
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def add_player(
+    async def add_player(self,
         ctx,
         name: str,
         club_name: str,
@@ -415,7 +141,7 @@ def setup_commands(bot, connection):
     ):
         """Add a new player to the database. Fails if the player already exists."""
         try:
-            cursor = connection.cursor()
+            cursor = self.connection.cursor()
 
             # Check if the player already exists
             cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
@@ -454,21 +180,21 @@ def setup_commands(bot, connection):
                         team_name
                     ),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Added new player '{name}' to the database.")
 
             cursor.close()
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def update_nerf(ctx, player_name: str, new_nerf: str):
+    async def update_nerf(self, ctx, player_name: str, new_nerf: str):
         """Update the nerf value for a player and set the nerf last updated date."""
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -483,20 +209,20 @@ def setup_commands(bot, connection):
                         """,
                         (new_nerf, player_name),
                     )
-                    connection.commit()
+                    self.connection.commit()
                     await ctx.send(f"Updated nerf for '{player_name}' to '{new_nerf}' and updated the last nerf change date.")
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def delete_player(ctx, player_name: str):
+    async def delete_player(self, ctx, player_name: str):
         """Delete a player from the database."""
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -504,17 +230,17 @@ def setup_commands(bot, connection):
                 if player:
                     # Delete the player
                     cursor.execute("DELETE FROM Player WHERE Name = %s", (player_name,))
-                    connection.commit()
+                    self.connection.commit()
                     await ctx.send(f"Player '{player_name}' has been deleted from the database.")
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def edit_sp(ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
+    async def edit_sp(self, ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
         """
 
         Args:
@@ -529,7 +255,7 @@ def setup_commands(bot, connection):
                 await ctx.send("Invalid SP number. Please specify a number from 1 to 5.")
                 return
 
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -551,15 +277,15 @@ def setup_commands(bot, connection):
                     """,
                     (sp_name, sp_skills, player_name),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Updated SP{sp_number} for player '{player_name}' to '{sp_name}' ({sp_skills}).")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def update_pr(ctx, player_name: str, new_pr: int):
+    async def update_pr(self, ctx, player_name: str, new_pr: int):
         """
         Update a player's PR (Power Rating).
         Args:
@@ -567,7 +293,7 @@ def setup_commands(bot, connection):
             new_pr: The new PR value.
         """
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -585,18 +311,18 @@ def setup_commands(bot, connection):
                     """,
                     (new_pr, player_name),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Updated PR for '{player_name}' to {new_pr}.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_club(ctx, player_name: str, new_club: str):
+    async def change_club(self, ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -629,16 +355,16 @@ def setup_commands(bot, connection):
                 if old_club_player_count == 0:
                     cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (current_club,))
 
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Player '{player_name}' has been moved to club '{new_club}'. Old club '{current_club}' has been deleted (if empty).")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_bat(ctx, player_name: str, new_batting_skill: str):
+    async def change_bat(self, ctx, player_name: str, new_batting_skill: str):
         """
         Update the most common batting skill for a player.
         Args:
@@ -646,7 +372,7 @@ def setup_commands(bot, connection):
             new_batting_skill: The new most common batting skill.
         """
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -664,15 +390,15 @@ def setup_commands(bot, connection):
                     """,
                     (new_batting_skill, player_name),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Updated batting skill for '{player_name}' to '{new_batting_skill}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_team_deck(ctx, player_name: str, new_team_name: str):
+    async def change_team_deck(self, ctx, player_name: str, new_team_name: str):
         """
         Change the team name of a player.
         Args:
@@ -680,7 +406,7 @@ def setup_commands(bot, connection):
             new_team_name: The new team name.
         """
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
                 player = cursor.fetchone()
@@ -698,15 +424,15 @@ def setup_commands(bot, connection):
                     """,
                     (new_team_name, player_name),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Updated team deck for '{player_name}' to '{new_team_name}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
     
-    @bot.command()
+    @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def rename_player(ctx, old_name: str, new_name: str):
+    async def rename_player(self, ctx, old_name: str, new_name: str):
         """
         Rename a player in the database.
         Args:
@@ -714,7 +440,7 @@ def setup_commands(bot, connection):
             new_name: The new name for the player.
         """
         try:
-            with connection.cursor() as cursor:
+            with self.connection.cursor() as cursor:
                 # Check if the player with the old name exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (old_name,))
                 player = cursor.fetchone()
@@ -740,16 +466,12 @@ def setup_commands(bot, connection):
                     """,
                     (new_name, old_name),
                 )
-                connection.commit()
+                self.connection.commit()
                 await ctx.send(f"Player '{old_name}' has been successfully renamed to '{new_name}'.")
         except Exception as e:
-            connection.rollback()
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
-
-
-
-
-
-
+def setup(bot, connection):
+    bot.add_cog(PlayerCommands(bot, connection))

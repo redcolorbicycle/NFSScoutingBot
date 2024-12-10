@@ -29,7 +29,8 @@ connection = psycopg2.connect(
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-setup_commands(bot, connection)
+bot.load_extension("commands.club_commands")
+bot.load_extension("commands.player_commands")
 
 
 # Run the bot
