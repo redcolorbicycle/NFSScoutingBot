@@ -5,7 +5,7 @@ from io import BytesIO
 import discord
 
 class PlayerCommands(commands.Cog):
-    def __init__(self, bot, connection):
+    def __init__(self, bot):
         self.bot = bot
         self.connection = bot.connection
 
