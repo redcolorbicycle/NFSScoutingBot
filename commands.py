@@ -191,25 +191,14 @@ def setup_commands(bot, connection):
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_club_image(ctx, club_name: str):
         """
-        Fetch all player details for a specific club and return them as a table image.
+        Fetch player details for a specific club and return them as a table image.
         """
         try:
             with connection.cursor() as cursor:
-                # Fetch column names and all player details
+                # Fetch player details for the club
                 cursor.execute(
                     """
-                    SELECT column_name
-                    FROM information_schema.columns
-                    WHERE table_name = 'Player'
-                    ORDER BY ordinal_position;
-                    """
-                )
-                column_names = [row[0] for row in cursor.fetchall()]
-
-                # Fetch all player details for the club
-                cursor.execute(
-                    """
-                    SELECT *
+                    SELECT Name, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -222,7 +211,8 @@ def setup_commands(bot, connection):
                     return
 
                 # Create a DataFrame from the fetched data
-                df = pd.DataFrame(players, columns=column_names)
+                columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated"]
+                df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(12, len(df) * 0.5 + 1))  # Dynamic height based on rows
