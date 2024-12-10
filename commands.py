@@ -237,7 +237,7 @@ def setup_commands(bot, connection):
                     f"**PR**: {pr}\n"
                     f"**Last Updated**: {last_updated}\n"
                     f"**Nerf Last Updated**: {nerf_updated}\n"
-                    f"**Team Name**: {team_name}\n"
+                    f"**Team Deck**: {team_name}\n"
                 )
 
                 await ctx.send(details)
@@ -527,7 +527,7 @@ def setup_commands(bot, connection):
 
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_team_name(ctx, player_name: str, new_team_name: str):
+    async def change_team_deck(ctx, player_name: str, new_team_name: str):
         """
         Change the team name of a player.
         Args:
@@ -554,7 +554,7 @@ def setup_commands(bot, connection):
                     (new_team_name, player_name),
                 )
                 connection.commit()
-                await ctx.send(f"Updated team name for '{player_name}' to '{new_team_name}'.")
+                await ctx.send(f"Updated team deck for '{player_name}' to '{new_team_name}'.")
         except Exception as e:
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
