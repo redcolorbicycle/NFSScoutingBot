@@ -145,11 +145,31 @@ def setup_commands(bot, connection):
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
 
-                # Create a DataFrame from the fetched data
-                columns = ["Name", "SP1 Name", "SP1 Skills", "SP2 Name", "SP2 Skills", "SP3 Name", "SP3 Skills", "SP4 Name", 
-                           "SP4 Skills", "SP5 Name", "SP5 Skills", "Nerf", "PR", "Batting Skill", "Last Updated"
-                           ]
-                df = pd.DataFrame(players, columns=columns)
+                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
+                processed_players = [
+                    (
+                        player[0],  # Name
+                        f"{player[1]} ({player[2]})",  # SP1 Info
+                        f"{player[3]} ({player[4]})",  # SP2 Info
+                        f"{player[5]} ({player[6]})",  # SP3 Info
+                        f"{player[7]} ({player[8]})",  # SP4 Info
+                        f"{player[9]} ({player[10]})",  # SP5 Info
+                        player[11],  # Nerf
+                        player[12],  # PR
+                        player[13],  # Batting Skill
+                        player[14],  # Last Updated
+                    )
+                    for player in players
+                ]
+
+                # Define new column headers
+                columns = [
+                    "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
+                    "Nerf", "PR", "Batting Skill", "Last Updated"
+                ]
+
+                # Create a DataFrame from the processed data
+                df = pd.DataFrame(processed_players, columns=columns)
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
@@ -180,6 +200,7 @@ def setup_commands(bot, connection):
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @bot.command()
     @commands.has_role("M16Speed Spy Daddies")
     async def scout_cupcake(ctx, club_name: str):
@@ -209,7 +230,7 @@ def setup_commands(bot, connection):
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(5, len(df) + 1))  # Increase width and dynamic height
+                fig, ax = plt.subplots(figsize=(5, len(df) * 2 + 1))  # Increase width and dynamic height
                 ax.axis("tight")
                 ax.axis("off")
                 table = ax.table(
