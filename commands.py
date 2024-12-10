@@ -205,11 +205,11 @@ def setup_commands(bot, connection):
 
                 # Create a DataFrame from the fetched data
                 columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
-                           "Team Deck"]
+                        "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
 
                 # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
+                fig, ax = plt.subplots(figsize=(18, len(df) * 0.8 + 1))  # Increase width and dynamic height
                 ax.axis("tight")
                 ax.axis("off")
                 table = ax.table(
@@ -221,12 +221,12 @@ def setup_commands(bot, connection):
 
                 # Adjust table style
                 table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
+                table.set_fontsize(14)  # Increase font size for better readability
+                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
 
-                # Save the table as an image in memory
+                # Save the table as an image in memory with minimal borders
                 buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
+                plt.savefig(buffer, format="png", bbox_inches="tight", pad_inches=0.1, dpi=200)  # Adjust DPI for higher quality
                 buffer.seek(0)
                 plt.close(fig)
 
@@ -237,10 +237,6 @@ def setup_commands(bot, connection):
             connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-
-    
-
-    
 
 
 
