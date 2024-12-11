@@ -37,8 +37,7 @@ class PlayerCommands(commands.Cog):
 
                 details = (
                     f"**Player Details**\n"
-                    f"**Name**: {name}\n"
-                    f"**Club**: {club}\n"
+                    f"{name}, PR {pr} from {club} ({team_name})\n"
                     f"**SP1**: {sp1_name} ({sp1_skills})\n"
                     f"**SP2**: {sp2_name} ({sp2_skills})\n"
                     f"**SP3**: {sp3_name} ({sp3_skills})\n"
@@ -46,10 +45,8 @@ class PlayerCommands(commands.Cog):
                     f"**SP5**: {sp5_name} ({sp5_skills})\n"
                     f"**Nerf**: {nerf}\n"
                     f"**Most Common Batting Skill**: {batting_skill}\n"
-                    f"**PR**: {pr}\n"
                     f"**Last Updated**: {last_updated}\n"
                     f"**Nerf Last Updated**: {nerf_updated}\n"
-                    f"**Team Deck**: {team_name}\n"
                 )
 
                 await ctx.send(details)
@@ -160,6 +157,7 @@ class PlayerCommands(commands.Cog):
                 await ctx.send(f"Added new player '{defaults['Name']}' to the database.")
 
             cursor.close()
+            await self.scout_player(defaults["Name"])
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
