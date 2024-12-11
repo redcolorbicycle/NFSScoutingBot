@@ -59,7 +59,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def add_player(self, ctx, *, args: str):
+    async def add_player(self, ctx, name:str, *, args: str):
         """
         Add a new player to the database using keyword arguments.
         Example usage:
@@ -73,7 +73,6 @@ class PlayerCommands(commands.Cog):
         try:
             # Define default values for all arguments
             defaults = {
-                "Name": None,
                 "Club_Name": "NO CLUB",
                 "SP1_Name": "",
                 "SP1_Skills": "",
@@ -101,11 +100,6 @@ class PlayerCommands(commands.Cog):
             for key in defaults.keys():
                 if key in provided_args:
                     defaults[key] = provided_args[key]
-
-            # Ensure required arguments are provided
-            if not defaults["Name"]:
-                await ctx.send("Error: 'Name' is required.")
-                return
 
             # Validate PR as an integer
             try:
@@ -135,7 +129,7 @@ class PlayerCommands(commands.Cog):
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
                     """,
                     (
-                        defaults["Name"],
+                        name,
                         defaults["Club_Name"],
                         defaults["SP1_Name"],
                         defaults["SP1_Skills"],
@@ -154,10 +148,10 @@ class PlayerCommands(commands.Cog):
                     ),
                 )
                 self.connection.commit()
-                await ctx.send(f"Added new player '{defaults['Name']}' to the database.")
+                await ctx.send(f"Added new player '{name}' to the database.")
 
             cursor.close()
-            await self.scout_player(defaults["Name"])
+            await self.scout_player(ctx, name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
