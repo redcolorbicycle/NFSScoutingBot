@@ -11,7 +11,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def addc(self, ctx, club_name: str):
+    async def addclub(self, ctx, club_name: str):
         """Add a new club to the database."""
         try:
             cursor = self.connection.cursor()
@@ -41,7 +41,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def renamec(self, ctx, old_name: str, new_name: str):
+    async def renameclub(self, ctx, old_name: str, new_name: str):
         """Rename an existing club in the database."""
         try:
             with self.connection.cursor() as cursor:
@@ -75,7 +75,7 @@ class ClubCommands(commands.Cog):
     
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def deletec(self, ctx, club_name: str):
+    async def deleteclub(self, ctx, club_name: str):
         """Delete a club from the database if it has no players."""
         try:
             with self.connection.cursor() as cursor:
@@ -105,7 +105,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def listc(self, ctx):
+    async def listclubs(self, ctx):
         """List all clubs in the database."""
         try:
             with self.connection.cursor() as cursor:
@@ -124,7 +124,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scoutc(self, ctx, club_name: str):
+    async def scoutclub(self, ctx, club_name: str):
         """
         Fetch player details for a specific club and return them as a table image.
         """
@@ -209,7 +209,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scoutcc(self, ctx, club_name: str):
+    async def scoutclubez(self, ctx, club_name: str):
         """
         Fetch player details for a specific club and return them as a table image.
         """

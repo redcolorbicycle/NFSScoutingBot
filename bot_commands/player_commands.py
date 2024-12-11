@@ -11,7 +11,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def scoutp(self, ctx, player_name: str):
+    async def scoutplayer(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
         try:
             cursor = self.connection.cursor()
@@ -59,7 +59,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def addp(self, ctx, name: str, *, args: str = ""):
+    async def addplayer(self, ctx, name: str, *, args: str = ""):
         """
         Add a new player to the database using the first argument as the name and optional keyword arguments.
         Example usage:
@@ -151,7 +151,7 @@ class PlayerCommands(commands.Cog):
                 await ctx.send(f"Added new player '{name}' to the database.")
 
             cursor.close()
-            await self.scoutp(ctx, name)
+            await self.scoutplayer(ctx, name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -161,7 +161,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def update_nerf(self, ctx, player_name: str, new_nerf: str):
+    async def updatenerf(self, ctx, player_name: str, new_nerf: str):
         """Update the nerf value for a player and set the nerf last updated date."""
         try:
             with self.connection.cursor() as cursor:
@@ -180,7 +180,7 @@ class PlayerCommands(commands.Cog):
                         (new_nerf, player_name),
                     )
                     self.connection.commit()
-                    await self.scoutp(ctx, player_name)
+                    await self.scoutplayer(ctx, player_name)
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
@@ -189,7 +189,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def deletep(self, ctx, player_name: str):
+    async def deleteplayer(self, ctx, player_name: str):
         """Delete a player from the database."""
         try:
             with self.connection.cursor() as cursor:
@@ -210,7 +210,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def edit_sp(self, ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
+    async def updatesp(self, ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
         """
 
         Args:
@@ -248,14 +248,14 @@ class PlayerCommands(commands.Cog):
                     (sp_name, sp_skills, player_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, player_name)
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def update_pr(self, ctx, player_name: str, new_pr: int):
+    async def updatepr(self, ctx, player_name: str, new_pr: int):
         """
         Update a player's PR (Power Rating).
         Args:
@@ -282,14 +282,14 @@ class PlayerCommands(commands.Cog):
                     (new_pr, player_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, player_name)
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def changec(self, ctx, player_name: str, new_club: str):
+    async def updateclub(self, ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
         try:
             with self.connection.cursor() as cursor:
@@ -317,7 +317,7 @@ class PlayerCommands(commands.Cog):
                     (new_club, player_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, player_name)
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -325,7 +325,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_bat(self, ctx, player_name: str, new_batting_skill: str):
+    async def updatebatskill(self, ctx, player_name: str, new_batting_skill: str):
         """
         Update the most common batting skill for a player.
         Args:
@@ -352,14 +352,14 @@ class PlayerCommands(commands.Cog):
                     (new_batting_skill, player_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, player_name)
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def change_team_deck(self, ctx, player_name: str, new_team_name: str):
+    async def updateteamdeck(self, ctx, player_name: str, new_team_name: str):
         """
         Change the team name of a player.
         Args:
@@ -386,14 +386,14 @@ class PlayerCommands(commands.Cog):
                     (new_team_name, player_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, player_name)
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
     
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def renamep(self, ctx, old_name: str, new_name: str):
+    async def renameplayer(self, ctx, old_name: str, new_name: str):
         """
         Rename a player in the database.
         Args:
@@ -428,7 +428,7 @@ class PlayerCommands(commands.Cog):
                     (new_name, old_name),
                 )
                 self.connection.commit()
-                await self.scoutp(ctx, old_name)
+                await self.scoutplayer(ctx, old_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
