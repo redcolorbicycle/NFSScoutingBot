@@ -180,7 +180,7 @@ class PlayerCommands(commands.Cog):
                         (new_nerf, player_name),
                     )
                     self.connection.commit()
-                    await ctx.send(f"Updated nerf for '{player_name}' to '{new_nerf}' and updated the last nerf change date.")
+                    await self.scout_player(ctx, player_name)
                 else:
                     await ctx.send(f"No player found with the name '{player_name}'.")
         except Exception as e:
@@ -248,7 +248,7 @@ class PlayerCommands(commands.Cog):
                     (sp_name, sp_skills, player_name),
                 )
                 self.connection.commit()
-                await ctx.send(f"Updated SP{sp_number} for player '{player_name}' to '{sp_name}' ({sp_skills}).")
+                await self.scout_player(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -282,7 +282,7 @@ class PlayerCommands(commands.Cog):
                     (new_pr, player_name),
                 )
                 self.connection.commit()
-                await ctx.send(f"Updated PR for '{player_name}' to {new_pr}.")
+                await self.scout_player(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -316,17 +316,8 @@ class PlayerCommands(commands.Cog):
                     "UPDATE Player SET Club_Name = %s WHERE Name = %s",
                     (new_club, player_name),
                 )
-
-                # Check if the old club is now empty
-                cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (current_club,))
-                old_club_player_count = cursor.fetchone()[0]
-
-                # Delete the old club if it is empty
-                if old_club_player_count == 0:
-                    cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (current_club,))
-
                 self.connection.commit()
-                await ctx.send(f"Player '{player_name}' has been moved to club '{new_club}'. Old club '{current_club}' has been deleted (if empty).")
+                await self.scout_player(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -361,7 +352,7 @@ class PlayerCommands(commands.Cog):
                     (new_batting_skill, player_name),
                 )
                 self.connection.commit()
-                await ctx.send(f"Updated batting skill for '{player_name}' to '{new_batting_skill}'.")
+                await self.scout_player(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -395,7 +386,7 @@ class PlayerCommands(commands.Cog):
                     (new_team_name, player_name),
                 )
                 self.connection.commit()
-                await ctx.send(f"Updated team deck for '{player_name}' to '{new_team_name}'.")
+                await self.scout_player(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -437,7 +428,7 @@ class PlayerCommands(commands.Cog):
                     (new_name, old_name),
                 )
                 self.connection.commit()
-                await ctx.send(f"Player '{old_name}' has been successfully renamed to '{new_name}'.")
+                await self.scout_player(ctx, old_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
