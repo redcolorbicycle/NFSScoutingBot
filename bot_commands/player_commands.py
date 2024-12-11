@@ -72,21 +72,21 @@ class PlayerCommands(commands.Cog):
         try:
             # Default values
             defaults = {
-                "Club_Name": "NO CLUB",
-                "SP1_Name": "",
-                "SP1_Skills": "",
-                "SP2_Name": "",
-                "SP2_Skills": "",
-                "SP3_Name": "",
-                "SP3_Skills": "",
-                "SP4_Name": "",
-                "SP4_Skills": "",
-                "SP5_Name": "",
-                "SP5_Skills": "",
-                "Nerf": "",
-                "Batting_Skill": "",
-                "PR": 9999,
-                "Team_Name": "",
+                "club": "NO CLUB",
+                "sp1name": "",
+                "sp1skills": "",
+                "sp2name": "",
+                "sp2skills": "",
+                "sp3name": "",
+                "sp3skills": "",
+                "sp4name": "",
+                "sp4skills": "",
+                "sp5name": "",
+                "sp5skills": "",
+                "nerf": "",
+                "battingskill": "",
+                "pr": 9999,
+                "teamdeck": "",
             }
 
 
@@ -102,11 +102,11 @@ class PlayerCommands(commands.Cog):
             # Merge provided arguments with defaults
             for key in defaults.keys():
                 if key in provided_args:
-                    defaults[key.lower()] = provided_args[key.lower()]
+                    defaults[key] = provided_args[key]
 
             # Validate PR as an integer
             try:
-                defaults["PR"] = int(defaults["PR"])
+                defaults["pr"] = int(defaults["pr"])
             except ValueError:
                 await ctx.send("Error: 'PR' must be an integer.")
                 return
@@ -133,21 +133,21 @@ class PlayerCommands(commands.Cog):
                     """,
                     (
                         name,
-                        defaults["Club_Name"],
-                        defaults["SP1_Name"],
-                        defaults["SP1_Skills"],
-                        defaults["SP2_Name"],
-                        defaults["SP2_Skills"],
-                        defaults["SP3_Name"],
-                        defaults["SP3_Skills"],
-                        defaults["SP4_Name"],
-                        defaults["SP4_Skills"],
-                        defaults["SP5_Name"],
-                        defaults["SP5_Skills"],
-                        defaults["Nerf"],
-                        defaults["Batting_Skill"],
-                        defaults["PR"],
-                        defaults["Team_Name"],
+                        defaults["club"],
+                        defaults["sp1name"],
+                        defaults["sp1skills"],
+                        defaults["sp2name"],
+                        defaults["sp2skills"],
+                        defaults["sp3name"],
+                        defaults["sp3skills"],
+                        defaults["sp4name"],
+                        defaults["sp4skills"],
+                        defaults["sp5name"],
+                        defaults["sp5skills"],
+                        defaults["nerf"],
+                        defaults["battingskill"],
+                        defaults["pr"],
+                        defaults["teamdeck"],
                     ),
                 )
                 self.connection.commit()
