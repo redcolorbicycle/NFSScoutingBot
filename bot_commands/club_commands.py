@@ -171,6 +171,7 @@ class ClubCommands(commands.Cog):
 
                 # Create a DataFrame from the processed data
                 df = pd.DataFrame(processed_players, columns=columns)
+                df = df.sort_values(by = "PR")
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
@@ -233,6 +234,7 @@ class ClubCommands(commands.Cog):
                 columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
                         "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
+                df = df.sort_values(by = "PR")
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(5, len(df) * 2 + 1))  # Increase width and dynamic height
