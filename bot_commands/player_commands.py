@@ -59,19 +59,18 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def add_player(self, ctx, name:str, *, args: str):
+    async def add_player(self, ctx, name: str, *, args: str = ""):
         """
-        Add a new player to the database using keyword arguments.
+        Add a new player to the database using the first argument as the name and optional keyword arguments.
         Example usage:
-        !add_player Name=John, Club_Name=NO CLUB, PR=9999, SP1_Name=, SP1_Skills=
+        !add_player John club=tokyodrift pr=9000 sp1_name=Skill1
         Unspecified arguments will take their default values:
-        - Name: (Required)
         - Club_Name: "NO CLUB"
         - PR: 9999
         - Other SP fields, Nerf, Batting_Skill, and Team_Name: Empty strings
         """
         try:
-            # Define default values for all arguments
+            # Default values
             defaults = {
                 "Club_Name": "NO CLUB",
                 "SP1_Name": "",
@@ -90,11 +89,12 @@ class PlayerCommands(commands.Cog):
                 "Team_Name": "",
             }
 
-            # Parse the arguments into a dictionary
+            # Parse the keyword arguments
             provided_args = {}
-            for arg in args.split(","):
-                key, value = map(str.strip, arg.split("=", 1))
-                provided_args[key] = value
+            if args:
+                for arg in args.split():
+                    key, value = map(str.strip, arg.split("=", 1))
+                    provided_args[key] = value
 
             # Merge provided arguments with defaults
             for key in defaults.keys():
@@ -111,11 +111,11 @@ class PlayerCommands(commands.Cog):
             cursor = self.connection.cursor()
 
             # Check if the player already exists
-            cursor.execute("SELECT * FROM Player WHERE Name = %s", (defaults["Name"],))
+            cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
             existing_player = cursor.fetchone()
 
             if existing_player:
-                await ctx.send(f"The player '{defaults['Name']}' already exists in the database. No changes made.")
+                await ctx.send(f"The player '{name}' already exists in the database. No changes made.")
             else:
                 # Insert the player with all arguments
                 cursor.execute(
@@ -155,6 +155,7 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
 
