@@ -89,17 +89,20 @@ class PlayerCommands(commands.Cog):
                 "Team_Name": "",
             }
 
+
             # Parse the keyword arguments
             provided_args = {}
             if args:
                 for arg in args.split():
                     key, value = map(str.strip, arg.split("=", 1))
-                    provided_args[key] = value
+                    provided_args[key.lower()] = value
+
+
 
             # Merge provided arguments with defaults
             for key in defaults.keys():
                 if key in provided_args:
-                    defaults[key] = provided_args[key]
+                    defaults[key.lower()] = provided_args[key.lower()]
 
             # Validate PR as an integer
             try:
