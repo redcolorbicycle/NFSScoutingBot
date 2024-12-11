@@ -12,7 +12,7 @@ intents = discord.Intents.default()  # Default intents include basic events
 intents.message_content = True       # Allows the bot to read message content
 
 # Initialize the bot with intents
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents, case_insensitive = True)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 result = urlparse(DATABASE_URL)
