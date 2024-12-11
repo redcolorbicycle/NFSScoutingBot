@@ -58,41 +58,75 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-            
+
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
-    async def add_player(self,
-        ctx,
-        name: str,
-        club_name: str,
-        sp1_name: str,
-        sp1_skills: str,
-        sp2_name: str,
-        sp2_skills: str,
-        sp3_name: str,
-        sp3_skills: str,
-        sp4_name: str,
-        sp4_skills: str,
-        sp5_name: str,
-        sp5_skills: str,
-        nerf: str,
-        batting_skill: str,
-        pr: int,
-        team_name: str,
-    ):
-        """Add a new player to the database. Fails if the player already exists."""
+    async def add_player(self, ctx, *, args: str):
+        """
+        Add a new player to the database using keyword arguments.
+        Example usage:
+        !add_player Name=John, Club_Name=NO CLUB, PR=9999, SP1_Name=, SP1_Skills=
+        Unspecified arguments will take their default values:
+        - Name: (Required)
+        - Club_Name: "NO CLUB"
+        - PR: 9999
+        - Other SP fields, Nerf, Batting_Skill, and Team_Name: Empty strings
+        """
         try:
+            # Define default values for all arguments
+            defaults = {
+                "Name": None,
+                "Club_Name": "NO CLUB",
+                "SP1_Name": "",
+                "SP1_Skills": "",
+                "SP2_Name": "",
+                "SP2_Skills": "",
+                "SP3_Name": "",
+                "SP3_Skills": "",
+                "SP4_Name": "",
+                "SP4_Skills": "",
+                "SP5_Name": "",
+                "SP5_Skills": "",
+                "Nerf": "",
+                "Batting_Skill": "",
+                "PR": 9999,
+                "Team_Name": "",
+            }
+
+            # Parse the arguments into a dictionary
+            provided_args = {}
+            for arg in args.split(","):
+                key, value = map(str.strip, arg.split("=", 1))
+                provided_args[key] = value
+
+            # Merge provided arguments with defaults
+            for key in defaults.keys():
+                if key in provided_args:
+                    defaults[key] = provided_args[key]
+
+            # Ensure required arguments are provided
+            if not defaults["Name"]:
+                await ctx.send("Error: 'Name' is required.")
+                return
+
+            # Validate PR as an integer
+            try:
+                defaults["PR"] = int(defaults["PR"])
+            except ValueError:
+                await ctx.send("Error: 'PR' must be an integer.")
+                return
+
             cursor = self.connection.cursor()
 
             # Check if the player already exists
-            cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
+            cursor.execute("SELECT * FROM Player WHERE Name = %s", (defaults["Name"],))
             existing_player = cursor.fetchone()
 
             if existing_player:
-                await ctx.send(f"The player '{name}' already exists in the database. No changes made.")
+                await ctx.send(f"The player '{defaults['Name']}' already exists in the database. No changes made.")
             else:
-                # Insert a new player and set Last_Updated to the current date
+                # Insert the player with all arguments
                 cursor.execute(
                     """
                     INSERT INTO Player (
@@ -104,31 +138,32 @@ class PlayerCommands(commands.Cog):
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
                     """,
                     (
-                        name,
-                        club_name,
-                        sp1_name,
-                        sp1_skills,
-                        sp2_name,
-                        sp2_skills,
-                        sp3_name,
-                        sp3_skills,
-                        sp4_name,
-                        sp4_skills,
-                        sp5_name,
-                        sp5_skills,
-                        nerf,
-                        batting_skill,
-                        pr,
-                        team_name
+                        defaults["Name"],
+                        defaults["Club_Name"],
+                        defaults["SP1_Name"],
+                        defaults["SP1_Skills"],
+                        defaults["SP2_Name"],
+                        defaults["SP2_Skills"],
+                        defaults["SP3_Name"],
+                        defaults["SP3_Skills"],
+                        defaults["SP4_Name"],
+                        defaults["SP4_Skills"],
+                        defaults["SP5_Name"],
+                        defaults["SP5_Skills"],
+                        defaults["Nerf"],
+                        defaults["Batting_Skill"],
+                        defaults["PR"],
+                        defaults["Team_Name"],
                     ),
                 )
                 self.connection.commit()
-                await ctx.send(f"Added new player '{name}' to the database.")
+                await ctx.send(f"Added new player '{defaults['Name']}' to the database.")
 
             cursor.close()
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
     @commands.command()
