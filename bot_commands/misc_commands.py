@@ -131,7 +131,7 @@ class MiscCommands(commands.Cog):
             return
 
         try:
-            await bot.user.edit(username=new_name)
+            await self.bot.user.edit(username=new_name)
             await ctx.send(f"Bot's username has been updated to {new_name}.")
         except Exception as e:
             await ctx.send(f"Failed to change username: {e}")
