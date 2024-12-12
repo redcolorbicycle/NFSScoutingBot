@@ -76,8 +76,7 @@ class MiscCommands(commands.Cog):
                       f"You need {eyetrain} points to Eye.\n"
                       f"You need {spdtrain} points to Speed.\n"
                       f"You need {fldtrain} points to Fielding.\n"
-                      f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} 
-                      training points left over.\n"
+                      f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
                       )      
             await ctx.send(answer)  
 
