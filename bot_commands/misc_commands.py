@@ -62,7 +62,7 @@ class MiscCommands(commands.Cog):
         totalstats = totalcon + totalpow + totaleye + totalspd + totalfld
         if supreme == "yes":
             trainingtotal = 87
-        if target*5 - (totalstats + trainingtotal) < 0:
+        if target*5 - (totalstats + trainingtotal) > 0:
             await ctx.send("You're fucked, that's out of reach.")
         else:
             contrain = target - totalcon
