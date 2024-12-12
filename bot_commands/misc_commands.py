@@ -119,6 +119,16 @@ class MiscCommands(commands.Cog):
                        f"\n"
                        f"Assuming the clubs will be as is:\n"
                        f"- For now (not set in stone), give me 10 teams that you'd want to be untouchable, and 5 that you'd be willing to move if there was an alternate and/or improvement team to replace (i.e. pending sale/retirement/leaving club)")
+        
+
+    @bot.command()
+    async def change_username(ctx, new_name: str):
+        try:
+            await bot.user.edit(username=new_name)
+            await ctx.send(f"Bot's username has been updated to {new_name}.")
+        except Exception as e:
+            await ctx.send(f"Failed to change username: {e}")
+
     
     
 
