@@ -9,8 +9,23 @@ class PlayerCommands(commands.Cog):
         self.bot = bot
         self.connection = connection
 
+    async def cog_check(self, ctx):
+        """
+        Restrict commands to users with a specific role and channel.
+        """
+        # Channel restriction
+        allowed_channel_names = ["scout-bot-testing-facility", "bot-testing"]
+        if ctx.channel.name not in allowed_channel_names:
+            return False
+
+        # Role restriction
+        #required_role_name = "M16Speed Spy Daddies"
+        #user_roles = [role.name for role in ctx.author.roles]
+        #return required_role_name in user_roles
+        return True
+
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def scoutplayer(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
         player_name = player_name.lower()
@@ -59,7 +74,6 @@ class PlayerCommands(commands.Cog):
 
 
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def addplayer(self, ctx, name: str, *, args: str = ""):
         """
         Add a new player to the database using the first argument as the name and optional keyword arguments.
@@ -162,10 +176,7 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-
-
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updatenerf(self, ctx, player_name: str, new_nerf: str):
         """Update the nerf value for a player and set the nerf last updated date."""
         player_name = player_name.lower()
@@ -215,8 +226,8 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updatesp(self, ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
         """
 
@@ -261,8 +272,8 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updatepr(self, ctx, player_name: str, new_pr: int):
         """
         Update a player's PR (Power Rating).
@@ -296,8 +307,8 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updateclub(self, ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
         player_name = player_name.lower()
@@ -334,7 +345,6 @@ class PlayerCommands(commands.Cog):
 
 
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updatebatskill(self, ctx, player_name: str, new_batting_skill: str):
         """
         Update the most common batting skill for a player.
@@ -368,8 +378,8 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def updateteamdeck(self, ctx, player_name: str, new_team_name: str):
         """
         Change the team name of a player.
@@ -402,9 +412,9 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-    
+
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def renameplayer(self, ctx, old_name: str, new_name: str):
         """
         Rename a player in the database.
@@ -446,9 +456,9 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-    
+
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def listplayers(self, ctx):
         """
         List all players in the database.
