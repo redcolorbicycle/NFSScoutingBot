@@ -48,10 +48,11 @@ class MiscCommands(commands.Cog):
 
     @commands.command()
     async def fivetoolcalculator(self, ctx, conbase:int, congi:int, powbase:int, powgi: int, eyebase:int, eyegi:int, spdbase:int,
-                                 spdgi:int, fldbase:int, fldgi:int, target:int, supreme:bool):
+                                 spdgi:int, fldbase:int, fldgi:int, target:int, supreme:str):
         """
         Calculates how many points are needed to hit a threshold and how many points leftover
         """
+        supreme = supreme.lower()
         trainingtotal = 57
         totalcon = conbase + congi
         totalpow = powbase + powgi
@@ -59,7 +60,7 @@ class MiscCommands(commands.Cog):
         totalspd = spdbase + spdgi
         totalfld = fldbase + fldgi
         totalstats = totalcon + totalpow + totaleye + totalspd + totalfld
-        if supreme:
+        if supreme == "yes":
             trainingtotal = 87
         if target*5 - (totalstats + trainingtotal) < 0:
             await ctx.send("You're fucked, that's out of reach.")
