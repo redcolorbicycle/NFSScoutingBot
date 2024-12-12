@@ -435,6 +435,36 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+    
+    @commands.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def listplayers(self, ctx):
+        """
+        List all players in the database.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                # Query to fetch all player names
+                cursor.execute("SELECT Name FROM Player")
+                players = cursor.fetchall()
+
+                if not players:
+                    await ctx.send("No players found in the database.")
+                    return
+
+                # Format player names into a readable message
+                player_list = "\n".join(player[0] for player in players)
+                message = f"**List of Players:**\n{player_list}"
+
+                # Send the message in chunks if it exceeds Discord's character limit
+                if len(message) > 2000:  # Discord message limit
+                    chunks = [message[i:i + 2000] for i in range(0, len(message), 2000)]
+                    for chunk in chunks:
+                        await ctx.send(chunk)
+                else:
+                    await ctx.send(message)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
 
 
 
