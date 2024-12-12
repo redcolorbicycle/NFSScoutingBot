@@ -111,7 +111,13 @@ class MiscCommands(commands.Cog):
         """
         Impersonate Bieber
         """
-        await ctx.send(f"I just want a Bieber sig - I would be so happy")
+        await ctx.send(f"Homework for each club (for me to discuss with you all): @everyone\n"
+                       f"I need you all within each club to try and carve out the following:\n"
+                       f" - Direction/look of your club post-tourney\n"
+                       f"- What you want to improve/change\n"
+                       f"\n"
+                       f"Assuming the clubs will be as is:\n"
+                       f"- For now (not set in stone), give me 10 teams that you'd want to be untouchable, and 5 that you'd be willing to move if there was an alternate and/or improvement team to replace (i.e. pending sale/retirement/leaving club)")
     
     
 
