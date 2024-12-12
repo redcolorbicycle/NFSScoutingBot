@@ -15,6 +15,7 @@ class ClubCommands(commands.Cog):
         """Add a new club to the database."""
         try:
             cursor = self.connection.cursor()
+            club_name = club_name.lower()
 
             # Check if the club already exists
             cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
@@ -43,6 +44,8 @@ class ClubCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def renameclub(self, ctx, old_name: str, new_name: str):
         """Rename an existing club in the database."""
+        old_name = old_name.lower()
+        new_name = new_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the club with the old name exists
@@ -77,6 +80,7 @@ class ClubCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def deleteclub(self, ctx, club_name: str):
         """Delete a club from the database if it has no players."""
+        club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the club exists
@@ -128,6 +132,7 @@ class ClubCommands(commands.Cog):
         """
         Fetch player details for a specific club and return them as a table image.
         """
+        club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Fetch player details for the club
@@ -213,6 +218,7 @@ class ClubCommands(commands.Cog):
         """
         Fetch player details for a specific club and return them as a table image.
         """
+        club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Fetch player details for the club
