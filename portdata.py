@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 from urllib.parse import urlparse
 
-file_path = "goldpursuit.xlsx"  # Replace with the actual Excel file path
+file_path = "tokyodrift.xlsx"  # Replace with the actual Excel file path
 
 df = pd.read_excel(file_path, engine="openpyxl")  # Specify engine if necessary
 
