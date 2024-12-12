@@ -13,6 +13,7 @@ class PlayerCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def scoutplayer(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
+        player_name = player_name.lower()
         try:
             cursor = self.connection.cursor()
             cursor.execute(
@@ -69,6 +70,7 @@ class PlayerCommands(commands.Cog):
         - PR: 9999
         - Other SP fields, Nerf, Batting_Skill, and Team_Name: Empty strings
         """
+        name = name.lower()
         try:
             # Default values
             defaults = {
@@ -166,6 +168,7 @@ class PlayerCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def updatenerf(self, ctx, player_name: str, new_nerf: str):
         """Update the nerf value for a player and set the nerf last updated date."""
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -194,6 +197,7 @@ class PlayerCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def deleteplayer(self, ctx, player_name: str):
         """Delete a player from the database."""
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -222,6 +226,7 @@ class PlayerCommands(commands.Cog):
             sp_name: The new name for the SP.
             sp_skills: The new skills for the SP.
         """
+        player_name = player_name.lower()
         try:
             # Validate SP number
             if sp_number < 1 or sp_number > 5:
@@ -265,6 +270,7 @@ class PlayerCommands(commands.Cog):
             player_name: The name of the player whose PR to update.
             new_pr: The new PR value.
         """
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -294,6 +300,7 @@ class PlayerCommands(commands.Cog):
     @commands.has_role("M16Speed Spy Daddies")
     async def updateclub(self, ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -335,6 +342,7 @@ class PlayerCommands(commands.Cog):
             player_name: The name of the player whose batting skill to update.
             new_batting_skill: The new most common batting skill.
         """
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -369,6 +377,7 @@ class PlayerCommands(commands.Cog):
             player_name: The name of the player whose team name to update.
             new_team_name: The new team name.
         """
+        player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
@@ -403,6 +412,8 @@ class PlayerCommands(commands.Cog):
             old_name: The current name of the player to rename.
             new_name: The new name for the player.
         """
+        old_name = old_name.lower()
+        new_name = new_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player with the old name exists
@@ -465,6 +476,33 @@ class PlayerCommands(commands.Cog):
                     await ctx.send(message)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    @commands.has_role("M16Speed Spy Daddies")
+    async def deleteallplayers(self, ctx, confirmation: str = None):
+        """
+        Delete all players in the database.
+        Requires confirmation by typing 'CONFIRM'.
+        """
+        try:
+            if confirmation != "CONFIRM":
+                await ctx.send(
+                    "Are you sure you want to delete all players? "
+                    "This action cannot be undone. "
+                    "If you are sure, run the command again with 'CONFIRM' as an argument."
+                )
+                return
+
+            with self.connection.cursor() as cursor:
+                # Delete all players from the Player table
+                cursor.execute("DELETE FROM Player")
+                self.connection.commit()
+
+                await ctx.send("All players have been deleted from the database.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
 
 
 
