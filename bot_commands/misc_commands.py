@@ -105,6 +105,13 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"Here is your random color: {random_color}", file=file)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def bieber(self, ctx):
+        """
+        Impersonate Bieber
+        """
+        await ctx.send(f"I just want a Bieber sig - I would be so happy")
     
     
 
