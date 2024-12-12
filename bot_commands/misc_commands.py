@@ -1,6 +1,9 @@
-from discord.ext import commands
+import random
+from io import BytesIO
+from PIL import Image
 import discord
 import os
+from discord.ext import commands
 
 class MiscCommands(commands.Cog):
     def __init__(self, bot):
@@ -79,6 +82,29 @@ class MiscCommands(commands.Cog):
                       f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
                       )      
             await ctx.send(answer)  
+
+
+    @commands.command()
+    async def randomcolor(self, ctx):
+        """
+        Generate a random color and return an image of that color.
+        """
+        try:
+            # Generate a random color
+            random_color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
+            rgb_color = tuple(int(random_color[i:i+2], 16) for i in (1, 3, 5))  # Convert HEX to RGB
+
+            # Create an image with the random color
+            img = Image.new('RGB', (256, 256), rgb_color)
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            # Send the image with the HEX code
+            file = discord.File(fp=buffer, filename="random_color.png")
+            await ctx.send(f"Here is your random color: {random_color}", file=file)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
     
     
 
