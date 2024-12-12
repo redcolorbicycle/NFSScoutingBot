@@ -74,7 +74,7 @@ class PlayerCommands(commands.Cog):
         try:
             # Default values
             defaults = {
-                "club": "NO CLUB",
+                "club": "no club",
                 "sp1name": "",
                 "sp1skills": "",
                 "sp2name": "",
