@@ -71,11 +71,40 @@ class MiscCommands(commands.Cog):
             spdtrain = target - totalspd
             fldtrain = target - totalfld
 
-            answer = (f"You need {contrain} points to Contact.\n"
-                      f"You need {powtrain} points to Power.\n"
-                      f"You need {eyetrain} points to Eye.\n"
-                      f"You need {spdtrain} points to Speed.\n"
-                      f"You need {fldtrain} points to Fielding.\n"
+            answer = (f"You need {max(contrain, 0)} points to Contact.\n"
+                      f"You need {max(powtrain, 0)} points to Power.\n"
+                      f"You need {max(eyetrain, 0)} points to Eye.\n"
+                      f"You need {max(spdtrain, 0)} points to Speed.\n"
+                      f"You need {max(fldtrain, 0)} points to Fielding.\n"
+                      f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
+                      )      
+            await ctx.send(answer)  
+    
+    @commands.command()
+    async def fivetoolcalculator(self, ctx, totalcon:int, totalpow:int, totaleye:int, totalspd:int,
+                                 totalfld:int, target:int, supreme:str):
+        """
+        Calculates how many points are needed to hit a threshold and how many points leftover
+        """
+        supreme = supreme.lower()
+        trainingtotal = 57
+        totalstats = totalcon + totalpow + totaleye + totalspd + totalfld
+        if supreme == "yes":
+            trainingtotal = 87
+        if target*5 - (totalstats + trainingtotal) > 0:
+            await ctx.send("You're fucked, that's out of reach.")
+        else:
+            contrain = target - totalcon
+            powtrain = target - totalpow
+            eyetrain = target - totaleye
+            spdtrain = target - totalspd
+            fldtrain = target - totalfld
+
+            answer = (f"You need {max(contrain, 0)} points to Contact.\n"
+                      f"You need {max(powtrain, 0)} points to Power.\n"
+                      f"You need {max(eyetrain, 0)} points to Eye.\n"
+                      f"You need {max(spdtrain, 0)} points to Speed.\n"
+                      f"You need {max(fldtrain, 0)} points to Fielding.\n"
                       f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
                       )      
             await ctx.send(answer)  
