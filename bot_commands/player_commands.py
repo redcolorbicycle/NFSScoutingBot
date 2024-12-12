@@ -85,7 +85,6 @@ class PlayerCommands(commands.Cog):
         - Other SP fields, Nerf, Batting_Skill, and Team_Name: Empty strings
         """
         name = name.lower()
-        args = args.replace("“", '"').replace("”", '"')
         try:
             # Default values
             defaults = {
