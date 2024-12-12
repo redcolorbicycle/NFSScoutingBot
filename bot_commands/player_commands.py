@@ -477,34 +477,6 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
-    @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
-    async def deleteallplayers(self, ctx, confirmation: str = None):
-        """
-        Delete all players in the database.
-        Requires confirmation by typing 'CONFIRM'.
-        """
-        try:
-            if confirmation != "CONFIRM":
-                await ctx.send(
-                    "Are you sure you want to delete all players? "
-                    "This action cannot be undone. "
-                    "If you are sure, run the command again with 'CONFIRM' as an argument."
-                )
-                return
-
-            with self.connection.cursor() as cursor:
-                # Delete all players from the Player table
-                cursor.execute("DELETE FROM Player")
-                self.connection.commit()
-
-                await ctx.send("All players have been deleted from the database.")
-        except Exception as e:
-            self.connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
-
 
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
