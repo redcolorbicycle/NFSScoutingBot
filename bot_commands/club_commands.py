@@ -9,8 +9,23 @@ class ClubCommands(commands.Cog):
         self.bot = bot
         self.connection = connection
 
+    async def cog_check(self, ctx):
+        """
+        Restrict commands to users with a specific role and channel.
+        """
+        # Channel restriction
+        allowed_channel_names = ["scout-bot-testing-facility", "bot-testing"]
+        if ctx.channel.name not in allowed_channel_names:
+            return False
+
+        # Role restriction
+        #required_role_name = "M16Speed Spy Daddies"
+        #user_roles = [role.name for role in ctx.author.roles]
+        #return required_role_name in user_roles
+        return True
+
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def addclub(self, ctx, club_name: str):
         """Add a new club to the database."""
         try:
@@ -40,8 +55,8 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def renameclub(self, ctx, old_name: str, new_name: str):
         """Rename an existing club in the database."""
         old_name = old_name.lower()
@@ -75,9 +90,9 @@ class ClubCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-    
+
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def deleteclub(self, ctx, club_name: str):
         """Delete a club from the database if it has no players."""
         club_name = club_name.lower()
@@ -107,8 +122,8 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def listclubs(self, ctx):
         """List all clubs in the database."""
         try:
@@ -126,8 +141,8 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def scoutclub(self, ctx, club_name: str):
         """
         Fetch player details for a specific club and return them as a table image.
@@ -213,7 +228,6 @@ class ClubCommands(commands.Cog):
 
 
     @commands.command()
-    @commands.has_role("M16Speed Spy Daddies")
     async def scoutclubez(self, ctx, club_name: str):
         """
         Fetch player details for a specific club and return them as a table image.
