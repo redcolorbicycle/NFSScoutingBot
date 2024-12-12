@@ -114,7 +114,7 @@ class ClubCommands(commands.Cog):
         try:
             with self.connection.cursor() as cursor:
                 # Fetch all clubs from the database
-                cursor.execute("SELECT Club_Name FROM Club")
+                cursor.execute("SELECT Club_Name FROM Club ORDER BY Club_Name ASC")
                 clubs = cursor.fetchall()
 
                 if clubs:
