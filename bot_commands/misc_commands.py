@@ -111,7 +111,7 @@ class MiscCommands(commands.Cog):
         """
         Impersonate Bieber
         """
-        await ctx.send(f"Homework for each club (for me to discuss with you all): @everyone\n"
+        await ctx.send(f"Homework for each club (for me to discuss with you all): @ everyone\n"
                        f"I need you all within each club to try and carve out the following:\n"
                        f" - Direction/look of your club post-tourney\n"
                        f"- What you want to improve/change\n"
