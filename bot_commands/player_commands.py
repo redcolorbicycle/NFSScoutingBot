@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
+import shlex
 
 class PlayerCommands(commands.Cog):
     def __init__(self, bot, connection):
@@ -77,14 +78,10 @@ class PlayerCommands(commands.Cog):
     async def addplayer(self, ctx, name: str, *, args: str = ""):
         """
         Add a new player to the database using the first argument as the name and optional keyword arguments.
-        Example usage:
-        !add_player John club=tokyodrift pr=9000 sp1_name=Skill1
-        Unspecified arguments will take their default values:
-        - Club_Name: "NO CLUB"
-        - PR: 9999
-        - Other SP fields, Nerf, Batting_Skill, and Team_Name: Empty strings
         """
         name = name.lower()
+        args = args.replace("“", '"').replace("”", '"')
+
         try:
             # Default values
             defaults = {
@@ -105,26 +102,21 @@ class PlayerCommands(commands.Cog):
                 "teamdeck": "",
             }
 
-
-            # Parse the keyword arguments
+            # Parse arguments with shlex
             provided_args = {}
             if args:
-                for arg in args.split():
+                parsed_args = shlex.split(args)
+                for arg in parsed_args:
                     key, value = map(str.strip, arg.split("=", 1))
                     provided_args[key.lower()] = value
 
-            # Merge provided arguments with defaults
+            # Merge with defaults
             for key in defaults.keys():
                 if key in provided_args:
                     defaults[key] = provided_args[key]
 
-            # Validate PR as an integer
-            try:
-                defaults["pr"] = int(defaults["pr"])
-            except ValueError:
-                await ctx.send("Error: 'PR' must be an integer.")
-                return
-
+            # Validate PR
+            defaults["pr"] = int(defaults["pr"])
             cursor = self.connection.cursor()
 
             # Check if the player already exists
