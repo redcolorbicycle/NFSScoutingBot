@@ -478,6 +478,79 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
+
+
+
+    @commands.command()
+    async def updateplayer(self, ctx, name: str, *, args: str = ""):
+        """
+        Update multiple attributes of a player in a single command.
+        Example usage:
+        !updateplayer John club=NewClubName nerf=NewNerfValue pr=9000 bat=NewBatSkill teamdeck=NewTeamDeck
+        """
+        name = name.lower()
+        args = args.replace("“", '"').replace("”", '"')  # Replace smart quotes
+        try:
+            # Define a mapping from user-friendly keys to SQL column names
+            column_mapping = {
+                "club": "club_name",
+                "nerf": "nerf",
+                "bat": "most_common_batting_skill",
+                "pr": "pr",
+                "teamdeck": "team_name",
+            }
+
+            # Parse the key-value arguments
+            updates = {}
+            if args:
+                for arg in args.split():
+                    key, value = map(str.strip, arg.split("=", 1))
+                    key = key.lower()
+                    if key in column_mapping:
+                        updates[column_mapping[key]] = value
+
+            # Validate and construct the SQL query
+            update_query_parts = []
+            update_values = []
+            for column, value in updates.items():
+                if column == "pr":  # Convert PR to integer
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        await ctx.send(f"Invalid value for PR: {value}. It must be an integer.")
+                        return
+                update_query_parts.append(f"{column} = %s")
+                update_values.append(value)
+
+            if not update_query_parts:
+                await ctx.send("No valid updates provided.")
+                return
+
+            # Add the player's name to the query
+            update_query = ", ".join(update_query_parts)
+            update_values.append(name)
+
+            # Execute the update query
+            with self.connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{name}'.")
+                    return
+
+                cursor.execute(
+                    f"UPDATE Player SET {update_query}, last_updated = CURRENT_DATE WHERE Name = %s",
+                    update_values,
+                )
+                self.connection.commit()
+                await ctx.send(f"Updated player '{name}' with the following changes: {updates}")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
     await bot.add_cog(PlayerCommands(bot, connection))
