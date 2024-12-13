@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 from urllib.parse import urlparse
 
-file_path = "tokyodrift.xlsx"  # Replace with the actual Excel file path
+file_path = "goldpursuit.xlsx"  # Replace with the actual Excel file path
 
 df = pd.read_excel(file_path, engine="openpyxl")  # Specify engine if necessary
 
@@ -11,8 +11,8 @@ sp_columns = ["SP1", "SP2", "SP3", "SP4", "SP5"]
 
 # Split each SP column into Name and Skills
 for sp in sp_columns:
-    df[f"{sp}_Name"] = df[sp].str.split(" - ", n=1).str[0]  # Extract the first word as Name
-    df[f"{sp}_Skills"] = df[sp].str.split(" - ", n=1).str[1]  # Extract the rest as Skills
+    df[f"{sp}_Name"] = df[sp].str.split(" ", n=1).str[0]  # Extract the first word as Name
+    df[f"{sp}_Skills"] = df[sp].str.split(" ", n=1).str[1]  # Extract the rest as Skills
 
 # Drop the original SP columns (optional)
 df = df.drop(columns=sp_columns)
@@ -51,8 +51,28 @@ for _, row in df.iterrows():
 
     # If the player exists, skip this row
     if player_exists:
-        print(f"Player '{row['Name']}' already exists. Skipping...")
-        continue
+        # Update the existing player's data
+        cursor.execute(
+            """
+            UPDATE Player
+            SET Club_Name = %s, SP1_Name = %s, SP1_Skills = %s,
+                SP2_Name = %s, SP2_Skills = %s, SP3_Name = %s, SP3_Skills = %s,
+                SP4_Name = %s, SP4_Skills = %s, SP5_Name = %s, SP5_Skills = %s,
+                Nerf = %s, Most_Common_Batting_Skill = %s, PR = %s, last_updated = CURRENT_DATE, team_name = %s
+            WHERE Name = %s
+            """,
+            (
+                row["Club_Name"],
+                row["SP1_Name"], row["SP1_Skills"],
+                row["SP2_Name"], row["SP2_Skills"],
+                row["SP3_Name"], row["SP3_Skills"],
+                row["SP4_Name"], row["SP4_Skills"],
+                row["SP5_Name"], row["SP5_Skills"],
+                row.get("Nerf", ""), row.get("Most_Common_Batting_Skill", ""),
+                row.get("PR", 9999), row.get("Team_Name", ""),
+                row["Name"]
+            )
+        )
 
     # If Club_Name is empty, set it to "no club"
     club_name = row["Club_Name"].lower() if row["Club_Name"] else "no club"
@@ -73,28 +93,29 @@ for _, row in df.iterrows():
         print(f"Created new club: {club_name}")
 
     # Insert the player into the Player table
-    cursor.execute(
-        """
-        INSERT INTO Player (
-            Name, Club_Name, SP1_Name, SP1_Skills,
-            SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
-            SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-            Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
+    if not player_exists:
+        cursor.execute(
+            """
+            INSERT INTO Player (
+                Name, Club_Name, SP1_Name, SP1_Skills,
+                SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
+                SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
+                Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
+            """,
+            (
+                row["Name"].lower(),
+                club_name,
+                row["SP1_Name"], row["SP1_Skills"],
+                row["SP2_Name"], row["SP2_Skills"],
+                row["SP3_Name"], row["SP3_Skills"],
+                row["SP4_Name"], row["SP4_Skills"],
+                row["SP5_Name"], row["SP5_Skills"],
+                row.get("Nerf", ""), row.get("Most_Common_Batting_Skill", ""),
+                row.get("PR", 9999), row.get("Team_Name", ""),
+            )
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
-        """,
-        (
-            row["Name"].lower(),
-            club_name,
-            row["SP1_Name"], row["SP1_Skills"],
-            row["SP2_Name"], row["SP2_Skills"],
-            row["SP3_Name"], row["SP3_Skills"],
-            row["SP4_Name"], row["SP4_Skills"],
-            row["SP5_Name"], row["SP5_Skills"],
-            row.get("Nerf", ""), row.get("Most_Common_Batting_Skill", ""),
-            row.get("PR", 9999), row.get("Team_Name", ""),
-        )
-    )
 
 # Commit and close
 connection.commit()

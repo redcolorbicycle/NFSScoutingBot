@@ -290,6 +290,44 @@ class ClubCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
+    @commands.command()
+    async def scoutclubtext(self, ctx, club_name:str):
+        club_name = club_name.lower()
+        try:
+            with self.connection.cursor() as cursor:
+                # Fetch player details for the club
+                cursor.execute(
+                    """
+                    SELECT Name, Nerf, PR, team_name
+                    FROM Player
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+                players = cursor.fetchall()
+
+                if not players:
+                    await ctx.send(f"No players found for the club '{club_name}'.")
+                    return
+                
+                player_details = "\n".join(
+                f"**Name**: {player[0]}, **Nerf**: {player[1]}, **PR**: {player[2]}, **Team**: {player[3]}"
+                for player in players
+            )
+
+            # Create the response message
+            message = f"**Players in {club_name}:**\n{player_details}"
+
+            # Send the message
+            await ctx.send(message)
+
+                
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+
 
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
