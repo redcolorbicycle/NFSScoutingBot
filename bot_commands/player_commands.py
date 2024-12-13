@@ -15,7 +15,7 @@ class PlayerCommands(commands.Cog):
         Restrict commands to users with a specific role and channel.
         """
         # Channel restriction
-        allowed_channel_names = ["scout-bot-testing-facility", "bot-testing"]
+        allowed_channel_names = ["scout-bot-testing-facility", "bot-testing", "rushhour-battles-scouts"]
         if ctx.channel.name not in allowed_channel_names:
             return False
 
