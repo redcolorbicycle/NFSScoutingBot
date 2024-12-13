@@ -209,8 +209,19 @@ class ClubCommands(commands.Cog):
                 table.set_fontsize(10)
                 table.auto_set_column_width(col=list(range(len(df.columns))))
 
+                # Apply conditional formatting for PR column
                 cell_dict = table.get_celld()
+                pr_index = columns.index("PR")  # Find the index of the PR column
                 for (row, col), cell in cell_dict.items():
+                    if col == pr_index and row > 0:  # Exclude header row
+                        pr_value = df.iloc[row - 1, pr_index]  # Get PR value
+                        if pr_value <= 200:
+                            cell.set_facecolor("#FF6347")  # Light red for high PR
+                        elif pr_value <= 500:
+                            cell.set_facecolor("#FFD700")  # Yellow for medium PR
+                        elif pr_value <=1000:
+                            cell.set_facecolor("#90EE90")  # Light green for low PR
+
                     cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
 
                 # Save the table as an image in memory
