@@ -215,13 +215,17 @@ class ClubCommands(commands.Cog):
                 for (row, col), cell in cell_dict.items():
                     if col == pr_index and row > 0:  # Exclude header row
                         pr_value = df.iloc[row - 1, pr_index]  # Get PR value
-                        if pr_value <= 200:
-                            cell.set_facecolor("#FF6347")  # Light red for high PR
+                        if pr_value <= 50:
+                            cell.set_facecolor("#FF0000")  # Sharp red for top 50
+                        elif pr_value <= 200:
+                            cell.set_facecolor("#FFA500")  # Orange for 51-200
                         elif pr_value <= 500:
-                            cell.set_facecolor("#FFD700")  # Yellow for medium PR
-                        elif pr_value <=1000:
-                            cell.set_facecolor("#90EE90")  # Light green for low PR
-
+                            cell.set_facecolor("#FFFF00")  # Yellow for 200-500
+                        elif pr_value <= 1000:
+                            cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
+                        elif pr_value <= 2000:
+                            cell.set_facecolor("#800080")  # Purple for 1001-2000
+                            
                     cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
 
                 # Save the table as an image in memory
