@@ -225,7 +225,7 @@ class ClubCommands(commands.Cog):
                             cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
                         elif pr_value <= 2000:
                             cell.set_facecolor("#800080")  # Purple for 1001-2000
-                            
+
                     cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
 
                 # Save the table as an image in memory
@@ -288,8 +288,22 @@ class ClubCommands(commands.Cog):
                 table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
                 
                 cell_dict = table.get_celld()
+                pr_index = columns.index("PR")  # Find the index of the PR column
                 for (row, col), cell in cell_dict.items():
-                    cell.set_height(0.08)  # Adjust the row height (experiment with values for desired size)
+                    if col == pr_index and row > 0:  # Exclude header row
+                        pr_value = df.iloc[row - 1, pr_index]  # Get PR value
+                        if pr_value <= 50:
+                            cell.set_facecolor("#FF0000")  # Sharp red for top 50
+                        elif pr_value <= 200:
+                            cell.set_facecolor("#FFA500")  # Orange for 51-200
+                        elif pr_value <= 500:
+                            cell.set_facecolor("#FFFF00")  # Yellow for 200-500
+                        elif pr_value <= 1000:
+                            cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
+                        elif pr_value <= 2000:
+                            cell.set_facecolor("#800080")  # Purple for 1001-2000
+                            
+                    cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
 
                 # Save the table as an image in memory with minimal borders
                 buffer = BytesIO()
