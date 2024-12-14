@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 from urllib.parse import urlparse
 
-file_path = "goldpursuit.xlsx"  # Replace with the actual Excel file path
+file_path = "TheIDOLS_SPs.xlsx"  # Replace with the actual Excel file path
 
 df = pd.read_excel(file_path, engine="openpyxl")  # Specify engine if necessary
 
@@ -18,14 +18,14 @@ for sp in sp_columns:
 df = df.drop(columns=sp_columns)
 
 # Convert player names and club names to lowercase
-df["Name"] = df["Name"].str.lower()
+df["Name"] = df["Name"].str.lower().str.replace(" ", "")
 df["Club_Name"] = df["Club_Name"].str.lower()
 
 # Fill empty Club_Name values with "no club"
 df["Club_Name"].fillna("no club", inplace=True)
+df["Nerf"].fillna("", inplace=True)
+df["PR"].fillna(9999, inplace=True)
 
-# Preview the processed DataFrame
-print(df.head())
 
 DATABASE_URL = "postgres://u4kqn7e60puiu1:p4a4ecc6673558b8a08d820c48a4456038a4752c358a0f1de9396f15fd58c6945@cd27da2sn4hj7h.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d6p7k4of1m96ql"
 result = urlparse(DATABASE_URL)
@@ -38,10 +38,7 @@ connection = psycopg2.connect(
 )
 cursor = connection.cursor()
 
-df["Name"].fillna("unknown", inplace=True)  # Replace NaN with "unknown"
-df["Name"] = df["Name"].astype(str).str.lower()  # Convert to lowercase strings
-df["Club_Name"].fillna("no club", inplace=True)  # Replace NaN with "no club"
-df["Club_Name"] = df["Club_Name"].astype(str).str.lower()  # Convert to lowercase strings
+
 
 # Iterate through the rows and insert into the database
 for _, row in df.iterrows():
@@ -68,8 +65,8 @@ for _, row in df.iterrows():
                 row["SP3_Name"], row["SP3_Skills"],
                 row["SP4_Name"], row["SP4_Skills"],
                 row["SP5_Name"], row["SP5_Skills"],
-                row.get("Nerf", ""), row.get("Most_Common_Batting_Skill", ""),
-                row.get("PR", 9999), row.get("Team_Name", ""),
+                row["Nerf"], row.get("Most_Common_Batting_Skill", ""),
+                row["PR"], row.get("Team_Name", ""),
                 row["Name"]
             )
         )
@@ -112,8 +109,8 @@ for _, row in df.iterrows():
                 row["SP3_Name"], row["SP3_Skills"],
                 row["SP4_Name"], row["SP4_Skills"],
                 row["SP5_Name"], row["SP5_Skills"],
-                row.get("Nerf", ""), row.get("Most_Common_Batting_Skill", ""),
-                row.get("PR", 9999), row.get("Team_Name", ""),
+                row["Nerf"], row.get("Most_Common_Batting_Skill", ""),
+                row["PR"], row.get("Team_Name", ""),
             )
         )
 
