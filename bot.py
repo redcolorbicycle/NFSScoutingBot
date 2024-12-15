@@ -10,6 +10,10 @@ import os
 # Define intents
 intents = discord.Intents.default()  # Default intents include basic events
 intents.message_content = True       # Allows the bot to read message content
+intents.reactions = True
+intents.messages = True
+intents.guilds = True
+intents.members = True 
 
 # Initialize the bot with intents
 bot = commands.Bot(command_prefix="!", intents=intents, case_insensitive = True)
@@ -36,6 +40,7 @@ async def load_extensions():
         await bot.load_extension("bot_commands.player_commands")
         await bot.load_extension("bot_commands.club_commands")
         await bot.load_extension("bot_commands.misc_commands")
+        await bot.load_extension("bot_commands.server_commands.py")
     except Exception as e:
         print(f"Failed to load extension: {e}")
 
