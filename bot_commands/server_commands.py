@@ -8,16 +8,16 @@ class ServerCommands(commands.Cog):
 
         # Define emoji-role mappings
         self.ROLE_REACTIONS = {
-            "🔴": "GoldyIsNFS",       # Red
-            "🔵": "TokyoDrift",      # Blue
-            "🟢": "Burnouts",        # Green
-            "🟡": "Dugout Party",    # Yellow
-            "🟣": "The Kerchosen",   # Purple
-            "⚫": "Rush Hour",        # Black
-            "🟤": "Speed Bumpers",   # Brown
-            "⚪": "ImOnSpeed Member", # White
-            "🟧": "NFS_NoLimits Member", # Orange
-            "🟨": "M&Ms",            # Gold
+            "🟨": "GoldyIsNFS",           
+            "🏎️": "TokyoDrift",          
+            "🔥": "Burnouts",            
+            "♠️": "Dugout Party",        
+            "🚀": "The Kerchosen",       
+            "🚦": "Rush Hour",           
+            "🚗": "Speed Bumpers",       
+            "😎": "ImOnSpeed Member",    
+            "🌠": "NFS_NoLimits Member", 
+            "🟧": "M&Ms",
         }
 
         self.STRAT_PASS_ROLE = "NFS Strat Pass"  # Role automatically assigned to all reactors
@@ -31,7 +31,7 @@ class ServerCommands(commands.Cog):
         )
         message = await ctx.send(
             f"React to this message to get a role:\n{role_message}\n\n"
-            f"Everyone who reacts will also receive the '{self.STRAT_PASS_ROLE}' role."
+            
         )
 
         # Add the reactions to the message
@@ -67,10 +67,7 @@ class ServerCommands(commands.Cog):
             role = discord.utils.get(guild.roles, name=role_name)
             if role:
                 await member.add_roles(role)
-                try:
-                    await member.send(f"You have been assigned the role: {role_name}")
-                except discord.Forbidden:
-                    pass
+                
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
@@ -92,10 +89,7 @@ class ServerCommands(commands.Cog):
             role = discord.utils.get(guild.roles, name=role_name)
             if role and member:
                 await member.remove_roles(role)
-                try:
-                    await member.send(f"The role {role_name} has been removed from you.")
-                except discord.Forbidden:
-                    pass
+                
 
     @commands.command()
     async def clean_roles(self, ctx):
