@@ -21,7 +21,7 @@ class ServerCommands(commands.Cog):
             "🌪": "NeedForSpeed Squad",
             "🚂": "TooDankFast",
         }
-        self.TEAM_REACTIONS = {
+        self.TEAM_REACTIONS1 = {
             "🗑": "Astros",
             "💩": "Red Sox",
             "💵": "Dodgers",
@@ -37,6 +37,8 @@ class ServerCommands(commands.Cog):
             "🏴‍☠️": "Pirates",
             "🐥": "Orioles",
             "⚾️": "Phillies",
+        }
+        self.TEAM_REACTIONS2 = {
             "🤩": "Twins",
             "👑": "Royals",
             "🏞": "Nationals",
@@ -58,33 +60,51 @@ class ServerCommands(commands.Cog):
 
     @commands.command()
     async def send_roles(self, ctx):
-        """Send a message for role assignment."""
-        # Create a message describing the role assignment options
-        club_message = "\n".join(
+        """Send separate messages for club and team role assignment."""
+        # Send the message for club roles
+        club_message_content = "\n".join(
             [f"{emoji} for {role}" for emoji, role in self.CLUB_REACTIONS.items()]
         )
-        message = await ctx.send(
-            f"React to this message to join a club:\n{club_message}\n\n"
-            
+        club_message = await ctx.send(
+            f"React to this message to join a club:\n{club_message_content}"
         )
 
-        team_message = "\n".join(
-            [f"{emoji} for {role}" for emoji, role in self.TEAM_REACTIONS.items()]
-        )
-        message = await ctx.send(
-            f"React to this message to be assigned your team:\n{team_message}\n\n"
-            
-        )
-
-        # Add the reactions to the message
+        # Add reactions for the club roles
         for emoji in self.CLUB_REACTIONS.keys():
-            await message.add_reaction(emoji)
-
-        for emoji in self.TEAM_REACTIONS.keys():
-            await message.add_reaction(emoji)
+            await club_message.add_reaction(emoji)
 
         # Save the message ID for tracking reactions
-        self.role_message_ids.append(message.id)
+        self.role_message_ids.append(club_message.id)
+
+        # Send the message for team roles
+        team_message_1_content = "\n".join(
+            [f"{emoji} for {role}" for emoji, role in self.TEAM_REACTIONS1.items()]
+        )
+        team_message_1 = await ctx.send(
+            f"React to this message to be assigned your team:\n{team_message_1_content}"
+        )
+
+        # Add reactions for the team roles
+        for emoji in self.TEAM_REACTIONS1.keys():
+            await team_message_1.add_reaction(emoji)
+
+        # Save the message ID for tracking reactions
+        self.role_message_ids.append(team_message_1.id)
+
+        # Send the message for team roles
+        team_message_2_content = "\n".join(
+            [f"{emoji} for {role}" for emoji, role in self.TEAM_REACTIONS2.items()]
+        )
+        team_message_2 = await ctx.send(
+            f"React to this message to be assigned your team:\n{team_message_2_content}"
+        )
+
+        # Add reactions for the team roles
+        for emoji in self.TEAM_REACTIONS2.keys():
+            await team_message_2.add_reaction(emoji)
+
+        # Save the message ID for tracking reactions
+        self.role_message_ids.append(team_message_2.id)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
