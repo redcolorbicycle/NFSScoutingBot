@@ -498,6 +498,16 @@ class PlayerCommands(commands.Cog):
                 "bat": "most_common_batting_skill",
                 "pr": "pr",
                 "teamdeck": "team_name",
+                "sp1n": "sp1_name",
+                "sp1s": "sp1_skills",
+                "sp2n": "sp2_name",
+                "sp2s": "sp2_skills",
+                "sp3n": "sp3_name",
+                "sp3s": "sp3_skills",
+                "sp4n": "sp4_name",
+                "sp4s": "sp4_skills",
+                "sp5n": "sp5_name",
+                "sp5s": "sp5_skills",
             }
 
             # Parse the key-value arguments
