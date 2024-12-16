@@ -478,9 +478,6 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-
-
-
     @commands.command()
     async def updateplayer(self, ctx, name: str, *, args: str = ""):
         """
@@ -510,10 +507,10 @@ class PlayerCommands(commands.Cog):
                 "sp5s": "sp5_skills",
             }
 
-            # Parse the key-value arguments
+            # Parse the key-value arguments using shlex.split
             updates = {}
             if args:
-                for arg in args.split():
+                for arg in shlex.split(args):
                     key, value = map(str.strip, arg.split("=", 1))
                     key = key.lower()
                     if key in column_mapping:
@@ -558,6 +555,7 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
 
