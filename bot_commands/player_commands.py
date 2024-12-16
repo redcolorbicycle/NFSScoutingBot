@@ -514,7 +514,7 @@ class PlayerCommands(commands.Cog):
                     key, value = map(str.strip, arg.split("=", 1))
                     key = key.lower()
                     if key in column_mapping:
-                        updates[column_mapping[key]] = value
+                        updates[column_mapping[key]] = value.lower()
 
             # Validate and construct the SQL query
             update_query_parts = []
