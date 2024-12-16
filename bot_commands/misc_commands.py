@@ -120,6 +120,26 @@ class MiscCommands(commands.Cog):
                        f"Assuming the clubs will be as is:\n"
                        f"- For now (not set in stone), give me 10 teams that you'd want to be untouchable, and 5 that you'd be willing to move if there was an alternate and/or improvement team to replace (i.e. pending sale/retirement/leaving club)")
 
+    @commands.command()
+    async def delete_bot_messages_in_lounge(self, ctx, limit: int = 10):
+        """Delete recent messages sent by the bot in the 'lounge' channel."""
+        lounge_channel = discord.utils.get(ctx.guild.channels, name="lounge")  # Find the "lounge" channel
+        if not lounge_channel:
+            await ctx.send("The 'lounge' channel does not exist.")
+            return
+
+        try:
+            deleted_count = 0
+            async for message in lounge_channel.history(limit=limit):
+                if message.author == self.bot.user:  # Check if the message was sent by the bot
+                    await message.delete()
+                    deleted_count += 1
+            await ctx.send(f"Deleted {deleted_count} recent messages sent by the bot in 'lounge'.")
+        except discord.Forbidden:
+            await ctx.send("I don't have permission to delete messages in the 'lounge' channel.")
+        except discord.HTTPException as e:
+            await ctx.send(f"Failed to delete messages: {e}")
+
     
     
 
