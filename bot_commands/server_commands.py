@@ -40,7 +40,6 @@ class ServerCommands(commands.Cog):
 
         # Save the message ID for tracking reactions
         self.role_message_ids.append(message.id)
-        await ctx.send("I'm not actually Bieber by the way")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
