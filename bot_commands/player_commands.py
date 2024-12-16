@@ -108,7 +108,7 @@ class PlayerCommands(commands.Cog):
                 parsed_args = shlex.split(args)
                 for arg in parsed_args:
                     key, value = map(str.strip, arg.split("=", 1))
-                    provided_args[key.lower()] = value
+                    provided_args[key.lower()] = value.lower()
 
             # Merge with defaults
             for key in defaults.keys():
