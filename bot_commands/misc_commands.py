@@ -123,7 +123,7 @@ class MiscCommands(commands.Cog):
     @commands.command()
     async def delete_bot_messages(self, ctx, limit: int = 10):
         """Delete recent messages sent by the bot in the 'lounge' channel."""
-        lounge_channel = discord.utils.get(ctx.guild.channels, name="the-lounge")  # Find the "lounge" channel
+        lounge_channel = discord.utils.get(ctx.guild.channels, name="bot-functions")  # Find the "lounge" channel
         if not lounge_channel:
             await ctx.send("The 'lounge' channel does not exist.")
             return
