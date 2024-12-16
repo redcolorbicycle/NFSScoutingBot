@@ -121,9 +121,9 @@ class MiscCommands(commands.Cog):
                        f"- For now (not set in stone), give me 10 teams that you'd want to be untouchable, and 5 that you'd be willing to move if there was an alternate and/or improvement team to replace (i.e. pending sale/retirement/leaving club)")
 
     @commands.command()
-    async def delete_bot_messages_in_lounge(self, ctx, limit: int = 10):
+    async def delete_bot_messages(self, ctx, limit: int = 10):
         """Delete recent messages sent by the bot in the 'lounge' channel."""
-        lounge_channel = discord.utils.get(ctx.guild.channels, name="lounge")  # Find the "lounge" channel
+        lounge_channel = discord.utils.get(ctx.guild.channels, name="the-lounge")  # Find the "lounge" channel
         if not lounge_channel:
             await ctx.send("The 'lounge' channel does not exist.")
             return
