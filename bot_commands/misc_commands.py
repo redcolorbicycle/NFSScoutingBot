@@ -66,7 +66,7 @@ class MiscCommands(commands.Cog):
         if supreme == "yes":
             trainingtotal = 87
         if target*5 - (totalstats + trainingtotal) > 0:
-            await ctx.send("You're fucked, that's out of reach.")
+            await ctx.send(f"You're fucked, that's out of reach. Try {(totalstats + trainingtotal)//5}.")
         else:
             contrain = max(target - totalcon,0)
             powtrain = max(target - totalpow,0)
