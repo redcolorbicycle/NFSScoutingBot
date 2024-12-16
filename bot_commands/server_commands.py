@@ -7,7 +7,7 @@ class ServerCommands(commands.Cog):
         self.role_message_ids = []  # List of all role assignment message IDs
 
         # Define emoji-role mappings
-        self.ROLE_REACTIONS = {
+        self.CLUB_REACTIONS = {
             "🟨": "GoldyIsNFS",           
             "🏎️": "TokyoDrift",          
             "🔥": "Burnouts",            
@@ -20,6 +20,8 @@ class ServerCommands(commands.Cog):
             "🍡": "M&Ms",
             "🌪": "NeedForSpeed Squad",
             "🚂": "TooDankFast",
+        }
+        self.TEAM_REACTIONS = {
             "🗑": "Astros",
             "💩": "Red Sox",
             "💵": "Dodgers",
@@ -58,16 +60,27 @@ class ServerCommands(commands.Cog):
     async def send_roles(self, ctx):
         """Send a message for role assignment."""
         # Create a message describing the role assignment options
-        role_message = "\n".join(
-            [f"{emoji} for {role}" for emoji, role in self.ROLE_REACTIONS.items()]
+        club_message = "\n".join(
+            [f"{emoji} for {role}" for emoji, role in self.CLUB_REACTIONS.items()]
         )
         message = await ctx.send(
-            f"React to this message to get a role:\n{role_message}\n\n"
+            f"React to this message to join a club:\n{club_message}\n\n"
+            
+        )
+
+        team_message = "\n".join(
+            [f"{emoji} for {role}" for emoji, role in self.TEAM_REACTIONS.items()]
+        )
+        message = await ctx.send(
+            f"React to this message to be assigned your team:\n{team_message}\n\n"
             
         )
 
         # Add the reactions to the message
-        for emoji in self.ROLE_REACTIONS.keys():
+        for emoji in self.CLUB_REACTIONS.keys():
+            await message.add_reaction(emoji)
+
+        for emoji in self.TEAM_REACTIONS.keys():
             await message.add_reaction(emoji)
 
         # Save the message ID for tracking reactions
