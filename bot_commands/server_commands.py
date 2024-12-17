@@ -46,7 +46,7 @@ class ServerCommands(commands.Cog):
             [f"{emoji} for {role}" for emoji, role in self.ROLE_REACTIONS.items()]
         )
         message = await ctx.send(
-            f"React to this message to get a role:\n{role_message}"
+            f"React to this message to get a role:\n{role_message}. React multiple times for multiple clubs."
         )
 
         # Add reactions to the message
