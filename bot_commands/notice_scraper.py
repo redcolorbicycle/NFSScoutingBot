@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.webdriver import Options
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
@@ -33,13 +33,17 @@ class NoticeScraper(commands.Cog):
 
     @tasks.loop(minutes=10)
     async def check_notices(self):
-        print("checking notices...")
+        print("Checking notices...")
         """Check for new notices."""
+        # Configure Chrome options for Heroku
         options = Options()
         options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")  # Disable GPU acceleration for smoother headless mode
-        service = Service("/path/to/chromedriver")  # Replace with your chromedriver path
-        driver = webdriver.Chrome(service=service, options=options)
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")  # Required for Heroku
+        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
+
+        # ChromeDriver path is managed by Heroku buildpacks, so no need to specify explicitly
+        driver = webdriver.Chrome(options=options)
 
         try:
             driver.get(self.base_url)
