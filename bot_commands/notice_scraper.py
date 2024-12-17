@@ -28,10 +28,11 @@ class NoticeScraper(commands.Cog):
             
             # Step 2: Parse the HTML content
             soup = BeautifulSoup(response.text, "html.parser")
-            await channel.send(soup)
+            
 
             # Step 3: Find all rows under 'notice_list_ul'
             notice_list = soup.find("ul", id="notice_list_ul")
+            await channel.send(notice_list)
             if not notice_list:
                 print("Could not find the 'notice_list_ul' element.")
                 await channel.send("Could not retrieve notices.")
