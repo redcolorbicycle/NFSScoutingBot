@@ -49,6 +49,7 @@ class NoticeScraper(commands.Cog):
 
         service = Service("/app/.chrome-for-testing/chromedriver-linux64/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
+        print("alrighty...")
 
 
         try:
