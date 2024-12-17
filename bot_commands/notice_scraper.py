@@ -45,10 +45,10 @@ class NoticeScraper(commands.Cog):
         options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
 
         # Use Chrome path provided by Heroku buildpack
-        options.binary_location = "/app/.apt/usr/bin/google-chrome"
-
-        service = Service("/app/.chrome-for-testing/chromedriver-linux64/chromedriver")
+        options.binary_location = "/app/.chromedriver/bin/google-chrome"
+        service = Service("/app/.chromedriver/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
+
         print("alrighty...")
 
 
