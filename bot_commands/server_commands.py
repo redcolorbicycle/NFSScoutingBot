@@ -56,6 +56,10 @@ class ServerCommands(commands.Cog):
             "🏳️": "white sox",
         }
 
+        # Combine CLUB_REACTIONS and TEAM_REACTIONS for unified role handling
+        self.ROLE_REACTIONS = {**self.CLUB_REACTIONS, **self.TEAM_REACTIONS1, **self.TEAM_REACTIONS2}
+
+
         self.STRAT_PASS_ROLE = "NFS Strat Pass"  # Role automatically assigned to all reactors
 
     @commands.command()
