@@ -4,6 +4,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
@@ -63,10 +65,15 @@ class NoticeScraper(commands.Cog):
         print("Starting to scrape notices...")
         sent_notices = self.fetch_sent_notices()
         print(f"Already sent notices: {sent_notices}")
+
+        # Wait for the table to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+        )
+
         last_height = driver.execute_script("return document.body.scrollHeight")
 
         while True:
-            # Parse the page source
             soup = BeautifulSoup(driver.page_source, "html.parser")
             rows = soup.select("table tbody tr")
             print(f"Found {len(rows)} rows in the table.")
@@ -83,16 +90,13 @@ class NoticeScraper(commands.Cog):
                         link = link_element["href"]
                         full_url = f"https://withhive.com{link}"
 
-                        print(f"Found notice: {title} - {full_url}")
-
                         if title not in sent_notices:
                             content = self.fetch_notice_content(driver, full_url)
-                            print("Fetched content:", content[:100])  # Log first 100 characters
                             await self.send_notice(channel, title, full_url, content)
                             self.save_sent_notice(title)
                             sent_notices.add(title)
 
-            # Scroll down
+            # Scroll and wait for content
             driver.execute_script("window.scrollBy(0, 1000);")
             time.sleep(2)
 
@@ -101,7 +105,6 @@ class NoticeScraper(commands.Cog):
                 print("Reached bottom of the page.")
                 break
             last_height = new_height
-
     def fetch_notice_content(self, driver, url):
         """Fetch the content of a specific notice."""
         driver.get(url)
