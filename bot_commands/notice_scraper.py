@@ -33,6 +33,7 @@ class NoticeScraper(commands.Cog):
 
     @tasks.loop(minutes=10)
     async def check_notices(self):
+        print("checking notices...")
         """Check for new notices."""
         options = Options()
         options.add_argument("--headless")  # Run in headless mode
@@ -51,36 +52,49 @@ class NoticeScraper(commands.Cog):
     async def scrape_notices(self, driver):
         """Scroll, find, and send notices with today's date."""
         channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
+        if not channel:
+            print("Channel 'bot-testing' not found.")
+            return
+
+        print("Starting to scrape notices...")
         sent_notices = self.fetch_sent_notices()
+        print(f"Already sent notices: {sent_notices}")
         last_height = driver.execute_script("return document.body.scrollHeight")
 
         while True:
             # Parse the page source
             soup = BeautifulSoup(driver.page_source, "html.parser")
             rows = soup.select("table tbody tr")
+            print(f"Found {len(rows)} rows in the table.")
 
             for row in rows:
-                # Extract the date and compare it to today
-                date_cell = row.find_all("td")[-1]  # Date is typically in the last column
-                if date_cell and date_cell.get_text(strip=True) == self.today_date:
+                date_cell = row.find_all("td")[-1]  # Date is in the last column
+                site_date = date_cell.get_text(strip=True)
+                print(f"Checking row with date: {site_date}")
+
+                if site_date == self.today_date:
                     link_element = row.find("a")
                     if link_element:
                         title = link_element.get_text(strip=True)
                         link = link_element["href"]
                         full_url = f"https://withhive.com{link}"
 
+                        print(f"Found notice: {title} - {full_url}")
+
                         if title not in sent_notices:
                             content = self.fetch_notice_content(driver, full_url)
+                            print("Fetched content:", content[:100])  # Log first 100 characters
                             await self.send_notice(channel, title, full_url, content)
                             self.save_sent_notice(title)
                             sent_notices.add(title)
 
             # Scroll down
             driver.execute_script("window.scrollBy(0, 1000);")
-            time.sleep(2)  # Pause for content to load
+            time.sleep(2)
 
             new_height = driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:  # Stop when no more content loads
+                print("Reached bottom of the page.")
                 break
             last_height = new_height
 
