@@ -41,6 +41,7 @@ async def load_extensions():
         await bot.load_extension("bot_commands.club_commands")
         await bot.load_extension("bot_commands.misc_commands")
         await bot.load_extension("bot_commands.server_commands")
+        await bot.load_extension("bot_commands.notice_scraper")
     except Exception as e:
         print(f"Failed to load extension: {e}")
 
