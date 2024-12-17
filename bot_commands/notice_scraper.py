@@ -39,10 +39,12 @@ class NoticeScraper(commands.Cog):
         """Check for new notices."""
         # Configure Chrome options for Heroku
         options = Options()
-        options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")
+        options.add_argument("--headless")  # Run headless
+        options.add_argument("--disable-gpu")  # Disable GPU acceleration
         options.add_argument("--no-sandbox")  # Required for Heroku
-        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
+        options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory issues
+        options.add_argument("--remote-debugging-port=9222")  # Enable debugging
+
 
         # ChromeDriver path is managed by Heroku buildpacks, so no need to specify explicitly
         driver = webdriver.Chrome(options=options)
