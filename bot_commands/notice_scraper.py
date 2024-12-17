@@ -8,7 +8,8 @@ class NoticeScraper(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.base_url = "https://withhive.com/notice/game/509"
-        self.today_date = datetime.now().strftime("%Y-%m-%d")  # Get today's date
+        self.today_date = "2024-12-17"
+        #datetime.now().strftime("%Y-%m-%d")  # Get today's date
         self.connection = connection
         self.check_notices.start()  # Start the periodic task
 
