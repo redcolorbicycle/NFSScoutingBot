@@ -28,6 +28,7 @@ class NoticeScraper(commands.Cog):
             
             # Step 2: Parse the HTML content
             soup = BeautifulSoup(response.text, "html.parser")
+            await channel.send(soup)
 
             # Step 3: Find all rows under 'notice_list_ul'
             notice_list = soup.find("ul", id="notice_list_ul")
