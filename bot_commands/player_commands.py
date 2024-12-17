@@ -12,18 +12,22 @@ class PlayerCommands(commands.Cog):
 
     async def cog_check(self, ctx):
         """
-        Restrict commands to users with a specific role and channel.
+        Restrict commands to users with specific roles.
+        Only users with the specified roles can call the commands.
         """
-        # Channel restriction
-        allowed_channel_names = ["scout-bot-testing-facility", "bot-testing", "rushhour-battles-scouts"]
-        if ctx.channel.name not in allowed_channel_names:
-            return False
+        # List of allowed roles
+        allowed_roles = [
+            "TooDank Leaders", "Vice", "TokyoDrift Leaders", "NFS Ops", "NFS OG Leaders", 
+            "NeedForSpeed Leaders", "M16Speed Spy Daddies", "GoldyLeads", "Burnout Leaders", 
+            "Dugout Leads", "Kerchoo Leaders", "Rush Hour Leaders", "Speed Bump Leaders", 
+            "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad"
+        ]
+        
+        # Check if the user has at least one of the allowed roles
+        user_roles = [role.name for role in ctx.author.roles]
+        return any(role in allowed_roles for role in user_roles)
 
-        # Role restriction
-        #required_role_name = "M16Speed Spy Daddies"
-        #user_roles = [role.name for role in ctx.author.roles]
-        #return required_role_name in user_roles
-        return True
+        
 
 
     @commands.command()
