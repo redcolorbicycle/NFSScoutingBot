@@ -76,9 +76,10 @@ class NoticeScraper(commands.Cog):
         last_height = driver.execute_script("return document.body.scrollHeight")
 
         while True:
+            print("Scrolling down...")
             # Scroll down to ensure all rows load
-            driver.execute_script("window.scrollBy(0, 1000);")
-            time.sleep(2)  # Allow time for new content to load
+            driver.execute_script("window.scrollBy(0, 100);")
+            time.sleep(20)  # Allow time for new content to load
             
             # Parse the updated page source
             soup = BeautifulSoup(driver.page_source, "html.parser")
