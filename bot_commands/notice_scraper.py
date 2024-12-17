@@ -40,13 +40,16 @@ class NoticeScraper(commands.Cog):
         # Configure Chrome options for Heroku
         options = Options()
         options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")  # Disable GPU acceleration
+        options.add_argument("--disable-gpu")  # Required for non-GUI systems
         options.add_argument("--no-sandbox")  # Required for Heroku
         options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
-        options.binary_location = "/app/.apt/usr/bin/google-chrome"  # Correct Chrome path on Heroku
 
-        # ChromeDriver path is managed by Heroku buildpacks, so no need to specify explicitly
-        driver = webdriver.Chrome(options=options)
+        # Use Chrome path provided by Heroku buildpack
+        options.binary_location = "/app/.apt/usr/bin/google-chrome"
+
+        service = Service("/app/.chrome-for-testing/chromedriver-linux64/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
+
 
         try:
             driver.get(self.base_url)
