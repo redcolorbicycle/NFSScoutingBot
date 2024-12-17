@@ -108,17 +108,34 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def bieber(self, ctx):
+    async def stevie(self, ctx):
         """
-        Impersonate Bieber
+        Impersonate Stevie
         """
-        await ctx.send(f"Homework for each club (for me to discuss with you all): @ everyone\n"
-                       f"I need you all within each club to try and carve out the following:\n"
-                       f" - Direction/look of your club post-tourney\n"
-                       f"- What you want to improve/change\n"
-                       f"\n"
-                       f"Assuming the clubs will be as is:\n"
-                       f"- For now (not set in stone), give me 10 teams that you'd want to be untouchable, and 5 that you'd be willing to move if there was an alternate and/or improvement team to replace (i.e. pending sale/retirement/leaving club)")
+        try:
+            # Fixed path to the image
+            image_path = "assets/steviestart.jpg"  # Adjust this path as needed
+
+            # Check if the image exists
+            if not os.path.isfile(image_path):
+                await ctx.send("The fixed image file was not found.")
+                return
+
+            # Send the image
+            file = discord.File(image_path, filename="cmtable.jpg")
+            await ctx.send(file=file)
+            await ctx.send("My hitting seems better after blues for sure but my pitching has taken a hit with the two aces")
+            await ctx.send("Gonna need to blue off an ace sp asap. Went from Anibal being close to dominant and fried being 3+ era to both of them being 2.4-2.8 era.")
+            await ctx.send("Need one of them to be a bonafide 2")
+            await ctx.send("Hopefully once I blue off Anibal or get him a new set fried can be that guy with 578 FB fin ace")
+            await ctx.send("I'm not liking wat I'm seeing with two aces")
+            image_path = "assets/steviegif.mp4"  # Adjust this path as needed
+            file = discord.File(image_path, filename="steviegif.mp4")
+            await ctx.send(file=file)
+            await ctx.send("Oh shit that's me")
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
     async def delete_bot_messages(self, ctx, limit: int = 10):
