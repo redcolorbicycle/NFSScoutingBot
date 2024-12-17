@@ -66,7 +66,7 @@ class NoticeScraper(commands.Cog):
         sent_notices = self.fetch_sent_notices()
         print(f"Already sent notices: {sent_notices}")
 
-        # Wait for the table to load
+        # Wait for the table to load completely
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
         )
@@ -74,37 +74,50 @@ class NoticeScraper(commands.Cog):
         last_height = driver.execute_script("return document.body.scrollHeight")
 
         while True:
+            # Scroll down to ensure all rows load
+            driver.execute_script("window.scrollBy(0, 1000);")
+            time.sleep(2)  # Allow time for new content to load
+            
+            # Parse the updated page source
             soup = BeautifulSoup(driver.page_source, "html.parser")
             rows = soup.select("table tbody tr")
             print(f"Found {len(rows)} rows in the table.")
 
+            if not rows:
+                print("No rows found. Table may not have loaded properly.")
+                continue
+
             for row in rows:
-                date_cell = row.find_all("td")[-1]  # Date is in the last column
-                site_date = date_cell.get_text(strip=True)
-                print(f"Checking row with date: {site_date}")
+                try:
+                    date_cell = row.find_all("td")[-1]  # Date is in the last column
+                    site_date = date_cell.get_text(strip=True)
+                    print(f"Checking row with date: {site_date}")
 
-                if site_date == self.today_date:
-                    link_element = row.find("a")
-                    if link_element:
-                        title = link_element.get_text(strip=True)
-                        link = link_element["href"]
-                        full_url = f"https://withhive.com{link}"
+                    if site_date == self.today_date:
+                        link_element = row.find("a")  # Extract link in the row
+                        if link_element:
+                            title = link_element.get_text(strip=True)
+                            link = link_element["href"]
+                            full_url = f"https://withhive.com{link}"
+                            print(f"Found notice: {title} - {full_url}")
 
-                        if title not in sent_notices:
-                            content = self.fetch_notice_content(driver, full_url)
-                            await self.send_notice(channel, title, full_url, content)
-                            self.save_sent_notice(title)
-                            sent_notices.add(title)
+                            if title not in sent_notices:
+                                # Fetch content and send notice
+                                content = self.fetch_notice_content(driver, full_url)
+                                print(f"Fetched content for '{title}': {content[:100]}")
+                                await self.send_notice(channel, title, full_url, content)
+                                self.save_sent_notice(title)
+                                sent_notices.add(title)
+                except Exception as e:
+                    print(f"Error processing row: {e}")
 
-            # Scroll and wait for content
-            driver.execute_script("window.scrollBy(0, 1000);")
-            time.sleep(2)
-
+            # Scroll to bottom of page and check for more rows
             new_height = driver.execute_script("return document.body.scrollHeight")
-            if new_height == last_height:  # Stop when no more content loads
+            if new_height == last_height:  # Stop if no more content is loaded
                 print("Reached bottom of the page.")
                 break
             last_height = new_height
+
     def fetch_notice_content(self, driver, url):
         """Fetch the content of a specific notice."""
         driver.get(url)
