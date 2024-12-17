@@ -5,7 +5,7 @@ import asyncio
 from urllib.parse import urlparse
 import os
 
-#source ~/.bash_profile    
+#source ~/.bash_profile    f
 
 # Define intents
 intents = discord.Intents.default()  # Default intents include basic events
