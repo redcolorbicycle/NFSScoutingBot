@@ -1,129 +1,61 @@
 import discord
 from discord.ext import commands, tasks
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-import re
-import time
 
 class NoticeScraper(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.base_url = "https://withhive.com/notice/game/509"
-        self.today_date = "2024-12-17"
-        #datetime.now().strftime("%Y-%m-%d")
+        self.today_date = datetime.now().strftime("%Y-%m-%d")  # Get today's date
         self.connection = connection
         self.check_notices.start()  # Start the periodic task
 
-    def fetch_sent_notices(self):
-        """Load sent notices from the database."""
-        with self.connection.cursor() as cur:
-            cur.execute("CREATE TABLE IF NOT EXISTS sent_notices (title TEXT PRIMARY KEY);")
-            cur.execute("SELECT title FROM sent_notices;")
-            return {row[0] for row in cur.fetchall()}
-
-    def save_sent_notice(self, title):
-        """Save the notice title to avoid re-sending."""
-        with self.connection.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sent_notices (title) VALUES (%s) ON CONFLICT DO NOTHING;", (title,)
-            )
-        self.connection.commit()
-
     @tasks.loop(minutes=10)
     async def check_notices(self):
-        print("Checking notices...")
-        """Check for new notices."""
-        # Configure Chrome options for Heroku
-        options = Options()
-        options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")  # Required for non-GUI systems
-        options.add_argument("--no-sandbox")  # Required for Heroku
-        options.add_argument("--disable-dev-shm-usage")  # Prevent memory issues
-
-        # Use Chrome path provided by Heroku buildpack
-        options.binary_location = "/app/.apt/usr/bin/google-chrome"
-
-        # ChromeDriver path is managed by Heroku buildpacks
-        service = Service("/app/.chromedriver/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=options)
-
-        try:
-            driver.get(self.base_url)
-            await self.scrape_notices(driver)
-        except Exception as e:
-            print(f"Error during notice scraping: {e}")
-        finally:
-            driver.quit()
-
-    async def scrape_notices(self, driver):
-        """Find and send notices with today's date."""
+        """Fetch and send rows from the page where the date matches today's date."""
         channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
         if not channel:
             print("Channel 'bot-testing' not found.")
             return
 
-        print("Starting to scrape notices...")
-        sent_notices = self.fetch_sent_notices()
-        print(f"Already sent notices: {sent_notices}")
+        try:
+            # Step 1: Fetch the webpage content
+            response = requests.get(self.base_url)
+            response.raise_for_status()  # Raise an error if the page couldn't be fetched
+            
+            # Step 2: Parse the HTML content
+            soup = BeautifulSoup(response.text, "html.parser")
 
-        # Parse the static page source
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        notice_rows = soup.select("ul#notice_list_ul li.row")  # Target each row in the list
-        print(f"Found {len(notice_rows)} rows in the table.")
+            # Step 3: Find all rows under 'notice_list_ul'
+            notice_list = soup.find("ul", id="notice_list_ul")
+            if not notice_list:
+                print("Could not find the 'notice_list_ul' element.")
+                await channel.send("Could not retrieve notices.")
+                return
 
-        for row in notice_rows:
-            try:
-                # Extract date from the last 'div' column
-                date_column = row.find_all("div", class_="col")[-1]
-                site_date = date_column.get_text(strip=True)
-                print(f"Checking row with date: {site_date}")
+            rows = notice_list.find_all("li", class_="row")  # Rows within the list
+            matched_rows = []
 
-                if site_date == self.today_date:
-                    # Extract title and onclick function
-                    link_element = row.find("a", onclick=True)
-                    if link_element:
-                        title = link_element.get_text(strip=True)
-                        onclick_attr = link_element["onclick"]  # e.g., notice.goDetailUrlView(76532)
+            # Step 4: Check each row for today's date
+            for row in rows:
+                date_col = row.find("div", class_="col")  # Find the date column
+                if date_col and date_col.get_text(strip=True) == self.today_date:
+                    matched_rows.append(row)
 
-                        # Extract notice ID using regex
-                        match = re.search(r'goDetailUrlView\((\d+)\)', onclick_attr)
-                        if match:
-                            notice_id = match.group(1)
-                            full_url = f"https://withhive.com/notice/view/{notice_id}"
-                            print(f"Found notice: {title} - {full_url}")
+            # Step 5: Send matched rows to the Discord channel
+            if matched_rows:
+                for row in matched_rows:
+                    # Extract the whole row as text
+                    row_text = row.get_text(separator="\n", strip=True)
+                    await channel.send(f"```{row_text}```")
+            else:
+                await channel.send("No notices found for today's date.")
 
-                            if title not in sent_notices:
-                                # Fetch content and send notice
-                                content = self.fetch_notice_content(driver, full_url)
-                                print(f"Fetched content for '{title}': {content[:100]}")
-                                await self.send_notice(channel, title, full_url, content)
-                                self.save_sent_notice(title)
-                                sent_notices.add(title)
-            except Exception as e:
-                print(f"Error processing row: {e}")
-
-    def fetch_notice_content(self, driver, url):
-        """Fetch the content of a specific notice."""
-        driver.get(url)
-        time.sleep(2)  # Allow the page to load
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        content = soup.find("div", class_="board_view")
-        return content.get_text(strip=True) if content else "Content not found."
-
-    async def send_notice(self, channel, title, url, content):
-        """Send the notice as an embed to Discord."""
-        embed = discord.Embed(
-            title=title,
-            url=url,
-            description=content[:1500] + "...",  # Limit content size to 1500 characters
-            color=discord.Color.blue(),
-        )
-        embed.set_footer(text=f"Posted on {self.today_date}")
-        await channel.send(embed=embed)
+        except Exception as e:
+            print(f"Error fetching or parsing notices: {e}")
+            await channel.send(f"Error fetching notices: {e}")
 
     @check_notices.before_loop
     async def before_check_notices(self):
