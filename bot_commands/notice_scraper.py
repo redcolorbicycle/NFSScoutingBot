@@ -1,84 +1,63 @@
 import discord
 from discord.ext import commands, tasks
 import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
-import time
 
 class NoticeScraper(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
-        self.base_url = "https://withhive.com/notice/game/509"
-        self.today_date = "2024-12-17"
-        #datetime.now().strftime("%Y-%m-%d")  # Get today's date
         self.connection = connection
-        self.check_notices.start()  # Start the periodic task
+        self.api_url = "https://withhive.com/api/notice/list/509"
+        self.today_date = "2024-12-17"
+        #datetime.now().strftime("%Y-%m-%d")
+        self.check_notices.start()
 
     @tasks.loop(minutes=10)
     async def check_notices(self):
-        """Scrape notices with retries to ensure correct content."""
+        print("Checking notices...")
         channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
         if not channel:
             print("Channel 'bot-testing' not found.")
             return
 
-        retries = 5  # Number of retries to fetch the correct content
-        wait_time = 3  # Seconds to wait between retries
-        correct_content = None
+        # Mimic browser headers copied from Network tab
+        headers = {
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Content-Type": "application/json;charset=UTF-8",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://withhive.com/notice/game/509",
+            "X-Requested-With": "XMLHttpRequest",
+        }
 
-        for attempt in range(retries):
-            try:
-                print(f"Attempt {attempt + 1}/{retries} to fetch page content...")
-                response = requests.get(self.base_url, timeout=10)
-                if response.status_code == 200:
-                    # Parse the page content and check for the target element
-                    soup = BeautifulSoup(response.text, "html.parser")
-                    notice_list = soup.find("ul", id="notice_list_ul")
-                    await channel.send(notice_list)
+        payload = {
+            "page": 1,  # Pagination
+            "size": 20  # Fetch 20 results at a time
+        }
 
-                    if notice_list:  # If the correct content is loaded
-                        correct_content = soup
-                        print("Correct content loaded.")
-                        break
-                else:
-                    print(f"Response status: {response.status_code}")
-            except requests.exceptions.RequestException as e:
-                print(f"Request failed: {e}")
+        try:
+            response = requests.post(self.api_url, headers=headers, json=payload)
+            if response.status_code == 200:
+                notices = self.parse_notices(response.json())
+                for notice in notices:
+                    await channel.send(f"**{notice['title']}**\n{notice['date']}\n{notice['link']}")
+            else:
+                print(f"Failed to fetch notices. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Error fetching notices: {e}")
 
-            time.sleep(wait_time)  # Wait before retrying
-
-        if not correct_content:
-            await channel.send("Failed to load the correct content after retries.")
-            return
-
-        # Extract rows with today's date
-        notice_list = correct_content.find("ul", id="notice_list_ul")
-        rows = notice_list.find_all("li", class_="row")
-        matched_rows = []
-
-        for row in rows:
-            date_col = row.find("div", class_="col")  # Date column
-            if date_col and date_col.get_text(strip=True) == self.today_date:
-                matched_rows.append(row)
-
-        # Send the matched rows to Discord
-        if matched_rows:
-            for row in matched_rows:
-                row_text = row.get_text(separator="\n", strip=True)
-                await self.send_in_chunks(channel, row_text)
-        else:
-            await channel.send("No notices found for today's date.")
-
-    async def send_in_chunks(self, channel, text, chunk_size=2000):
-        """Send long text in chunks."""
-        for i in range(0, len(text), chunk_size):
-            await channel.send(f"```{text[i:i+chunk_size]}```")
-
-    @check_notices.before_loop
-    async def before_check_notices(self):
-        """Ensure the bot is ready before starting the loop."""
-        await self.bot.wait_until_ready()
+    def parse_notices(self, data):
+        """Parse the JSON response to extract notices."""
+        notices = []
+        for item in data.get("data", []):  # Adjust key based on JSON structure
+            notice_date = item.get("reg_date")  # Adjust based on actual JSON
+            if notice_date == self.today_date:
+                notices.append({
+                    "title": item.get("title"),
+                    "date": notice_date,
+                    "link": f"https://withhive.com/notice/view/{item.get('id')}"
+                })
+        return notices
 
 async def setup(bot):
-    connection = bot.connection  # Retrieve the connection from the bot instance
+    connection = bot.connection
     await bot.add_cog(NoticeScraper(bot, connection))
