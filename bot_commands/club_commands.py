@@ -56,7 +56,6 @@ class ClubCommands(commands.Cog):
                 await ctx.send(f"Added new club '{club_name}' to the database.")
 
             cursor.close()
-            self.connection.commit()
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -370,21 +369,6 @@ class ClubCommands(commands.Cog):
         club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the club exists
-                cursor.execute(
-                    """
-                    SELECT club_name
-                    FROM Club
-                    WHERE club_name = %s
-                    """,
-                    (club_name,),
-                )
-                club = cursor.fetchone()
-
-                if not club:
-                    # If club doesn't exist, add it
-                    self.addclub(club_name)
-                    await ctx.send(f"Club **{club_name}** has been added to the database.")
 
                 # Process player names from `args`
                 if args:
