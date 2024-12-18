@@ -64,4 +64,5 @@ class PlayerRegistration(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(PlayerRegistration(bot))
+    connection = bot.connection
+    await bot.add_cog(PlayerRegistration(bot, connection))
