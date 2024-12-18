@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
 import shlex
+from player_commands import addplayer
+from player_commands import updateclub
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
@@ -364,6 +366,7 @@ class ClubCommands(commands.Cog):
 
     @commands.command
     async def addtoclub(self, ctx, club_name: str, *, args: str = ""):
+        player_commands_cog = self.bot.get_cog("PlayerCommands")
         try:
             with self.connection.cursor() as cursor:
                 # Check if the club exists
@@ -379,14 +382,7 @@ class ClubCommands(commands.Cog):
 
                 if not club:
                     # If club doesn't exist, add it
-                    cursor.execute(
-                        """
-                        INSERT INTO Club (club_name)
-                        VALUES (%s)
-                        """,
-                        (club_name,),
-                    )
-                    self.connection.commit()
+                    self.addclub(club_name)
                     await ctx.send(f"Club **{club_name}** has been added to the database.")
 
                 # Process player names from `args`
@@ -397,7 +393,7 @@ class ClubCommands(commands.Cog):
                         # Check if the player exists
                         cursor.execute(
                             """
-                            SELECT player_name, club_name
+                            SELECT player_name
                             FROM Player
                             WHERE player_name = %s
                             """,
@@ -406,26 +402,19 @@ class ClubCommands(commands.Cog):
                         player = cursor.fetchone()
 
                         if player:
-                            # Player exists; update their club
-                            cursor.execute(
-                                """
-                                UPDATE Player
-                                SET club_name = %s
-                                WHERE player_name = %s
-                                """,
-                                (club_name, player_name),
-                            )
-                            await ctx.send(f"Updated **{player_name}** to club **{club_name}**.")
+                            if player_commands_cog:
+                                await player_commands_cog.updateclub(ctx, player_name, club_name)
+                                await ctx.send(f"Updated **{player_name}** to club **{club_name}**.")
+                            else:
+                                await ctx.send("Error: `PlayerCommands` cog is not loaded.")
+                                return
                         else:
-                            # Player doesn't exist; add them
-                            cursor.execute(
-                                """
-                                INSERT INTO Player (player_name, club_name)
-                                VALUES (%s, %s)
-                                """,
-                                (player_name, club_name),
-                            )
-                            await ctx.send(f"Added player **{player_name}** to club **{club_name}**.")
+                            if player_commands_cog:
+                                await player_commands_cog.addplayer(ctx, player_name, club=club_name)
+                                await ctx.send(f"Added player **{player_name}** to club **{club_name}**.")
+                            else:
+                                await ctx.send("Error: `PlayerCommands` cog is not loaded.")
+                                return
 
                     self.connection.commit()
                 else:
