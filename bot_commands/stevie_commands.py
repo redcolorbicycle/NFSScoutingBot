@@ -39,6 +39,7 @@ class StevieCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
     async def stevie2(self, ctx):
         """
         Impersonate Stevie too
