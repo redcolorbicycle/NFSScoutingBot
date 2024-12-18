@@ -12,7 +12,7 @@ class NoticeScraper(commands.Cog):
         #datetime.now().strftime("%Y-%m-%d")
         self.check_notices.start()
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=1)
     async def check_notices(self):
         print("Checking notices...")
         channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
