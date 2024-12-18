@@ -5,7 +5,6 @@ import asyncio
 from urllib.parse import urlparse
 import os
 
-# Define intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
@@ -13,9 +12,8 @@ intents.messages = True
 intents.guilds = True
 intents.members = True
 
-# Initialize the bots
-bot1 = commands.Bot(command_prefix="!", intents=intents, case_insensitive=True)
-bot2 = commands.Bot(command_prefix="!", intents=intents, case_insensitive=True)
+bot1 = commands.Bot(command_prefix="!", intents=intents, case_insensitive=True) #stevie bot
+bot2 = commands.Bot(command_prefix="!", intents=intents, case_insensitive=True) #bieber bot
 
 # Database connection
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -50,15 +48,13 @@ async def load_extensions(bot):
             await bot.load_extension("bot_commands.misc_commands")
             await bot.load_extension("bot_commands.server_commands")
             await bot.load_extension("bot_commands.notice_scraper")
+            await bot.load_extension("bot_commands.battle_records")
     except Exception as e:
         print(f"Failed to load extension for {bot.user}: {e}")
 
-# Run the bots in parallel
-async def main():
-    # Load extensions for both bots
-    await asyncio.gather(load_extensions(bot1), load_extensions(bot2))
 
-    # Start both bots
+async def main():
+    await asyncio.gather(load_extensions(bot1), load_extensions(bot2))
     await asyncio.gather(
         bot1.start(os.getenv("DISCORD_BOT_TOKEN")),
         bot2.start(os.getenv("DISCORD_BOT_TOKEN_2")),

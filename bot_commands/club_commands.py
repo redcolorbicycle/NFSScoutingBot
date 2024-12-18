@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
+import shlex
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
@@ -357,6 +358,78 @@ class ClubCommands(commands.Cog):
             await ctx.send(message)
 
                 
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command
+    async def addtoclub(self, ctx, club_name: str, *, args: str = ""):
+        try:
+            with self.connection.cursor() as cursor:
+                # Check if the club exists
+                cursor.execute(
+                    """
+                    SELECT club_name
+                    FROM Club
+                    WHERE club_name = %s
+                    """,
+                    (club_name,),
+                )
+                club = cursor.fetchone()
+
+                if not club:
+                    # If club doesn't exist, add it
+                    cursor.execute(
+                        """
+                        INSERT INTO Club (club_name)
+                        VALUES (%s)
+                        """,
+                        (club_name,),
+                    )
+                    self.connection.commit()
+                    await ctx.send(f"Club **{club_name}** has been added to the database.")
+
+                # Process player names from `args`
+                if args:
+                    parsed_args = shlex.split(args)  # Split the player names
+
+                    for player_name in parsed_args:
+                        # Check if the player exists
+                        cursor.execute(
+                            """
+                            SELECT player_name, club_name
+                            FROM Player
+                            WHERE player_name = %s
+                            """,
+                            (player_name,),
+                        )
+                        player = cursor.fetchone()
+
+                        if player:
+                            # Player exists; update their club
+                            cursor.execute(
+                                """
+                                UPDATE Player
+                                SET club_name = %s
+                                WHERE player_name = %s
+                                """,
+                                (club_name, player_name),
+                            )
+                            await ctx.send(f"Updated **{player_name}** to club **{club_name}**.")
+                        else:
+                            # Player doesn't exist; add them
+                            cursor.execute(
+                                """
+                                INSERT INTO Player (player_name, club_name)
+                                VALUES (%s, %s)
+                                """,
+                                (player_name, club_name),
+                            )
+                            await ctx.send(f"Added player **{player_name}** to club **{club_name}**.")
+
+                    self.connection.commit()
+                else:
+                    await ctx.send("No player names were provided.")
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
