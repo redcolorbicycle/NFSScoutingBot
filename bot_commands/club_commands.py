@@ -311,7 +311,10 @@ class ClubCommands(commands.Cog):
                         elif pr_value <= 2000:
                             cell.set_facecolor("#800080")  # Purple for 1001-2000
                             
-                    cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
+                    #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
+                row_height = 1 / len(df)  # Divide the figure height by the number of rows
+                for (row, col), cell in cell_dict.items():
+                    cell.set_height(row_height)  # Set height dynamically
 
                 # Save the table as an image in memory with minimal borders
                 buffer = BytesIO()
