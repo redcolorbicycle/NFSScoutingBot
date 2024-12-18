@@ -36,8 +36,7 @@ class NoticeScraper(commands.Cog):
 
         try:
             response = requests.post(self.api_url, headers=headers, json=payload)
-            print(f"Response Status: {response.status_code}")
-            print("Response Content:", response.text[:2000])  # Debug response content
+            print("Response Content:", response.text[:9000])  # Debug response content
 
             if response.status_code == 200:
                 try:
