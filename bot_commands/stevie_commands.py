@@ -60,7 +60,7 @@ class StevieCommands(commands.Cog):
             await ctx.send("It jus needs Alot of work . I can prob get it right in a year or so")
             await ctx.send("But I'ma focus more on boston")
             await ctx.send("It's much closer to competing")
-            await ctx.sned("Mets team is literally going 0-5 for moonshots everyday lmao")
+            await ctx.send("Mets team is literally going 0-5 for moonshots everyday lmao")
             await ctx.send("Surprised they ain't kick me out")
             await ctx.send("Yet")
 
