@@ -1,15 +1,16 @@
 import discord
 from discord.ext import commands, tasks
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
+import time
 
 class NoticeScraper(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
         self.api_url = "https://withhive.com/api/notice/list/509"
-        self.today_date = "2024-12-17"
-        #datetime.now().strftime("%Y-%m-%d")
+        self.today_date = datetime.now().strftime("%Y-%m-%d")
         self.check_notices.start()
 
     @tasks.loop(minutes=10)
