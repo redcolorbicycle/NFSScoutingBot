@@ -56,6 +56,7 @@ class ClubCommands(commands.Cog):
                 await ctx.send(f"Added new club '{club_name}' to the database.")
 
             cursor.close()
+            self.connection.commit()
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
