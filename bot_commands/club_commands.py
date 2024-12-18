@@ -363,7 +363,7 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-    @commands.command
+    @commands.command()
     async def addtoclub(self, ctx, club_name: str, *, args: str = ""):
         player_commands_cog = self.bot.get_cog("PlayerCommands")
         try:
