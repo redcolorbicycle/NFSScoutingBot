@@ -157,6 +157,19 @@ class MiscCommands(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"Failed to delete messages: {e}")
 
+    @commands.command()
+    async def list_channels(self, ctx):
+        """Lists all text channels the bot can access in all servers."""
+        print("Available channels the bot can see:")
+        for guild in self.bot.guilds:
+            print(f"Server: {guild.name} (ID: {guild.id})")
+            for channel in guild.text_channels:
+                print(f"- Channel: {channel.name} (ID: {channel.id})")
+            print("\n")
+        await ctx.send("Channel list has been printed to the console.")
+
+
+
     
     
 
