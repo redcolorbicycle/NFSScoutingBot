@@ -1,9 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
-import time
 
 class NoticeScraper(commands.Cog):
     def __init__(self, bot, connection):
@@ -12,11 +10,11 @@ class NoticeScraper(commands.Cog):
         self.api_url = "https://withhive.com/api/notice/list/509"
         self.today_date = datetime.now().strftime("%Y-%m-%d")
         self.check_notices.start()
-
+        
     @tasks.loop(minutes=10)
     async def check_notices(self):
         print("Checking notices...")
-        channel = self.bot.get_channel(752899250366578718)
+        channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
         if not channel:
             print("Channel 'bot-testing' not found.")
             return
@@ -58,6 +56,10 @@ class NoticeScraper(commands.Cog):
                     "link": f"https://withhive.com/notice/view/{item.get('id')}"
                 })
         return notices
+
+async def setup(bot):
+    connection = bot.connection
+    await bot.add_cog(NoticeScraper(bot, connection))
 
 async def setup(bot):
     connection = bot.connection
