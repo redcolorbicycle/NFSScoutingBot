@@ -11,7 +11,7 @@ class NoticeScraper(commands.Cog):
         self.today_date = "2024-12-17"
         #datetime.now().strftime("%Y-%m-%d")
         self.check_notices.start()
-        
+
     @tasks.loop(minutes=10)
     async def check_notices(self):
         print("Checking notices...")
@@ -36,10 +36,17 @@ class NoticeScraper(commands.Cog):
 
         try:
             response = requests.post(self.api_url, headers=headers, json=payload)
+            print(f"Response Status: {response.status_code}")
+            print("Response Content:", response.text)  # Debug response content
+
             if response.status_code == 200:
-                notices = self.parse_notices(response.json())
-                for notice in notices:
-                    await channel.send(f"**{notice['title']}**\n{notice['date']}\n{notice['link']}")
+                try:
+                    json_response = response.json()
+                    notices = self.parse_notices(json_response)
+                    for notice in notices:
+                        await channel.send(f"**{notice['title']}**\n{notice['date']}\n{notice['link']}")
+                except Exception as e:
+                    print(f"Error parsing JSON: {e}")
             else:
                 print(f"Failed to fetch notices. Status code: {response.status_code}")
         except Exception as e:
