@@ -8,8 +8,7 @@ class NoticeScraper(commands.Cog):
         self.bot = bot
         self.connection = connection
         self.api_url = "https://withhive.com/api/notice/list/509"
-        self.today_date = "2024-12-17"
-        #datetime.now().strftime("%Y-%m-%d")
+        self.today_date = datetime.now().strftime("%Y-%m-%d")
         self.create_table()
         self.check_notices.start()
         
@@ -39,7 +38,7 @@ class NoticeScraper(commands.Cog):
     @tasks.loop(minutes=1)
     async def check_notices(self):
         print("Checking notices...")
-        channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
+        channel = discord.utils.get(self.bot.get_all_channels(), name="bot-scraped-com2-announcements")
         if not channel:
             print("Channel not found.")
             return
@@ -64,14 +63,12 @@ class NoticeScraper(commands.Cog):
 
                     # Skip if notice has already been sent
                     if self.is_notice_sent(notice_id):
-                        print(f"Skipping already sent notice: {notice_id}")
                         continue
 
                     # Send the notice
                     await channel.send(
-                        f"**{notice['title']}**\n[View Notice]({notice['link']}\n)"
+                        f"**{notice['title']}**\n[View Notice]({notice['link']}\n\n)"
                     )
-                    print(f"Sent notice: {notice['title']}")
 
                     # Mark notice as sent
                     self.mark_notice_as_sent(notice_id)
