@@ -66,7 +66,7 @@ class NoticeScraper(commands.Cog):
                         "id": item.get("noticeId"),  # Extract the notice ID
                         "title": item.get("noticeTitle"),  # Extract the title
                         "date": notice_date,  # Include the notice date
-                        "link": f"https://withhive.com/notice/view/{item.get('noticeId')}",  # Construct the notice link
+                        "link": f"https://withhive.com/notice/509/{item.get('noticeId')}",  # Construct the notice link
                     })
         except Exception as e:
             print(f"Error parsing notices: {e}")
