@@ -16,7 +16,7 @@ class NoticeScraper(commands.Cog):
     @tasks.loop(minutes=10)
     async def check_notices(self):
         print("Checking notices...")
-        channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
+        channel = self.bot.get_channel(1311750685540483102)
         if not channel:
             print("Channel 'bot-testing' not found.")
             return
