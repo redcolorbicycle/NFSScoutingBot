@@ -52,17 +52,27 @@ class NoticeScraper(commands.Cog):
             print(f"Error fetching notices: {e}")
 
     def parse_notices(self, data):
-        """Parse the JSON response to extract notices."""
+        """Parse the JSON response to extract notice IDs with today's date."""
         notices = []
-        for item in data.get("data", []):  # Adjust key based on JSON structure
-            notice_date = item.get("reg_date")  # Adjust based on actual JSON
-            if notice_date == self.today_date:
-                notices.append({
-                    "title": item.get("title"),
-                    "date": notice_date,
-                    "link": f"https://withhive.com/notice/view/{item.get('id')}"
-                })
+        try:
+            # Access the notice list inside the "data" key
+            notice_list = data.get("data", {}).get("notice_list", [])
+            
+            for item in notice_list:
+                # Extract the `startTime` key to match against today's date
+                notice_date = item.get("startTime")
+                if notice_date == self.today_date:  # Compare against today's date
+                    notices.append({
+                        "id": item.get("noticeId"),  # Extract the notice ID
+                        "title": item.get("noticeTitle"),  # Extract the title
+                        "date": notice_date,  # Include the notice date
+                        "link": f"https://withhive.com/notice/view/{item.get('noticeId')}",  # Construct the notice link
+                    })
+        except Exception as e:
+            print(f"Error parsing notices: {e}")
+
         return notices
+
 
     @check_notices.before_loop
     async def before_check_notices(self):
