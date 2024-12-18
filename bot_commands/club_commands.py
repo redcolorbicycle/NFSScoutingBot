@@ -366,6 +366,7 @@ class ClubCommands(commands.Cog):
     @commands.command()
     async def addtoclub(self, ctx, club_name: str, *, args: str = ""):
         player_commands_cog = self.bot.get_cog("PlayerCommands")
+        club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the club exists
