@@ -68,5 +68,5 @@ class BattleRecords(commands.Cog):
 
 
 async def setup(bot):
-    connnection = bot.connection
+    connection = bot.connection
     await bot.add_cog(BattleRecords(bot, connection))

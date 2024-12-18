@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
 import shlex
-from player_commands import addplayer
-from player_commands import updateclub
+from bot_commands.player_commands import PlayerCommands
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
