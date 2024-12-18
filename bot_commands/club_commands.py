@@ -409,7 +409,7 @@ class ClubCommands(commands.Cog):
                                 return
                         else:
                             if player_commands_cog:
-                                await player_commands_cog.addplayer(ctx, player_name, club=club_name)
+                                await player_commands_cog.addplayer(ctx, player_name, args=f"club={club_name}")
                                 await ctx.send(f"Added player **{player_name}** to club **{club_name}**.")
                             else:
                                 await ctx.send("Error: `PlayerCommands` cog is not loaded.")
