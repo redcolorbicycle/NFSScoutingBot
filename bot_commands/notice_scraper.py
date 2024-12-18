@@ -10,17 +10,41 @@ class NoticeScraper(commands.Cog):
         self.api_url = "https://withhive.com/api/notice/list/509"
         self.today_date = "2024-12-17"
         #datetime.now().strftime("%Y-%m-%d")
+        self.create_table()
         self.check_notices.start()
+        
+
+    def create_table(self):
+        """Create the table to store sent notice IDs if it doesn't exist."""
+        with self.connection.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS sent_notices (
+                    notice_id BIGINT PRIMARY KEY
+                );
+            """)
+        self.connection.commit()
+
+    def is_notice_sent(self, notice_id):
+        """Check if a notice ID has already been sent."""
+        with self.connection.cursor() as cur:
+            cur.execute("SELECT 1 FROM sent_notices WHERE notice_id = %s;", (notice_id,))
+            return cur.fetchone() is not None
+
+    def mark_notice_as_sent(self, notice_id):
+        """Mark a notice ID as sent by storing it in the database."""
+        with self.connection.cursor() as cur:
+            cur.execute("INSERT INTO sent_notices (notice_id) VALUES (%s) ON CONFLICT DO NOTHING;", (notice_id,))
+        self.connection.commit()
 
     @tasks.loop(minutes=1)
     async def check_notices(self):
         print("Checking notices...")
         channel = discord.utils.get(self.bot.get_all_channels(), name="bot-testing")
         if not channel:
-            print("Channel 'bot-testing' not found.")
+            print("Channel not found.")
             return
 
-        # Mimic browser headers copied from Network tab
+        # Mimic browser headers
         headers = {
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "Content-Type": "application/json;charset=UTF-8",
@@ -29,22 +53,28 @@ class NoticeScraper(commands.Cog):
             "X-Requested-With": "XMLHttpRequest",
         }
 
-        payload = {
-            "page": 1,  # Pagination
-            "size": 20  # Fetch 20 results at a time
-        }
+        payload = {"page": 1, "size": 20}
 
         try:
             response = requests.post(self.api_url, headers=headers, json=payload)
-
             if response.status_code == 200:
-                try:
-                    json_response = response.json()
-                    notices = self.parse_notices(json_response)
-                    for notice in notices:
-                        await channel.send(f"**{notice['title']}**\n{notice['link']}\n")
-                except Exception as e:
-                    print(f"Error parsing JSON: {e}")
+                notices = self.parse_notices(response.json())
+                for notice in notices:
+                    notice_id = notice['id']
+
+                    # Skip if notice has already been sent
+                    if self.is_notice_sent(notice_id):
+                        print(f"Skipping already sent notice: {notice_id}")
+                        continue
+
+                    # Send the notice
+                    await channel.send(
+                        f"**{notice['title']}**\n[View Notice]({notice['link']}\n)"
+                    )
+                    print(f"Sent notice: {notice['title']}")
+
+                    # Mark notice as sent
+                    self.mark_notice_as_sent(notice_id)
             else:
                 print(f"Failed to fetch notices. Status code: {response.status_code}")
         except Exception as e:
@@ -54,24 +84,19 @@ class NoticeScraper(commands.Cog):
         """Parse the JSON response to extract notice IDs with today's date."""
         notices = []
         try:
-            # Access the notice list inside the "data" key
             notice_list = data.get("data", {}).get("notice_list", [])
-            
             for item in notice_list:
-                # Extract the `startTime` key to match against today's date
                 notice_date = item.get("startTime")
-                if notice_date == self.today_date:  # Compare against today's date
+                if notice_date == self.today_date:
                     notices.append({
-                        "id": item.get("noticeId"),  # Extract the notice ID
-                        "title": item.get("noticeTitle"),  # Extract the title
-                        "date": notice_date,  # Include the notice date
-                        "link": f"https://withhive.com/notice/509/{item.get('noticeId')}",  # Construct the notice link
+                        "id": item.get("noticeId"),
+                        "title": item.get("noticeTitle"),
+                        "date": notice_date,
+                        "link": f"https://withhive.com/notice/509/{item.get('noticeId')}",
                     })
         except Exception as e:
             print(f"Error parsing notices: {e}")
-
         return notices
-
 
     @check_notices.before_loop
     async def before_check_notices(self):
