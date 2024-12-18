@@ -344,6 +344,7 @@ class ClubCommands(commands.Cog):
                     SELECT Name, Nerf, PR, team_name
                     FROM Player
                     WHERE Club_Name = %s
+                    ORDER BY PR ASC;
                     """,
                     (club_name,),
                 )
