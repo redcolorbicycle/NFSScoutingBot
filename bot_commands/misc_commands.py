@@ -140,6 +140,23 @@ class MiscCommands(commands.Cog):
         await ctx.send("Channel list has been printed to the console.")
 
 
+    @commands.command()
+    async def respondtostevie(self, ctx):
+        """
+        Respond to stevie
+        """
+        try:
+            
+
+            image_path = "assets/steviegif.mp4"  # Adjust this path as needed
+            file = discord.File(image_path, filename="steviegif.mp4")
+            await ctx.send(file=file)
+            await ctx.send("Boy shut yo ass")
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
 
     
     

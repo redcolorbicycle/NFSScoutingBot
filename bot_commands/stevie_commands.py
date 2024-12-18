@@ -4,6 +4,7 @@ from PIL import Image
 import discord
 import os
 from discord.ext import commands
+from bot_commands.misc_commands import MiscCommands
 
 class StevieCommands(commands.Cog):
     def __init__(self, bot):
@@ -44,6 +45,7 @@ class StevieCommands(commands.Cog):
         """
         Impersonate Stevie too
         """
+        misc_commands_cog = self.bot.get_cog("MiscCommands")
         try:
             await ctx.send("So my Boston team is coming along.. blues n greens away from having my rotation complete.. worst set wld be a cm 331 on erod .. 2 legends with fb sets .. Pedro 333 cm price 332 fb ace")
             await ctx.send("Xander sig to replace Ozzie (to bench wit chem)")
@@ -63,6 +65,7 @@ class StevieCommands(commands.Cog):
             await ctx.send("Mets team is literally going 0-5 for moonshots everyday lmao")
             await ctx.send("Surprised they ain't kick me out")
             await ctx.send("Yet")
+            await misc_commands_cog.respondtostevie(ctx)
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
