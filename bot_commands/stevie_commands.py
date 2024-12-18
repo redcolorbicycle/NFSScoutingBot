@@ -64,7 +64,7 @@ class StevieCommands(commands.Cog):
             await ctx.send("Mets team is literally going 0-5 for moonshots everyday lmao")
             await ctx.send("Surprised they ain't kick me out")
             await ctx.send("Yet")
-            await ctx.send("!respondtostevie")
+            await ctx.send("yabbadabbadobadee")
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")

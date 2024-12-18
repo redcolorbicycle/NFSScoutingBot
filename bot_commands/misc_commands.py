@@ -152,9 +152,27 @@ class MiscCommands(commands.Cog):
             file = discord.File(image_path, filename="steviegif.mp4")
             await ctx.send(file=file)
             await ctx.send("Boy shut yo ass")
+            image_path2 = "assets/sitdownandshutup.mp4"
+            file = discord.File(image_path2, filename="sitdownandshutup.mp4")
+            await ctx.send(file=file)
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """
+        Listen for messages and respond to specific ones.
+        """
+
+        if message.content == "yabbadabbadobadee":
+            try:
+                ctx = await self.bot.get_context(message)
+                if ctx.command is None:
+                    await self.respondtostevie(ctx)
+            except Exception as e:
+                await message.channel.send(f"An error occurred: {e}")
+
 
 
 
