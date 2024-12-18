@@ -41,7 +41,7 @@ class StevieCommands(commands.Cog):
 
     async def stevie2(self, ctx):
         """
-        Impersonate Stevie
+        Impersonate Stevie too
         """
         try:
             await ctx.send("So my Boston team is coming along.. blues n greens away from having my rotation complete.. worst set wld be a cm 331 on erod .. 2 legends with fb sets .. Pedro 333 cm price 332 fb ace")
