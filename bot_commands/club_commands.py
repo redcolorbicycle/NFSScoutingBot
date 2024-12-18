@@ -229,7 +229,7 @@ class ClubCommands(commands.Cog):
                         elif pr_value <= 1000:
                             cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
                         elif pr_value <= 2000:
-                            cell.set_facecolor("#800080")  # Purple for 1001-2000
+                            cell.set_facecolor("#D397F8")  # Purple for 1001-2000
 
                     #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
                 row_height = 1 / len(df)  # Divide the figure height by the number of rows
@@ -312,7 +312,7 @@ class ClubCommands(commands.Cog):
                         elif pr_value <= 1000:
                             cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
                         elif pr_value <= 2000:
-                            cell.set_facecolor("#800080")  # Purple for 1001-2000
+                            cell.set_facecolor("#D397F8")  # Purple for 1001-2000
                             
                     #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
                 row_height = 1 / len(df)  # Divide the figure height by the number of rows
