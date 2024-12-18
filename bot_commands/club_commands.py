@@ -392,9 +392,9 @@ class ClubCommands(commands.Cog):
                         # Check if the player exists
                         cursor.execute(
                             """
-                            SELECT player_name
+                            SELECT Name
                             FROM Player
-                            WHERE player_name = %s
+                            WHERE Name = %s
                             """,
                             (player_name,),
                         )
