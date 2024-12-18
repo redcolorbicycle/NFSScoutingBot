@@ -5,4 +5,3 @@ matplotlib
 requests
 bs4
 selenium
-playwright
