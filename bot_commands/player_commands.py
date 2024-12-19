@@ -454,31 +454,34 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def listplayers(self, ctx):
-        """
-        List all players in the database.
-        """
+        """List the bottom 10 most recently added clubs and the total number of clubs in the database."""
         try:
             with self.connection.cursor() as cursor:
-                # Query to fetch all player names
-                cursor.execute("SELECT Name FROM Player")
+                # Fetch the total number of clubs
+                cursor.execute("SELECT COUNT(*) FROM Player")
+                total_clubs = cursor.fetchone()[0]
+
+                # Fetch the bottom 10 most recently added clubs
+                cursor.execute(
+                    """
+                    SELECT Name
+                    FROM Player
+                    OFFSET GREATEST((SELECT COUNT(*) FROM Club) - 10, 0)
+                    """
+                )
                 players = cursor.fetchall()
 
-                if not players:
-                    await ctx.send("No players found in the database.")
-                    return
-
-                # Format player names into a readable message
-                player_list = "\n".join(player[0] for player in players)
-                message = f"**List of Players:**\n{player_list}"
-
-                # Send the message in chunks if it exceeds Discord's character limit
-                if len(message) > 2000:  # Discord message limit
-                    chunks = [message[i:i + 2000] for i in range(0, len(message), 2000)]
-                    for chunk in chunks:
-                        await ctx.send(chunk)
+                if players:
+                    # Format the recent clubs list
+                    players = "\n".join([club[0] for club in recent_clubs])
+                    await ctx.send(
+                        f"**Total Clubs in the Database:** {total_clubs}\n\n"
+                        f"**10 Most Recently Added Clubs:**\n{club_list}"
+                    )
                 else:
-                    await ctx.send(message)
+                    await ctx.send("No players found in the database.")
         except Exception as e:
+            self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 

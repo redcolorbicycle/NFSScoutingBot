@@ -130,21 +130,36 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     async def listclubs(self, ctx):
-        """List all clubs in the database."""
+        """List the bottom 10 most recently added clubs and the total number of clubs in the database."""
         try:
             with self.connection.cursor() as cursor:
-                # Fetch all clubs from the database
-                cursor.execute("SELECT Club_Name FROM Club ORDER BY Club_Name ASC")
-                clubs = cursor.fetchall()
+                # Fetch the total number of clubs
+                cursor.execute("SELECT COUNT(*) FROM Club")
+                total_clubs = cursor.fetchone()[0]
 
-                if clubs:
-                    club_list = "\n".join([club[0] for club in clubs])  # Extract club names into a formatted string
-                    await ctx.send(f"**Clubs in the Database:**\n{club_list}")
+                # Fetch the bottom 10 most recently added clubs
+                cursor.execute(
+                    """
+                    SELECT Club_Name
+                    FROM Club
+                    OFFSET GREATEST((SELECT COUNT(*) FROM Club) - 10, 0)
+                    """
+                )
+                recent_clubs = cursor.fetchall()
+
+                if recent_clubs:
+                    # Format the recent clubs list
+                    club_list = "\n".join([club[0] for club in recent_clubs])
+                    await ctx.send(
+                        f"**Total Clubs in the Database:** {total_clubs}\n\n"
+                        f"**10 Most Recently Added Clubs:**\n{club_list}"
+                    )
                 else:
                     await ctx.send("No clubs found in the database.")
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
 
     @commands.command()
