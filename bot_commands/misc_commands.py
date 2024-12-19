@@ -55,6 +55,7 @@ class MiscCommands(commands.Cog):
         """
         Calculates how many points are needed to hit a threshold and how many points leftover
         """
+        bonuses = [110, 108, 105, 103, 100, 98, 95, 93, 90, 88]
         supreme = supreme.lower()
         trainingtotal = 57
         totalcon = conbase + congi
@@ -73,6 +74,12 @@ class MiscCommands(commands.Cog):
             eyetrain = max(target - totaleye,0)
             spdtrain = max(target - totalspd,0)
             fldtrain = max(target - totalfld,0)
+            maxpossible = (totalstats + trainingtotal)//5
+            final = 110
+            for i in bonuses:
+                if i <=maxpossible:
+                    final = i
+                    break
 
             answer = (f"You need {contrain} points to Contact.\n"
                       f"You need {powtrain} points to Power.\n"
@@ -80,7 +87,8 @@ class MiscCommands(commands.Cog):
                       f"You need {spdtrain} points to Speed.\n"
                       f"You need {fldtrain} points to Fielding.\n"
                       f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
-                      f"Your max possible 5 tool level is {(totalstats + trainingtotal)//5}."
+                      f"Your max possible 5 tool level is {maxpossible}."
+                      f"Your max possible 5 tool level where the boost hits a new threshold is {final}."
                       )      
             await ctx.send(answer)  
 
