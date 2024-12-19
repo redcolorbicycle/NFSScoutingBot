@@ -3,6 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import discord
+from discord.ext import commands, tasks
+from datetime import datetime, timedelta
+import pytz
 
 class BattleRecords(commands.Cog):
     def __init__(self, bot, connection):
@@ -28,6 +31,9 @@ class BattleRecords(commands.Cog):
 
     @commands.command()
     async def checkbattle(self, ctx, opponent_club):
+        """
+        Pulls up opponent record
+        """
         try:
             cursor = self.connection.cursor()
 
@@ -46,7 +52,9 @@ class BattleRecords(commands.Cog):
 
             if not records:
                 # No records found for the given club
-                await ctx.send(f"No records found for **{opponent_club}**. Start a new battle with start, then log with !log.")
+                await ctx.send(f"No records found for **{opponent_club}**. Check your roster with !check clubname."
+                               f"Start a new battle with !start homeclub opponentclub."
+                               f"Log battles with !log homenumber opponentnumber result.")
             else:
                 # Format the results
                 result_message = f"Battle records for **{opponent_club}**:\n\n"
@@ -62,26 +70,60 @@ class BattleRecords(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def start(self, ctx, opponent_club):
+    async def checkroster(self, ctx, hometeam):
+        """
+        Shows roster
+        """
         try:
             with self.connection.cursor() as cursor:
                 roster = ""
                 cursor.execute("""
-                    SELECT * FROM hometeam;
-                               """)
+                    SELECT * FROM hometeam 
+                               WHERE homeclub = %s;
+                               """, (hometeam,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    roster.append(row)
-                    roster.append("\n")
-                await ctx.send("This is the current roster.")
+                    roster.append(f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
                 await ctx.send(f"{roster}")
                 await ctx.send("Please use command logroster if you want to use a new roster.")
 
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+    
+    @commands.command()
+    async def startbattle(self, ctx, hometeam, opponent):
+        """
+        Start a new battle and lock the current date.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                # Lock the current date
+                cursor.execute(
+                    """
+                    UPDATE battle_date SET locked_date = CURRENT_DATE,id = CASE WHEN id = 0 THEN 1 ELSE id END WHERE id = 0;
 
+                    """
+                )
+                self.connection.commit()
 
+                # Your existing logic to reset players
+                cursor.execute("""
+                    UPDATE hometeam
+                    SET SP = 1
+                    WHERE homeclub = %s
+                """, (hometeam,))
+                cursor.execute("""
+                    UPDATE opponents
+                    SET SP = 1
+                    WHERE opponentclub = %s
+                """, (opponent,))
+                self.connection.commit()
+
+            await ctx.send(f"Battle started between **{hometeam}** and **{opponent}**. Date locked to today's date.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
 
 
 
