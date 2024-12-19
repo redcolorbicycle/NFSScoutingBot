@@ -1,10 +1,14 @@
 from discord.ext import commands
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from io import BytesIO
 import discord
 import shlex
 from bot_commands.player_commands import PlayerCommands
+import matplotlib
+
+matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
@@ -185,6 +189,7 @@ class ClubCommands(commands.Cog):
                 if not players:
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
+                    
 
                 # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
                 processed_players = [
@@ -435,6 +440,122 @@ class ClubCommands(commands.Cog):
                     self.connection.commit()
                 else:
                     await ctx.send("No player names were provided.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+    @commands.command()
+    async def scoutclubtrial(self, ctx, club_name: str):
+        """
+        Fetch player details for a specific club and return them as a paginated table image.
+        """
+        club_name = club_name.lower()
+        rows_per_page = 30  # Number of rows per page
+        try:
+            with self.connection.cursor() as cursor:
+                # Fetch player details for the club
+                cursor.execute(
+                    """
+                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
+                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated
+                    FROM Player
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+                players = cursor.fetchall()
+
+                if not players:
+                    await ctx.send(f"No players found for the club '{club_name}'.")
+                    return
+
+                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
+                processed_players = [
+                    (
+                        player[0],  # Name
+                        f"{player[1]} ({player[2]})",  # SP1 Info
+                        f"{player[3]} ({player[4]})",  # SP2 Info
+                        f"{player[5]} ({player[6]})",  # SP3 Info
+                        f"{player[7]} ({player[8]})",  # SP4 Info
+                        f"{player[9]} ({player[10]})",  # SP5 Info
+                        player[11],  # Nerf
+                        player[12],  # PR
+                        player[13],  # Batting Skill
+                        player[14],  # Last Updated
+                    )
+                    for player in players
+                ]
+
+                # Define new column headers
+                columns = [
+                    "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
+                    "Nerf", "PR", "Batting Skill", "Last Updated"
+                ]
+
+                # Create a DataFrame from the processed data
+                df = pd.DataFrame(processed_players, columns=columns)
+                df = df.sort_values(by="PR")
+
+                # Paginate the table
+                total_pages = (len(df) + rows_per_page - 1) // rows_per_page
+                for page in range(total_pages):
+                    start = page * rows_per_page
+                    end = start + rows_per_page
+                    df_page = df.iloc[start:end]
+
+                    # Plot the table using matplotlib
+                    fig, ax = plt.subplots(figsize=(24, len(df_page) * 0.5 + 1))  # Dynamic height based on rows
+                    ax.axis("tight")
+                    ax.axis("off")
+                    table = ax.table(
+                        cellText=df_page.values,
+                        colLabels=df_page.columns,
+                        cellLoc="center",
+                        loc="center",
+                    )
+
+                    # Adjust table style
+                    table.auto_set_font_size(False)
+                    table.set_fontsize(10)
+                    table.auto_set_column_width(col=list(range(len(df_page.columns))))
+
+                    # Apply conditional formatting for PR column
+                    cell_dict = table.get_celld()
+                    pr_index = columns.index("PR")  # Find the index of the PR column
+                    for (row, col), cell in cell_dict.items():
+                        if col == pr_index and row > 0:  # Exclude header row
+                            pr_value = df_page.iloc[row - 1, pr_index]  # Get PR value
+                            if pr_value <= 50:
+                                cell.set_facecolor("#FF0000")  # Sharp red for top 50
+                            elif pr_value <= 200:
+                                cell.set_facecolor("#FFA500")  # Orange for 51-200
+                            elif pr_value <= 500:
+                                cell.set_facecolor("#FFFF00")  # Yellow for 200-500
+                            elif pr_value <= 1000:
+                                cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
+                            elif pr_value <= 2000:
+                                cell.set_facecolor("#D397F8")  # Purple for 1001-2000
+
+                    for (row, col), cell in cell_dict.items():
+                        if row == 0 or col == 0:
+                            cell.set_text_props(weight="bold")
+
+                        # Adjust the row height dynamically
+                        row_height = 1 / len(df_page)
+                        cell.set_height(row_height)
+
+                    # Save the table as an image in memory
+                    buffer = BytesIO()
+                    plt.savefig(buffer, format="png", bbox_inches="tight")
+                    buffer.seek(0)
+                    plt.close(fig)
+
+                    # Send the image to Discord
+                    file = discord.File(fp=buffer, filename=f"club_table_page_{page + 1}.png")
+                    await ctx.send(f"**Page {page + 1} of {total_pages}:**", file=file)
+
+                    buffer.close()
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
