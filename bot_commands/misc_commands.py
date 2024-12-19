@@ -87,7 +87,7 @@ class MiscCommands(commands.Cog):
                       f"You need {spdtrain} points to Speed.\n"
                       f"You need {fldtrain} points to Fielding.\n"
                       f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
-                      f"Your max possible 5 tool level is {maxpossible}."
+                      f"Your max possible 5 tool level is {maxpossible}.\n"
                       f"Your max possible 5 tool level where the boost hits a new threshold is {final}."
                       )      
             await ctx.send(answer)  
