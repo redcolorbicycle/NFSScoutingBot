@@ -81,11 +81,7 @@ class MiscCommands(commands.Cog):
                     final = i
                     break
 
-            answer = (f"You need {contrain} points to Contact.\n"
-                      f"You need {powtrain} points to Power.\n"
-                      f"You need {eyetrain} points to Eye.\n"
-                      f"You need {spdtrain} points to Speed.\n"
-                      f"You need {fldtrain} points to Fielding.\n"
+            answer = (f"Train {contrain} {powtrain} {eyetrain} {spdtrain} {fldtrain}.\n"
                       f"You will have {trainingtotal - contrain - powtrain - eyetrain - spdtrain - fldtrain} training points left over.\n"
                       f"Your max possible 5 tool level is {maxpossible}.\n"
                       f"Your max possible 5 tool level where the boost hits a new threshold is {final}."
