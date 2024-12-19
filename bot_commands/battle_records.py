@@ -44,12 +44,9 @@ class BattleRecords(commands.Cog):
 
             records = cursor.fetchall()  # Fetch all results
 
-            cursor.execute("""
-                           """)
-
             if not records:
                 # No records found for the given club
-                await ctx.send(f"No records found for **{opponent_club}**. Please log a new battle with logclubbattle.")
+                await ctx.send(f"No records found for **{opponent_club}**. Start a new battle with start, then log with !log.")
             else:
                 # Format the results
                 result_message = f"Battle records for **{opponent_club}**:\n\n"
@@ -63,6 +60,27 @@ class BattleRecords(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def start(self, ctx, opponent_club):
+        try:
+            with self.connection.cursor() as cursor:
+                roster = ""
+                cursor.execute("""
+                    SELECT * FROM hometeam;
+                               """)
+                rows = cursor.fetchall()
+                for row in rows:
+                    roster.append(row)
+                    roster.append("\n")
+                await ctx.send("This is the current roster.")
+                await ctx.send(f"{roster}")
+                await ctx.send("Please use command logroster if you want to use a new roster.")
+
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
 
 
 
