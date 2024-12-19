@@ -466,17 +466,17 @@ class PlayerCommands(commands.Cog):
                     """
                     SELECT Name
                     FROM Player
-                    OFFSET GREATEST((SELECT COUNT(*) FROM Club) - 10, 0)
+                    OFFSET GREATEST((SELECT COUNT(*) FROM Player) - 10, 0)
                     """
                 )
                 players = cursor.fetchall()
 
                 if players:
                     # Format the recent clubs list
-                    players = "\n".join([club[0] for club in recent_clubs])
+                    playerlist = "\n".join([club[0] for club in players])
                     await ctx.send(
                         f"**Total Clubs in the Database:** {total_clubs}\n\n"
-                        f"**10 Most Recently Added Clubs:**\n{club_list}"
+                        f"**10 Most Recently Added Clubs:**\n{playerlist}"
                     )
                 else:
                     await ctx.send("No players found in the database.")
