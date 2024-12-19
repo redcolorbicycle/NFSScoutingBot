@@ -454,7 +454,7 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def listplayers(self, ctx):
-        """List the bottom 10 most recently added clubs and the total number of clubs in the database."""
+        """List the bottom 10 most recently added players and the total number of players in the database."""
         try:
             with self.connection.cursor() as cursor:
                 # Fetch the total number of clubs
@@ -475,8 +475,8 @@ class PlayerCommands(commands.Cog):
                     # Format the recent clubs list
                     playerlist = "\n".join([club[0] for club in players])
                     await ctx.send(
-                        f"**Total Clubs in the Database:** {total_clubs}\n\n"
-                        f"**10 Most Recently Added Clubs:**\n{playerlist}"
+                        f"**Total Players in the Database:** {total_clubs}\n\n"
+                        f"**10 Most Recently Added Players:**\n{playerlist}"
                     )
                 else:
                     await ctx.send("No players found in the database.")
