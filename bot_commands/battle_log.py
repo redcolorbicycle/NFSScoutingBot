@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-class ClubRecords(commands.Cog):
+class BattleLog(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
@@ -9,7 +9,12 @@ class ClubRecords(commands.Cog):
         """
         Restrict commands to users with specific roles.
         """
-        allowed_roles = ["Admin", "Moderator"]  # Add your roles here
+        allowed_roles = [
+            "TooDank Leaders", "Vice", "TokyoDrift Leaders", "NFS Ops", "NFS OG Leaders", 
+            "NeedForSpeed Leaders", "M16Speed Spy Daddies", "GoldyLeads", "Burnout Leaders", 
+            "Dugout Leads", "Kerchoo Leaders", "Rush Hour Leaders", "Speed Bump Leaders", 
+            "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad"
+        ]
         user_roles = [role.name for role in ctx.author.roles]
         return any(role in allowed_roles for role in user_roles)
 
@@ -126,4 +131,4 @@ class ClubRecords(commands.Cog):
 
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
-    await bot.add_cog(ClubRecords(bot, connection))
+    await bot.add_cog(BattleLog(bot, connection))
