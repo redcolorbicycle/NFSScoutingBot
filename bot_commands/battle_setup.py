@@ -83,7 +83,7 @@ class BattleSetup(commands.Cog):
                                """, (hometeam,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    roster.append(f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
+                    roster += (f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
                 await ctx.send(f"{roster}")
                 await ctx.send("Please use command createhomeroster if you want to use a new roster.")
 
