@@ -65,7 +65,7 @@ class BattleLog(commands.Cog):
 
                         cursor.execute(
                             """
-                            SELECT player, opponentclub, sp
+                            SELECT opponent, opponentclub, sp
                             FROM opponents
                             WHERE designated_number = %s AND opponentclub = %s
                             """,
