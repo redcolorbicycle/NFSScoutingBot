@@ -44,7 +44,7 @@ class BattleSetup(commands.Cog):
                     SUM(CASE WHEN result = 'L' THEN 1 ELSE 0 END) AS losses,
                     SUM(CASE WHEN result = 'D' THEN 1 ELSE 0 END) AS draws
                 FROM club_records
-                WHERE opponent_club_name = %s
+                WHERE opponent_club = %s
                 GROUP BY player_club
             """, (opponent_club,))
 
