@@ -85,7 +85,7 @@ class BattleSetup(commands.Cog):
                 for row in rows:
                     roster.append(f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
                 await ctx.send(f"{roster}")
-                await ctx.send("Please use command logroster if you want to use a new roster.")
+                await ctx.send("Please use command createhomeroster if you want to use a new roster.")
 
         except Exception as e:
             self.connection.rollback()
@@ -137,6 +137,10 @@ class BattleSetup(commands.Cog):
 
         try:
             with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    DELETE FROM hometeam
+                    WHERE homeclub = %s;
+                """, (hometeam,))
                 # Validate numbers and players are unique
                 numbers = set()
                 players = set()
@@ -187,6 +191,10 @@ class BattleSetup(commands.Cog):
 
         try:
             with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    DELETE FROM opponents
+                    WHERE opponentclub = %s;
+                """, (opponent,))
                 # Validate numbers and players are unique
                 numbers = set()
                 players = set()
