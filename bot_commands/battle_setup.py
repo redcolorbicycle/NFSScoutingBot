@@ -231,6 +231,7 @@ class BattleSetup(commands.Cog):
         Pulls up the battle record of a specific opponent player.
         Lists all encounters and provides total wins, losses, and draws.
         """
+        opponent_player=opponent_player.lower()
         try:
             cursor = self.connection.cursor()
 
