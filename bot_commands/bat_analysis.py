@@ -43,6 +43,8 @@ class RankedBatStats(commands.Cog):
             def getsb(sb, sbpct):
                 sb = sb.split("\n")
                 sbpct = sbpct.split("\n")
+                print(sb)
+                print(sbpct)
                 lst = []
                 for i in range(len(sb)):
                     if sb[i] == 0:
