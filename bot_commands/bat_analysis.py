@@ -43,14 +43,12 @@ class RankedBatStats(commands.Cog):
             def getsb(sb, sbpct):
                 sb = sb.split("\n")
                 sbpct = sbpct.split("\n")
-                print(sb)
-                print(sbpct)
+                sbpct += ["0"] * (len(sb) - len(sbpct))
                 lst = []
+                
                 for i in range(len(sb)):
                     if sb[i] == 0:
                         lst.append(0)
-                    else:
-                        lst.append(sbpct.pop(0))
                 return (sb, lst)
             
             def processfloats(lst):
