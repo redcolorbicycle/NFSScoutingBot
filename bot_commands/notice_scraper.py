@@ -14,6 +14,7 @@ class NoticeScraper(commands.Cog):
         
 
     def create_table(self):
+        print("creating table...")
         """Create the table to store sent notice IDs if it doesn't exist."""
         with self.connection.cursor() as cur:
             cur.execute("""
