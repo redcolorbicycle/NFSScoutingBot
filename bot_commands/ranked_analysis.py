@@ -46,8 +46,10 @@ class TableAnalyser(commands.Cog):
 
         try:
             # Process each image
+            print("starting!")
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
+                print("I'm in")
                 parsed_rows = self.parse_image(image_data)
 
                 # Add rows to the appropriate cache
