@@ -8,7 +8,6 @@ import shlex
 from bot_commands.player_commands import PlayerCommands
 import matplotlib
 
-matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
