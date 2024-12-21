@@ -90,28 +90,17 @@ class RankedBatStats(commands.Cog):
 
                 print("made it here")
 
-                # Clean up data
-                def clean_float(value):
+                def safe_float(value):
                     try:
                         return float(value)
                     except ValueError:
-                        return None
+                        return 0.0
 
                 # Insert into the database
                 discord_id = ctx.author.id  # Get the Discord ID of the user
                 try:
                     with self.connection.cursor() as cursor:
                         for i in range(max_rows):
-                            print(max_rows)
-                            print(len(player_names))
-                            print(len(ab))
-                            print(len(h))
-                            print(len(bb))
-                            print(len(slg))
-                            print(len(bbk))
-                            print(len(hr))
-                            print(len(doubles))
-                            print(len(rbi))
                             if counter <= 2:
                                 timing = "before"
                             else:
@@ -125,14 +114,14 @@ class RankedBatStats(commands.Cog):
                                 (
                                     discord_id,
                                     player_names[i].strip(),
-                                    int(ab[i]) if ab[i].isdigit() else None,
-                                    int(h[i]) if h[i].isdigit() else None,
-                                    int(bb[i]) if bb[i].isdigit() else None,
-                                    clean_float(slg[i]),
-                                    clean_float(bbk[i]),
-                                    int(hr[i]) if hr[i].isdigit() else None,
-                                    int(doubles[i]) if doubles[i].isdigit() else None,
-                                    int(rbi[i]) if rbi[i].isdigit() else None,
+                                    int(ab[i]) if ab[i].isdigit() else 0,
+                                    int(h[i]) if h[i].isdigit() else 0,
+                                    int(bb[i]) if bb[i].isdigit() else 0,
+                                    safe_float(slg[i]),
+                                    safe_float(bbk[i]),
+                                    int(hr[i]) if hr[i].isdigit() else 0,
+                                    int(doubles[i]) if doubles[i].isdigit() else 0,
+                                    int(rbi[i]) if rbi[i].isdigit() else 0,
                                     timing
                                 ),
                             )

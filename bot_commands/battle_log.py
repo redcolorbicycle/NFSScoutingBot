@@ -45,94 +45,94 @@ class BattleLog(commands.Cog):
                 battle_date = battle_date_row[0]
 
                 for i in range(0, len(args), 3):
-                    try:
-                        # Parse arguments
-                        player_number = int(args[i])
-                        opponent_number = int(args[i + 1])
-                        result = args[i + 2].upper()
+                    # Parse arguments
+                    player_number = int(args[i])
+                    opponent_number = int(args[i + 1])
+                    result = args[i + 2].upper()
 
-                        if result not in ("W", "L", "D"):
-                            raise ValueError(f"Invalid result: {result}")
-                            
+                    if result not in ("W", "L", "D"):
+                        raise ValueError(f"Invalid result: {result}")
 
-                        # Fetch player and opponent details
-                        cursor.execute(
-                            """
-                            SELECT player, homeclub, sp
-                            FROM hometeam
-                            WHERE designated_number = %s AND homeclub = %s
-                            """,
-                            (player_number, hometeam)
+                    # Fetch player and opponent details
+                    cursor.execute(
+                        """
+                        SELECT player, homeclub, sp
+                        FROM hometeam
+                        WHERE designated_number = %s AND homeclub = %s
+                        """,
+                        (player_number, hometeam)
+                    )
+                    player_row = cursor.fetchone()
+
+                    cursor.execute(
+                        """
+                        SELECT opponent, opponentclub, sp
+                        FROM opponents
+                        WHERE designated_number = %s AND opponentclub = %s
+                        """,
+                        (opponent_number, opponentteam)
+                    )
+                    opponent_row = cursor.fetchone()
+
+                    if not player_row or not opponent_row:
+                        raise ValueError(f"Player {player_number} or opponent {opponent_number} does not exist in the roster.")
+
+                    player_name, player_club, player_sp = player_row
+                    opponent_name, opponent_club, opponent_sp = opponent_row
+
+                    # Insert into club_records
+                    cursor.execute(
+                        """
+                        INSERT INTO club_records (
+                            battle_date, player_name, opponent_name, result,
+                            opponent_club, player_club, player_sp_number, opponent_sp_number
                         )
-                        player_row = cursor.fetchone()
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            battle_date,
+                            player_name, opponent_name, result,
+                            opponent_club, player_club,
+                            player_sp, opponent_sp,
+                        ),
+                    )
 
-                        cursor.execute(
-                            """
-                            SELECT opponent, opponentclub, sp
-                            FROM opponents
-                            WHERE designated_number = %s AND opponentclub = %s
-                            """,
-                            (opponent_number, opponentteam)
-                        )
-                        opponent_row = cursor.fetchone()
+                    # Update SP numbers
+                    next_player_sp = 1 if player_sp == 5 else player_sp + 1
+                    next_opponent_sp = 1 if opponent_sp == 5 else opponent_sp + 1
 
-                        if not player_row or not opponent_row:
-                            raise ValueError(f"Invalid player ({player_number}) or opponent ({opponent_number}) number.")
+                    cursor.execute(
+                        """
+                        UPDATE hometeam
+                        SET sp = %s
+                        WHERE designated_number = %s AND homeclub = %s
+                        """,
+                        (next_player_sp, player_number, hometeam),
+                    )
 
-                        player_name, player_club, player_sp = player_row
-                        opponent_name, opponent_club, opponent_sp = opponent_row
+                    cursor.execute(
+                        """
+                        UPDATE opponents
+                        SET sp = %s
+                        WHERE designated_number = %s AND opponentclub = %s
+                        """,
+                        (next_opponent_sp, opponent_number, opponentteam),
+                    )
 
-                        # Insert into club_records
-                        cursor.execute(
-                            """
-                            INSERT INTO club_records (
-                                battle_date, player_name, opponent_name, result,
-                                opponent_club, player_club, player_sp_number, opponent_sp_number
-                            )
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                            """,
-                            (
-                                battle_date,
-                                player_name, opponent_name, result,
-                                opponent_club, player_club,
-                                player_sp, opponent_sp,
-                            ),
-                        )
+                    # Add success message for this operation
+                    response_messages.append(
+                        f"Logged: Player {player_name} ({player_number}) vs Opponent {opponent_name} ({opponent_number}), Result: {result}."
+                    )
 
-                        # Update SP numbers
-                        next_player_sp = 1 if player_sp == 5 else player_sp + 1
-                        next_opponent_sp = 1 if opponent_sp == 5 else opponent_sp + 1
-
-                        cursor.execute(
-                            """
-                            UPDATE hometeam
-                            SET sp = %s
-                            WHERE designated_number = %s AND homeclub = %s
-                            """,
-                            (next_player_sp, player_number, hometeam),
-                        )
-
-                        cursor.execute(
-                            """
-                            UPDATE opponents
-                            SET sp = %s
-                            WHERE designated_number = %s AND opponentclub = %s
-                            """,
-                            (next_opponent_sp, opponent_number, opponentteam),
-                        )
-
-                        
-                    except Exception as sub_error:
-                        self.connection.rollback()
-                        response_messages.append(f"Error processing {args[i:i+3]}: {sub_error}")
-                        return
+                # Commit all operations if no errors occurred
                 self.connection.commit()
-
                 await ctx.send("\n".join(response_messages))
 
         except Exception as e:
+            # Rollback the entire transaction on any error
             self.connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
+            await ctx.send(f"An error occurred, and the transaction was rolled back: {e}")
+
 
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
