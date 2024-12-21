@@ -129,7 +129,7 @@ class RankedBatStats(commands.Cog):
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
         except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
+            await ctx.send(f"Error occurred: {e}")
 
     @commands.command()
     async def checktables(self, ctx):
