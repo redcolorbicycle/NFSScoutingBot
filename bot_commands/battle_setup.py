@@ -72,23 +72,33 @@ class BattleSetup(commands.Cog):
     @commands.command()
     async def checkhomeroster(self, ctx, hometeam):
         """
-        Prints home roster
+        Prints home roster as a single message
         """
         try:
             with self.connection.cursor() as cursor:
-                roster = ""
                 cursor.execute("""
                     SELECT * FROM hometeam 
-                               WHERE homeclub = %s;
-                               """, (hometeam,))
+                    WHERE homeclub = %s;
+                    """, (hometeam,))
                 rows = cursor.fetchall()
-                for row in rows:
-                    await ctx.send(f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
-                await ctx.send("Please use command createhomeroster if you want to use a new roster.")
+
+                if not rows:
+                    await ctx.send(f"No roster found for the home team: {hometeam}.")
+                    return
+
+                # Build the roster message
+                roster = "\n".join(
+                    f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}"
+                    for row in rows
+                )
+
+                # Send the roster in a single message
+                await ctx.send(f"**Roster for {hometeam}:**\n{roster}")
 
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
     
     @commands.command()
     async def startbattle(self, ctx, hometeam, opponent):
