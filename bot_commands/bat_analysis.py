@@ -121,8 +121,8 @@ class RankedBatStats(commands.Cog):
                                     clean_float(slg[i]),
                                     clean_float(bbk[i]),
                                     int(hr[i]) if hr[i].isdigit() else None,
-                                    int(doubles[i]) if sb[i].isdigit() else None,
-                                    int(rbi[i]) if sbpct[i].isdigit() else None,
+                                    int(doubles[i]) if doubles[i].isdigit() else None,
+                                    int(rbi[i]) if rbi[i].isdigit() else None,
                                     timing
                                 ),
                             )
