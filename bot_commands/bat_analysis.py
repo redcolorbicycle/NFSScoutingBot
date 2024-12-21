@@ -60,6 +60,7 @@ class RankedBatStats(commands.Cog):
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
+                print("hi")
                 
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
@@ -83,8 +84,10 @@ class RankedBatStats(commands.Cog):
                 slg += ["0"] * (max_rows - len(slg))
                 bbk += ["0"] * (max_rows - len(bbk))
                 hr += ["0"] * (max_rows - len(hr))
-                sb += ["0"] * (max_rows - len(sb))
-                sbpct += ["0"] * (max_rows - len(sbpct))
+                doubles += ["0"] * (max_rows - len(doubles))
+                rbi += ["0"] * (max_rows - len(rbi))
+
+                print("made it here")
 
                 # Clean up data
                 def clean_float(value):
