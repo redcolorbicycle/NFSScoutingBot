@@ -51,6 +51,7 @@ async def load_extensions(bot):
             await bot.load_extension("bot_commands.battle_setup")
             await bot.load_extension("bot_commands.battle_log")
             await bot.load_extension("bot_commands.battle_manager")
+            await bot.load_extension("bot_commands.ranked_analysis")
     except Exception as e:
         print(f"Failed to load extension for {bot.user}: {e}")
 
