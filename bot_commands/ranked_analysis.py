@@ -20,15 +20,9 @@ class TableAnalyser(commands.Cog):
             print("TESSDATA_PREFIX:", os.getenv("TESSDATA_PREFIX"))
 
             image = Image.open(BytesIO(image_data))
-            extracted_text = pytesseract.image_to_string(image)
+            extracted_text = pytesseract.image_to_string(image, lang="eng")
 
-            rows = []
-            for line in extracted_text.split("\n"):
-                # Split rows into columns based on multiple spaces
-                columns = re.split(r"\s{2,}", line.strip())
-                if len(columns) >= 4:  # Ensure it has at least 4 columns
-                    rows.append(tuple(columns[:4]))  # Take the first 4 columns
-            return rows
+            return extracted_text
         except Exception as e:
             print(f"Error parsing image: {e}")
             return []
@@ -46,42 +40,11 @@ class TableAnalyser(commands.Cog):
 
         try:
             # Process each image
-            print("starting!")
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
-                print("I'm in")
                 parsed_rows = self.parse_image(image_data)
 
-                # Add rows to the appropriate cache
-                if i < 2:  # Initial state (first two images)
-                    self.initial_state.update(parsed_rows)
-                else:  # Final state (last two images)
-                    self.final_state.update(parsed_rows)
-
-            # Convert sets to lists for processing
-            initial_rows = list(self.initial_state)
-            final_rows = list(self.final_state)
-
-            # Perform calculations (example: compare row counts)
-            initial_count = len(initial_rows)
-            final_count = len(final_rows)
-            added_rows = len(self.final_state - self.initial_state)
-            removed_rows = len(self.initial_state - self.final_state)
-
-            # Send results back to Discord
-            await ctx.send(
-                f"**Results:**\n"
-                f"- Initial State Rows: {initial_count}\n"
-                f"- Final State Rows: {final_count}\n"
-                f"- Rows Added: {added_rows}\n"
-                f"- Rows Removed: {removed_rows}"
-            )
-
-            # Optionally: print or send the exact rows added or removed
-            added_rows_details = "\n".join(map(str, self.final_state - self.initial_state))
-            removed_rows_details = "\n".join(map(str, self.initial_state - self.final_state))
-            await ctx.send(f"**Added Rows:**\n{added_rows_details}")
-            await ctx.send(f"**Removed Rows:**\n{removed_rows_details}")
+                await ctx.send(parsed_rows)
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
