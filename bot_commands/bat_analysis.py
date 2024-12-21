@@ -65,8 +65,10 @@ class RankedBatStats(commands.Cog):
                 counter += 1
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
+                print(data)
 
                 groups = data.strip().split("\n\n")
+                print(groups)
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
