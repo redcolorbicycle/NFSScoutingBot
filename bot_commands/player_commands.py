@@ -446,7 +446,7 @@ class PlayerCommands(commands.Cog):
                     (new_name, old_name),
                 )
                 self.connection.commit()
-                await self.scoutplayer(ctx, old_name)
+                await self.scoutplayer(ctx, new_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
