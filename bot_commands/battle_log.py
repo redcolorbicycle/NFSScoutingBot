@@ -121,12 +121,12 @@ class BattleLog(commands.Cog):
                             (next_opponent_sp, opponent_number, opponentteam),
                         )
 
-                        self.connection.commit()
-                        response_messages.append(f"Logged: Player {player_number} vs Opponent {opponent_number} ({result}).")
+                        
                     except Exception as sub_error:
                         self.connection.rollback()
                         response_messages.append(f"Error processing {args[i:i+3]}: {sub_error}")
                         return
+                self.connection.commit()
 
                 await ctx.send("\n".join(response_messages))
 
