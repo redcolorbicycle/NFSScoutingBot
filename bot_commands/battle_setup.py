@@ -70,9 +70,9 @@ class BattleSetup(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def checkroster(self, ctx, hometeam):
+    async def checkhomeroster(self, ctx, hometeam):
         """
-        Shows roster
+        Prints home roster
         """
         try:
             with self.connection.cursor() as cursor:
@@ -83,8 +83,7 @@ class BattleSetup(commands.Cog):
                                """, (hometeam,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    roster += (f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
-                await ctx.send(f"{roster}")
+                    await ctx.send(f"Player {row[0]} is designated {row[1]} and is on SP{row[2]}\n")
                 await ctx.send("Please use command createhomeroster if you want to use a new roster.")
 
         except Exception as e:
