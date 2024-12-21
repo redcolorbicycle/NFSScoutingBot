@@ -102,6 +102,16 @@ class RankedBatStats(commands.Cog):
                 try:
                     with self.connection.cursor() as cursor:
                         for i in range(max_rows):
+                            print(max_rows)
+                            print(len(player_names))
+                            print(len(ab))
+                            print(len(h))
+                            print(len(bb))
+                            print(len(slg))
+                            print(len(bbk))
+                            print(len(hr))
+                            print(len(doubles))
+                            print(len(rbi))
                             if counter <= 2:
                                 timing = "before"
                             else:
