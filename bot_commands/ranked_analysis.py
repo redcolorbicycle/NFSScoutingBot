@@ -34,7 +34,7 @@ class TableAnalyser(commands.Cog):
     async def analyse(self, ctx):
         """
         Analyse images for initial and final states, process them, and calculate results.
-        Attach exactly 4 images to the command
+        Attach exactly 4 images to the command.
         """
         attachments = ctx.message.attachments
         if len(attachments) != 4:
