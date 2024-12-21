@@ -42,6 +42,7 @@ class RankedBatStats(commands.Cog):
         try:
             
             def processfloats(lst):
+                lst = lst.split("\n")
                 for i in range(len(lst)):
                     f = float(lst[i])
                     if f >= 2:
@@ -60,14 +61,16 @@ class RankedBatStats(commands.Cog):
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
-                print(groups)
+                for i in groups:
+                    print(i)
+                    print("\n")
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
                 h = groups[2].split("\n")
                 bb = groups[3].split("\n")
-                slg = groups[4].split("\n")
+                slg = groups[4]
                 slg = processfloats(slg)
-                bbk = groups[5].split("\n")
+                bbk = groups[5]
                 bbk = processfloats(bbk)
                 hr = groups[6].split("\n")
                 doubles = groups[7].split("\n")
