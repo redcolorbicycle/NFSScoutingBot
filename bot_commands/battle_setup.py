@@ -81,7 +81,7 @@ class BattleSetup(commands.Cog):
             with self.connection.cursor() as cursor:
                 cursor.execute("""
                     SELECT * FROM opponents
-                    WHERE opponentclub = %s;
+                    WHERE opponentclub = %s ORDER BY designated_number ASC ;
                     """, (opponent,))
                 rows = cursor.fetchall()
 

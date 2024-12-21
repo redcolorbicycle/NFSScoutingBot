@@ -53,6 +53,7 @@ class BattleLog(commands.Cog):
 
                         if result not in ("W", "L", "D"):
                             raise ValueError(f"Invalid result: {result}")
+                            
 
                         # Fetch player and opponent details
                         cursor.execute(
@@ -125,6 +126,7 @@ class BattleLog(commands.Cog):
                     except Exception as sub_error:
                         self.connection.rollback()
                         response_messages.append(f"Error processing {args[i:i+3]}: {sub_error}")
+                        return
 
                 await ctx.send("\n".join(response_messages))
 
