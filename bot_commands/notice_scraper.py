@@ -100,7 +100,9 @@ class NoticeScraper(commands.Cog):
     @check_notices.before_loop
     async def before_check_notices(self):
         """Ensure the bot is ready before starting the loop."""
+        print("waiting for bot to be ready")
         await self.bot.wait_until_ready()
+        print("bot ready")
 
 async def setup(bot):
     connection = bot.connection
