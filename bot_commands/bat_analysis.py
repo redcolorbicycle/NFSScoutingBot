@@ -55,10 +55,8 @@ class RankedBatStats(commands.Cog):
                 counter += 1
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
-                print(data)
 
                 groups = data.strip().split("\n")
-                print(groups)
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
@@ -74,6 +72,7 @@ class RankedBatStats(commands.Cog):
                 hr = groups[6].split("\n")
                 doubles = groups[7].split("\n")
                 rbi = groups[8].split("\n")
+                print(player_names, ab, h, bb, slg, bbk, hr, doubles, rbi)
 
                 #make all same length
                 max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(doubles), len(rbi))
