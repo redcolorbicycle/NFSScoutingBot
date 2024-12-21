@@ -1,14 +1,12 @@
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
-import pytz  # For handling Singapore timezone
-import discord
 
 class BattleManager(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
-        self.sg_timezone = pytz.timezone("Asia/Singapore")
-        self.schedule_endbattle.start()  # Start the scheduled task
+        
+        
 
     @commands.command()
     async def endbattle(self, ctx):
