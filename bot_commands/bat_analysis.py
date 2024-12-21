@@ -53,8 +53,9 @@ class RankedBatStats(commands.Cog):
             
             def processfloats(lst):
                 for i in range(len(lst)):
-                    if lst[i] >= 2:
-                        lst[i] /= 1000
+                    f = float(lst[i])
+                    if f >= 2:
+                        lst[i] = f/1000
                 return lst
             
             counter = 0
