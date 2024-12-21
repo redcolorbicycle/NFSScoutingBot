@@ -30,10 +30,11 @@ class BattleSetup(commands.Cog):
         return any(role in allowed_roles for role in user_roles)
 
     @commands.command()
-    async def checkbattle(self, ctx, opponent_club):
+    async def checkopponentrecord(self, ctx, opponent_club):
         """
         Pulls up opponent record
         """
+        opponent_club = opponent_club.lower()
         try:
             cursor = self.connection.cursor()
 
@@ -69,21 +70,23 @@ class BattleSetup(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+    
     @commands.command()
-    async def checkhomeroster(self, ctx, hometeam):
+    async def checkopponentroster(self, ctx, opponent):
         """
         Prints home roster as a single message
         """
+        opponent = opponent.lower()
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT * FROM hometeam 
-                    WHERE homeclub = %s;
-                    """, (hometeam,))
+                    SELECT * FROM opponents
+                    WHERE opponentclub = %s;
+                    """, (opponent,))
                 rows = cursor.fetchall()
 
                 if not rows:
-                    await ctx.send(f"No roster found for the home team: {hometeam}.")
+                    await ctx.send(f"No roster found for the team: {opponent}.")
                     return
 
                 # Build the roster message
@@ -93,7 +96,7 @@ class BattleSetup(commands.Cog):
                 )
 
                 # Send the roster in a single message
-                await ctx.send(f"**Roster for {hometeam}:**\n{roster}")
+                await ctx.send(f"**Roster for {opponent}:**\n{roster}")
 
         except Exception as e:
             self.connection.rollback()
@@ -105,6 +108,8 @@ class BattleSetup(commands.Cog):
         """
         Start a new battle and lock the current date.
         """
+        hometeam = hometeam.lower()
+        opponent = opponent.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Lock the current date
@@ -140,6 +145,7 @@ class BattleSetup(commands.Cog):
         Create a roster for the hometeam.
         Usage: !createroster <hometeam> <number> <player> ...
         """
+        hometeam = hometeam.lower()
         if len(args) % 2 != 0:
             await ctx.send("Error: Arguments must be in pairs of <number> <player>.")
             return
@@ -194,6 +200,7 @@ class BattleSetup(commands.Cog):
         Create a roster for the opponent team.
         Usage: !createroster <opponentteam> <number> <player> ...
         """
+        opponent = opponent.lower()
         if len(args) % 2 != 0:
             await ctx.send("Error: Arguments must be in pairs of <number> <player>.")
             return

@@ -24,6 +24,8 @@ class BattleLog(commands.Cog):
         Log battles into the club_records table.
         Usage: !log <hometeam> <opponentteam> <player_number> <opponent_number> <result> ...
         """
+        hometeam = hometeam.lower()
+        opponentteam = opponentteam.lower()
         if len(args) % 3 != 0:
             await ctx.send("Error: Arguments must be in groups of 3 (player_number opponent_number result).")
             return
