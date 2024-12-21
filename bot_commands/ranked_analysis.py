@@ -4,6 +4,7 @@ from PIL import Image
 import pytesseract
 from io import BytesIO
 import re
+import os
 
 class TableAnalyser(commands.Cog):
     def __init__(self, bot):
@@ -13,9 +14,11 @@ class TableAnalyser(commands.Cog):
 
     def parse_image(self, image_data):
         """
-        Extracts tabular data from an image using OCR.
+        Extracts tabular data from an image using OCR
         """
         try:
+            print("TESSDATA_PREFIX:", os.getenv("TESSDATA_PREFIX"))
+
             image = Image.open(BytesIO(image_data))
             extracted_text = pytesseract.image_to_string(image)
 
