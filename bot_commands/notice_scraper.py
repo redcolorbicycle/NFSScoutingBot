@@ -56,6 +56,7 @@ class NoticeScraper(commands.Cog):
 
         try:
             response = requests.post(self.api_url, headers=headers, json=payload)
+            print("function is active")
             if response.status_code == 200:
                 notices = self.parse_notices(response.json())
                 for notice in notices:
