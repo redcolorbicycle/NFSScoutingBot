@@ -40,16 +40,6 @@ class RankedBatStats(commands.Cog):
             return
 
         try:
-            def getsb(sb, sbpct):
-                sb = sb.split("\n")
-                sbpct = sbpct.split("\n")
-                sbpct += ["0"] * (len(sb) - len(sbpct))
-                lst = []
-                
-                for i in range(len(sb)):
-                    if sb[i] == 0:
-                        lst.append(0)
-                return (sb, lst)
             
             def processfloats(lst):
                 for i in range(len(lst)):
@@ -73,7 +63,6 @@ class RankedBatStats(commands.Cog):
                     await ctx.send("Error: Insufficient data provided.")
                     return
                 
-                sb, sbpct = getsb(groups[7], groups[8])
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
                 h = groups[2].split("\n")
@@ -83,9 +72,11 @@ class RankedBatStats(commands.Cog):
                 bbk = groups[5].split("\n")
                 bbk = processfloats(bbk)
                 hr = groups[6].split("\n")
+                doubles = groups[7].split("\n")
+                rbi = groups[8].split("\n")
 
                 #make all same length
-                max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(sb), len(sbpct))
+                max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(doubles), len(rbi))
                 player_names += [""] * (max_rows - len(player_names))
                 ab += ["0"] * (max_rows - len(ab))
                 h += ["0"] * (max_rows - len(h))
@@ -115,7 +106,7 @@ class RankedBatStats(commands.Cog):
                             cursor.execute(
                                 """
                                 INSERT INTO rankedbatstats (
-                                    DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT,TIMING 
+                                    DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI,TIMING 
                                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                                 """,
                                 (
@@ -127,8 +118,8 @@ class RankedBatStats(commands.Cog):
                                     clean_float(slg[i]),
                                     clean_float(bbk[i]),
                                     int(hr[i]) if hr[i].isdigit() else None,
-                                    int(sb[i]) if sb[i].isdigit() else None,
-                                    int(sbpct[i]) if sbpct[i].isdigit() else None,
+                                    int(doubles[i]) if sb[i].isdigit() else None,
+                                    int(rbi[i]) if sbpct[i].isdigit() else None,
                                     timing
                                 ),
                             )
