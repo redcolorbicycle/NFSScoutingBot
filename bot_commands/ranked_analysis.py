@@ -13,7 +13,7 @@ class TableAnalyser(commands.Cog):
 
     def parse_image(self, image_data):
         """
-        Extracts tabular data from an image using OCR
+        Extracts tabular data from an image using OCR.
         """
         try:
             image = Image.open(BytesIO(image_data))
