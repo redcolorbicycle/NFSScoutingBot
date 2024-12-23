@@ -19,23 +19,31 @@ class RankedBatStats(commands.Cog):
         """
         print("trying")
         try:
-            # Send the image to OCR.Space API
             response = requests.post(
                 'https://api.ocr.space/parse/image',
-                files={'image': image_data},
-                data={'apikey': self.api_key, 'language': 'eng'}
+                files={'image': image_data},  # Pass the image data
+                data={'apikey': API_KEY, 'language': 'eng', 'isTable': 'true'}
             )
 
-            # Parse the API response
+            # Check for HTTP errors
+            if response.status_code != 200:
+                print(f"HTTP Error {response.status_code}: {response.text}")
+                return None
 
-            print("HTTP Status Code:", response.status_code)
-            print("Response Text:", response)
+            # Parse the response
+            result = response.json()
+            print("API Response:", result)  # Debug output
 
-            # Extract the recognized text
-            return response
+            # Check for processing errors
+            if result.get('IsErroredOnProcessing', True):
+                print(f"Error: {result.get('ErrorMessage', 'Unknown error')}")
+                return None
+
+            # Extract and return the recognized text
+            return result['ParsedResults'][0]['ParsedText']
         except Exception as e:
-            print(f"Error using OCR.Space API: {e}")
-            return ""
+            print(f"Error during API call: {e}")
+            return None
 
     @commands.command()
     async def collect(self, ctx):
