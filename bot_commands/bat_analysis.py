@@ -27,13 +27,12 @@ class RankedBatStats(commands.Cog):
             )
 
             # Parse the API response
-            result = response.json()
 
             print("HTTP Status Code:", response.status_code)
-            print("Response Text:", response.text)
+            print("Response Text:", response)
 
             # Extract the recognized text
-            return result['ParsedResults'][0]['ParsedText']
+            return response
         except Exception as e:
             print(f"Error using OCR.Space API: {e}")
             return ""
