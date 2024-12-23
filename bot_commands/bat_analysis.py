@@ -61,9 +61,6 @@ class RankedBatStats(commands.Cog):
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
-                for i in groups:
-                    print(i)
-                    print("\n")
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
                 h = groups[2].split("\n")
@@ -100,6 +97,7 @@ class RankedBatStats(commands.Cog):
                 discord_id = ctx.author.id  # Get the Discord ID of the user
                 try:
                     with self.connection.cursor() as cursor:
+                        print(discord_id, "\n", player_names, "\n", ab, "\n", h, "\n", bb, "\n", slg, "\n", bbk, "\n", hr, "\n", doubles, "\n", rbi)
                         for i in range(max_rows):
                             print(i)
                             if counter <= 2:

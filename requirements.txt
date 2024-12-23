@@ -6,3 +6,4 @@ requests
 bs4
 selenium
 pytesseract
+google-cloud-vision
