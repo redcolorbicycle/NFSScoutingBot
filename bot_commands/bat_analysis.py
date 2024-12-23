@@ -24,18 +24,22 @@ class RankedBatStats(commands.Cog):
         try:
             # Create an authenticated client
             credentials = CognitiveServicesCredentials(self.api_key)
+            print("1")
             client = ComputerVisionClient(self.endpoint, credentials)
+            print("1")
 
             # Submit the image for processing
             read_operation = client.read_in_stream(image_data)
+            print("1")
 
             # Wait for the operation to complete
             import time
             while True:
                 read_result = client.get_read_result(read_operation.operation_id)
+                print("1")
                 if read_result.status.lower() in ['succeeded', 'failed']:
                     break
-                time.sleep(1)  # Wait a bit before checking again
+                print("1")
 
             # Check if the operation succeeded
             if read_result.status == "succeeded":
