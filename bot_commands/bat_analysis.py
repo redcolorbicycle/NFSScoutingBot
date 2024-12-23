@@ -22,7 +22,7 @@ class RankedBatStats(commands.Cog):
             response = requests.post(
                 'https://api.ocr.space/parse/image',
                 files={'image': image_data},  # Pass the image data
-                data={'apikey': API_KEY, 'language': 'eng', 'isTable': 'true'}
+                data={'apikey': self.api_key, 'language': 'eng', 'isTable': 'true'}
             )
 
             # Check for HTTP errors
