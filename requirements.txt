@@ -5,5 +5,5 @@ matplotlib
 requests
 bs4
 selenium
-pytesseract
-google-cloud-vision
+paddleocr
+paddlepaddle==2.5.0
