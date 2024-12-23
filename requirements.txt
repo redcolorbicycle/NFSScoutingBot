@@ -6,4 +6,4 @@ requests
 bs4
 selenium
 paddleocr
-paddlepaddle==2.5.0
+paddlepaddle
