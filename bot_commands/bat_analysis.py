@@ -25,7 +25,7 @@ class RankedBatStats(commands.Cog):
 
             # Create an authenticated client
             credentials = CognitiveServicesCredentials(self.api_key)
-            client = ComputerVisionClient(endpoint, credentials)
+            client = ComputerVisionClient(self.endpoint, credentials)
 
             result = client.analyze_image_in_stream(image_data, ["objects"], raw=True)
             for line in result["recognitionResults"][0]["lines"]:
