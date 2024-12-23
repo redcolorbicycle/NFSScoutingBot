@@ -4,9 +4,10 @@ import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
 import os
+from azure.ai.vision.imageanalysis import ImageAnalysisClient
+from azure.ai.vision import ImageAnalysisClient, ImageAnalysisOptions, AzureKeyCredential
+from azure.core.credentials import AzureKeyCredential
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -18,44 +19,36 @@ class RankedBatStats(commands.Cog):
         self.endpoint = 'AZURE_ENDPOINT'  # Replace with your Azure endpoint
 
     def parse_image(self, image_data):
-        """
-        Extracts tabular data from an image using Azure Computer Vision API.
-        """
         try:
-            # Create an authenticated client
-            credentials = CognitiveServicesCredentials(self.api_key)
-            print("1")
-            client = ComputerVisionClient(self.endpoint, credentials)
-            print("1")
+            # Initialize the client
+            client = ImageAnalysisClient(
+                endpoint=self.endpoint,
+                credential=AzureKeyCredential(self.api_key)
+            )
 
-            # Submit the image for processing
-            read_operation = client.read_in_stream(image_data)
-            print("1")
+            # Define the analysis options with the "read" feature
+            options = ImageAnalysisOptions(features=["read"], language="en")
 
-            # Wait for the operation to complete
-            import time
-            while True:
-                read_result = client.get_read_result(read_operation.operation_id)
-                print("1")
-                if read_result.status.lower() in ['succeeded', 'failed']:
-                    break
-                print("1")
+            # Submit the image for analysis
+            result = client.analyze_image_in_stream(image_data, options=options)
 
-            # Check if the operation succeeded
-            if read_result.status == "succeeded":
-                text_lines = []
-                for page in read_result.analyze_result.read_results:
+            # Check if the "read" feature succeeded
+            if result.read_result and result.read_result.status == "succeeded":
+                extracted_text = []
+                for page in result.read_result.pages:
                     for line in page.lines:
-                        text_lines.append(line.text)
-                return "\n".join(text_lines)  # Return all extracted text as a single string
+                        # Each line in the result corresponds to a line of text in the image
+                        extracted_text.append(line.content)
+
+                # Combine extracted lines into a single string (or return the list of lines)
+                return "\n".join(extracted_text)
             else:
-                print("OCR operation failed.")
+                print("Text extraction failed or no text found.")
                 return ""
 
         except Exception as e:
             print(f"Error using Azure OCR API: {e}")
             return ""
-
 
     @commands.command()
     async def collect(self, ctx):
