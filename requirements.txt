@@ -3,3 +3,6 @@ psycopg2-binary
 pandas
 matplotlib
 requests
+azure-cognitiveservices-vision
+msrest
+

@@ -4,6 +4,9 @@ import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from msrest.authentication import CognitiveServicesCredentials
+import os
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -19,34 +22,15 @@ class RankedBatStats(commands.Cog):
         Extracts tabular data from an image using Azure Computer Vision API.
         """
         try:
-            # Azure OCR API URL
-            url = f"https://{self.endpoint}/vision/v3.2/ocr"
 
-            # Set headers and payload
-            headers = {
-                'Ocp-Apim-Subscription-Key': self.api_key,
-                'Content-Type': 'application/octet-stream'
-            }
+            # Create an authenticated client
+            credentials = CognitiveServicesCredentials(self.api_key)
+            client = ComputerVisionClient(endpoint, credentials)
 
-            # Send the image to Azure's OCR endpoint
-            response = requests.post(url, headers=headers, data=image_data)
+            result = client.analyze_image_in_stream(image_data, ["objects"], raw=True)
+            for line in result["recognitionResults"][0]["lines"]:
+                print(line)
 
-            # Check for errors
-            if response.status_code != 200:
-                print(f"Azure OCR Error {response.status_code}: {response.text}")
-                return ""
-
-            # Parse the JSON response
-            result = response.json()
-            print("Azure OCR Result:", result)  # Debug output
-
-            # Extract the recognized text from the response
-            extracted_text = ""
-            for region in result.get("regions", []):
-                for line in region.get("lines", []):
-                    extracted_text += " ".join([word["text"] for word in line["words"]]) + "\n"
-
-            return extracted_text
         except Exception as e:
             print(f"Error using Azure OCR API: {e}")
             return ""
