@@ -29,7 +29,8 @@ class RankedBatStats(commands.Cog):
             # Parse the API response
             result = response.json()
 
-            print(result)
+            print("HTTP Status Code:", response.status_code)
+            print("Response Text:", response.text)
 
             # Extract the recognized text
             return result['ParsedResults'][0]['ParsedText']
