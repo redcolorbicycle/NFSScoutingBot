@@ -2,7 +2,6 @@ from discord.ext import commands
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
-import discord
 import shlex
 
 class PlayerCommands(commands.Cog):

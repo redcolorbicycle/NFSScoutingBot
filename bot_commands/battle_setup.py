@@ -1,11 +1,9 @@
 from discord.ext import commands
-import pandas as pd
-import matplotlib.pyplot as plt
-from io import BytesIO
-import discord
+
+
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
-import pytz
+
 
 class BattleSetup(commands.Cog):
     def __init__(self, bot, connection):

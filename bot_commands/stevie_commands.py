@@ -1,6 +1,3 @@
-import random
-from io import BytesIO
-from PIL import Image
 import discord
 import os
 from discord.ext import commands
