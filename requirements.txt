@@ -3,6 +3,5 @@ psycopg2-binary
 pandas
 matplotlib
 requests
-bs4
 selenium
 

@@ -17,6 +17,7 @@ class RankedBatStats(commands.Cog):
         """
         Extracts tabular data from an image using the OCR.Space API.
         """
+        print("trying")
         try:
             # Send the image to OCR.Space API
             response = requests.post(
@@ -44,6 +45,7 @@ class RankedBatStats(commands.Cog):
         Collect images for initial and final states, process them.
         Attach exactly 4 images to the command.
         """
+        print("ok")
         attachments = ctx.message.attachments
         if len(attachments) != 4:
             await ctx.send("Please attach exactly 4 images: first 2 for the initial state, last 2 for the final state.")
@@ -77,6 +79,7 @@ class RankedBatStats(commands.Cog):
                 if len(groups) < 9:  # Ensure there are at least 9 groups
                     await ctx.send("Error: Insufficient data provided.")
                     return
+                print("ok")
 
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
@@ -87,6 +90,8 @@ class RankedBatStats(commands.Cog):
                 hr = groups[6].split("\n")
                 sb = groups[7].split("\n")
                 sbpct = groups[8].split("\n")
+
+                print("ok2")
 
                 # Make all lists the same length
                 max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(doubles), len(rbi))
