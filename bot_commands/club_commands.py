@@ -6,7 +6,7 @@ from io import BytesIO
 import discord
 import shlex
 from bot_commands.player_commands import PlayerCommands
-
+import matplotlib
 
 
 class ClubCommands(commands.Cog):

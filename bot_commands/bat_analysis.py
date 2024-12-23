@@ -20,7 +20,7 @@ class RankedBatStats(commands.Cog):
         """
         try:
             # Azure OCR API URL
-            url = f"{self.endpoint}/vision/v3.2/ocr"
+            url = f"https://{self.endpoint}/vision/v3.2/ocr"
 
             # Set headers and payload
             headers = {
