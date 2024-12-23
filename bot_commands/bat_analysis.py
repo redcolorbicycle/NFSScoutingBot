@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands
-from PIL import Image
-import pytesseract
+import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
-from paddleocr import PaddleOCR
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -13,26 +11,32 @@ class RankedBatStats(commands.Cog):
         self.connection = connection
         self.initial_state = set()  # Cache for initial state (rows as tuples)
         self.final_state = set()    # Cache for final state (rows as tuples)
-        self.ocr = PaddleOCR(use_angle_cls=True, lang="en")  # Initialize PaddleOCR
+        self.api_key = 'OCRSPACE_API'  # Replace with your OCR.Space API key
 
     def parse_image(self, image_data):
         """
-        Extracts tabular data from an image using PaddleOCR.
+        Extracts tabular data from an image using the OCR.Space API.
         """
         try:
-            # Load image from bytes
-            image = Image.open(BytesIO(image_data)).convert("RGB")
+            # Send the image to OCR.Space API
+            response = requests.post(
+                'https://api.ocr.space/parse/image',
+                files={'image': image_data},
+                data={'apikey': self.api_key, 'language': 'eng'}
+            )
 
-            # Convert image to a format PaddleOCR can process
-            result = self.ocr.ocr(image, det=True, rec=True)
+            # Parse the API response
+            result = response.json()
+
+            if result.get('IsErroredOnProcessing', True):
+                print(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
+                return ""
 
             # Extract the recognized text
-            extracted_text = "\n".join([line[1][0] for line in result[0]])
-            return extracted_text
+            return result['ParsedResults'][0]['ParsedText']
         except Exception as e:
-            print(f"Error using PaddleOCR: {e}")
+            print(f"Error using OCR.Space API: {e}")
             return ""
-
 
     @commands.command()
     async def collect(self, ctx):
@@ -46,15 +50,95 @@ class RankedBatStats(commands.Cog):
             return
 
         try:
-            for attachment in attachments:
+            def processfloats(lst):
+                lst = lst.split("\n")
+                for i in range(len(lst)):
+                    try:
+                        f = float(lst[i])
+                        if f >= 2:
+                            lst[i] = f / 1000
+                    except ValueError:
+                        pass
+                return lst
+
+            counter = 0
+
+            # Process each image
+            for i, attachment in enumerate(attachments):
+                counter += 1
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
-                # Process the extracted text into structured data
-                print("OCR Output:", data)
-                # Proceed with database and table logic...
+
+                if not data.strip():
+                    await ctx.send("Error: Unable to extract data from one of the images.")
+                    return
+
+                groups = data.strip().split("\n\n")
+                if len(groups) < 9:  # Ensure there are at least 9 groups
+                    await ctx.send("Error: Insufficient data provided.")
+                    return
+
+                player_names = groups[0].split("\n")
+                ab = groups[1].split("\n")
+                h = groups[2].split("\n")
+                bb = groups[3].split("\n")
+                slg = processfloats(groups[4])
+                bbk = processfloats(groups[5])
+                hr = groups[6].split("\n")
+                sb = groups[7].split("\n")
+                sbpct = groups[8].split("\n")
+
+                # Make all lists the same length
+                max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(doubles), len(rbi))
+                player_names += [""] * (max_rows - len(player_names))
+                ab += ["0"] * (max_rows - len(ab))
+                h += ["0"] * (max_rows - len(h))
+                bb += ["0"] * (max_rows - len(bb))
+                slg += ["0"] * (max_rows - len(slg))
+                bbk += ["0"] * (max_rows - len(bbk))
+                hr += ["0"] * (max_rows - len(hr))
+                sb += ["0"] * (max_rows - len(sb))
+                sbpct += ["0"] * (max_rows - len(sbpct))
+
+                def safe_float(value):
+                    try:
+                        return float(value)
+                    except ValueError:
+                        return 0.0
+
+                # Insert into the database
+                discord_id = ctx.author.id  # Get the Discord ID of the user
+                try:
+                    with self.connection.cursor() as cursor:
+                        for i in range(max_rows):
+                            timing = "before" if counter <= 2 else "after"
+                            cursor.execute(
+                                """
+                                INSERT INTO rankedbatstats (
+                                    DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING 
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                """,
+                                (
+                                    discord_id,
+                                    player_names[i].strip(),
+                                    int(ab[i]) if ab[i].isdigit() else 0,
+                                    int(h[i]) if h[i].isdigit() else 0,
+                                    int(bb[i]) if bb[i].isdigit() else 0,
+                                    safe_float(slg[i]),
+                                    safe_float(bbk[i]),
+                                    int(hr[i]) if hr[i].isdigit() else 0,
+                                    int(sb[i]) if sb[i].isdigit() else 0,
+                                    int(sbpct[i]) if sbpct[i].isdigit() else 0,
+                                    timing
+                                ),
+                            )
+                        self.connection.commit()
+                    await ctx.send(f"Data successfully inserted for Discord ID {discord_id}.")
+                except Exception as e:
+                    self.connection.rollback()
+                    await ctx.send(f"An error occurred: {e}")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
-
 
     @commands.command()
     async def checktables(self, ctx):
