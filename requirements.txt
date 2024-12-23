@@ -3,6 +3,6 @@ psycopg2-binary
 pandas
 matplotlib
 requests
-azure
+azure==4.0.0
 msrest
 
