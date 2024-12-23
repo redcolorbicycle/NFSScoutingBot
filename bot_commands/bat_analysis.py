@@ -101,6 +101,7 @@ class RankedBatStats(commands.Cog):
                 try:
                     with self.connection.cursor() as cursor:
                         for i in range(max_rows):
+                            print(i)
                             if counter <= 2:
                                 timing = "before"
                             else:
