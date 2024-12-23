@@ -22,18 +22,36 @@ class RankedBatStats(commands.Cog):
         Extracts tabular data from an image using Azure Computer Vision API.
         """
         try:
-
             # Create an authenticated client
             credentials = CognitiveServicesCredentials(self.api_key)
             client = ComputerVisionClient(self.endpoint, credentials)
 
-            result = client.read_in_stream(image_data, ["objects"], raw=True)
-            for line in result["recognitionResults"][0]["lines"]:
-                print(line)
+            # Submit the image for processing
+            read_operation = client.read_in_stream(image_data)
+
+            # Wait for the operation to complete
+            import time
+            while True:
+                read_result = client.get_read_result(read_operation.operation_id)
+                if read_result.status.lower() in ['succeeded', 'failed']:
+                    break
+                time.sleep(1)  # Wait a bit before checking again
+
+            # Check if the operation succeeded
+            if read_result.status == "succeeded":
+                text_lines = []
+                for page in read_result.analyze_result.read_results:
+                    for line in page.lines:
+                        text_lines.append(line.text)
+                return "\n".join(text_lines)  # Return all extracted text as a single string
+            else:
+                print("OCR operation failed.")
+                return ""
 
         except Exception as e:
             print(f"Error using Azure OCR API: {e}")
             return ""
+
 
     @commands.command()
     async def collect(self, ctx):
