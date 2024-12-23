@@ -29,9 +29,7 @@ class RankedBatStats(commands.Cog):
             # Parse the API response
             result = response.json()
 
-            if result.get('IsErroredOnProcessing', True):
-                print(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
-                return ""
+            print(result)
 
             # Extract the recognized text
             return result['ParsedResults'][0]['ParsedText']
