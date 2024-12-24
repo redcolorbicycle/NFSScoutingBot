@@ -121,6 +121,7 @@ class RankedBatStats(commands.Cog):
             data = []
             newrow = []
             flag = False
+            print(raw_data)
             for i in range(len(raw_data)):
                 print(newrow)
                 print(data)
@@ -152,7 +153,7 @@ class RankedBatStats(commands.Cog):
                     newrow.append(raw_data[i])
 
 
-            print(data)
+            print(raw_data)
             # Insert rows into the database
             with self.connection.cursor() as cursor:
                 for row in data:
