@@ -183,7 +183,7 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
-                    await ctx.send(f"{player_name} hit an average of {diff_H/diff_AB: .3}, with a walk rate of {diff_BB/(diff_AB + diff_BB) :.3} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB):.3}, scoring {diff_RBI} in {diff_AB} ABs with {diff_BB} walks. ")
+                    await ctx.send(f"{player_name} hit an average of {diff_H/diff_AB: .3}, with a walk rate of {diff_BB/(diff_AB + diff_BB) :.3} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB):.3}, scoring {diff_RBI} RBIs in {diff_AB} ABs with {diff_BB} walks. ")
                     await ctx.send(f"He hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB :.3}, slugging {diff_BASES/diff_AB :.3} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB :.3}%, {diff_DOUBLES/diff_H :.3}% of his hits).\n")
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
