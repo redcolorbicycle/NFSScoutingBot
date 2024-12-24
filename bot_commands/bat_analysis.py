@@ -128,10 +128,10 @@ class RankedBatStats(commands.Cog):
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
                 if len(newrow) == 8:
-                    if newrow[-1] == 0:
+                    if newrow[-1] == "0":
                         newrow.append(0)
                     else:
-                        newrow.append(raw_data[i + 1])
+                        newrow.append(raw_data[i])
                     data.append(newrow)
                     newrow = []
             print(data)
