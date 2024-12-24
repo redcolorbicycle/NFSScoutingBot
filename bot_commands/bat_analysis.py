@@ -122,7 +122,6 @@ class RankedBatStats(commands.Cog):
             newrow = []
             print(raw_data)
             for i in range(len(raw_data)):
-                print(data)
                 if len(newrow) == 9:
                     data.append(newrow)
                 if len(newrow) == 0 and ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
