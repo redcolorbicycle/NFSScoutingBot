@@ -130,19 +130,20 @@ class RankedBatStats(commands.Cog):
                     else:
                         newrow.append(raw_data[i])
                     flag = False
-                    data.append(newrow)
                     if i == len(raw_data) - 1:
+                        data.append(newrow)
                         break
-                    else:
-                        continue
-                if ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
+                if len(newrow) == 9:
+                    data.append(newrow)
                     newrow = []
-                    newrow.append(raw_data[i])
+                if len(newrow) == 0 and ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
+                    newrow = [raw_data[i]]
+                    continue
                 elif len(newrow) == 8:
                     if (i + 1) < len(raw_data):
                         if raw_data[i] == 0:
                             newrow.append(0)
-                            if not (raw_data[i + 1][0].isUpper() or "'" in raw_data[i + 1]): #handle 8 for having a 9th value
+                            if not ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #handle 8 for having a 9th value
                                 flag = True
                             continue
                         else:
@@ -150,6 +151,7 @@ class RankedBatStats(commands.Cog):
                             flag = True
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
+                
 
 
             # Insert rows into the database
