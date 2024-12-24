@@ -128,14 +128,13 @@ class RankedBatStats(commands.Cog):
                     newrow = [raw_data[i]]
                     continue
                 elif len(newrow) == 8:
-                    if (i + 1) < len(raw_data):
-                        if newrow[-1] == 0:
-                            newrow.append(0)
-                            data.append(newrow)
-                            newrow = []
-                            continue
-                        else:
-                            newrow.append(raw_data[i])
+                    if newrow[-1] == 0:
+                        newrow.append(0)
+                        data.append(newrow)
+                        newrow = []
+                        continue
+                    else:
+                        newrow.append(raw_data[i])
                             
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
@@ -153,7 +152,6 @@ class RankedBatStats(commands.Cog):
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
                     )
-                    print("done!")
                 self.connection.commit()
             print(f"Inserted {len(data)} rows into the database.")
 
