@@ -55,9 +55,7 @@ class RankedBatStats(commands.Cog):
                         for read_result in result["analyzeResult"]["readResults"]:
                             for line in read_result["lines"]:
                                 extracted_text.append(line["text"])
-                        print(extracted_text)
-
-                        return "\n".join(extracted_text)
+                        return extracted_text
 
                     elif result.get("status") == "failed":
                         print("Text extraction failed.")
