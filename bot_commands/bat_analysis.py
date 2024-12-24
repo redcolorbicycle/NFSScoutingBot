@@ -148,7 +148,7 @@ class RankedBatStats(commands.Cog):
                         else:
                             newrow.append(raw_data[i])
                             flag = True
-                elif len(newrow) in [2, 3, 4, 5, 6, 7]:
+                elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
 
 
