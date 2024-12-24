@@ -118,7 +118,35 @@ class RankedBatStats(commands.Cog):
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
-            data = [raw_data[i:i + 9] for i in range(0, len(raw_data), 9)]
+            data = []
+            newrow = []
+            flag = False
+            for i in range(len(raw_data)):
+                if flag == True: #should only be for nondash 9s
+                    if raw_data[i] == "-":
+                        newrow.append("0")
+                    else:
+                        newrow.append(raw_data[i])
+                    flag = False
+                    data.append(newrow)
+                    continue
+                if (raw_data[i][0].isUpper() or "'" in raw_data[i]): #for 1
+                    newrow = []
+                    newrow.append(raw_data[i])
+                elif len(newrow) == 8:
+                    if (i + 1) < len(raw_data):
+                        if raw_data[i] == 0:
+                            newrow.append(0)
+                            if not (raw_data[i + 1][0].isUpper() or "'" in raw_data[i + 1]): #handle 8 for having a 9th value
+                                flag = True
+                            continue
+                        else:
+                            newrow.append(raw_data[i])
+                            flag = True
+                elif len(newrow) in [2, 3, 4, 5, 6, 7]:
+                    newrow.append(raw_data[i])
+
+
             print(data)
             # Insert rows into the database
             with self.connection.cursor() as cursor:
@@ -126,7 +154,7 @@ class RankedBatStats(commands.Cog):
                     cursor.execute(
                         """
                         INSERT INTO rankedbatstats (
-                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING
+                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT, TIMING
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
@@ -159,8 +187,8 @@ class RankedBatStats(commands.Cog):
                         b.HR - a.HR AS diff_HR,
                         b.BB - a.BB AS diff_BB,
                         b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
-                        b.DOUBLES - a.DOUBLES AS diff_DOUBLES,
-                        b.RBI - a.RBI AS diff_RBI,
+                        b.SB - a.SB AS diff_SB,
+                        b.SB/b.SBPCT * 100 - a.SB/a.SBPCT * 100 AS diff_SBA,
                         CASE 
                             WHEN b.BBK > 0 AND a.BBK > 0 THEN b.BB / b.BBK - a.BB / a.BBK
                             ELSE NULL
@@ -193,8 +221,8 @@ class RankedBatStats(commands.Cog):
                     diff_HR = row[3]
                     diff_BB = row[4]
                     diff_BASES = row[5]
-                    diff_DOUBLES = row[6]
-                    diff_RBI = row[7]
+                    diff_SB = row[6]
+                    diff_SBA = row[7]
                     diff_K = round(row[8])  
 
 
@@ -209,12 +237,9 @@ class RankedBatStats(commands.Cog):
                     hrrate = round(hrrate, 1)
                     slg = round(diff_BASES / diff_AB, 3) if diff_AB > 0 else 0
                     ops = round(obp + slg, 3)
-                    doublerate = round(diff_DOUBLES / diff_AB, 3) if diff_AB > 0 else 0
-                    doublerate *= 100
-                    doublerate = round(doublerate, 1)
-                    doublehitrate = round(diff_DOUBLES / diff_H, 3) if diff_H > 0 else 0
-                    doublehitrate *= 100
-                    doublehitrate = round(doublehitrate, 1)
+                    sbrate = round(diff_SB / diff_SBA, 3) if (diff_SBA > 0 and diff_SB > 0) else 0
+                    sbrate *= 100
+                    sbrate = round(sbrate, 1)
                     krate = round(diff_K/diff_AB, 3)
                     krate *= 100
                     krate = round(krate, 1)
@@ -222,13 +247,13 @@ class RankedBatStats(commands.Cog):
                     # Append the row
                     data.append([
                         player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
-                        diff_HR, hrrate, slg, ops, doublerate, doublehitrate, diff_RBI, 
+                        diff_HR, hrrate, slg, ops, diff_SB, sbrate
                     ])
 
                 # Define column headers
                 columns = [
                     "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
-                    "HR", "HR%", "SLG", "OPS", "Double%", "Double% (Of hits)", "RBI"
+                    "HR", "HR%", "SLG", "OPS", "SB", "SB%"
                 ]
 
                 # Create DataFrame
