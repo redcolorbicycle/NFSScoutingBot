@@ -104,10 +104,11 @@ class RankedBatStats(commands.Cog):
                     else:
                         timing = "after"
                     self.process_insert(data, discord_id, timing)
-                    await ctx.send("Data reset!")
+                    
                 except Exception as e:
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
+            await ctx.send("Data reset!")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
 
@@ -182,10 +183,9 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
-                    message += f"{player_name} hit an average of {diff_H/diff_AB}, with a walk rate of {diff_BB/(diff_AB + diff_BB)} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB)}.\n"
-                    message += f"{player_name} hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB}, slugging {diff_BASES/diff_AB} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB}%, {diff_DOUBLES/diff_H}% of his hits).\n"
-                    message += f"{player_name} hit {diff_RBI} in {diff_H} hits and {diff_BB} walks."
-            await ctx.send(message)
+                    await ctx.send(f"{player_name} hit an average of {diff_H/diff_AB}, with a walk rate of {diff_BB/(diff_AB + diff_BB)} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB)}.\n")
+                    await ctx.send(f"{player_name} hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB}, slugging {diff_BASES/diff_AB} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB}%, {diff_DOUBLES/diff_H}% of his hits).\n")
+                    await ctx.send(f"{player_name} hit {diff_RBI} in {diff_H} hits and {diff_BB} walks.")
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
 
