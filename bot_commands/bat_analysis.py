@@ -160,6 +160,7 @@ class RankedBatStats(commands.Cog):
                         b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
                         b.DOUBLES - a.DOUBLES AS diff_DOUBLES,
                         b.RBI - a.RBI AS diff_RBI
+                        b.BB/b.BBK - a.BB/a.BBK as diff_K
                     FROM rankedbatstats a
                     JOIN rankedbatstats b
                     ON a.PLAYERNAME = b.PLAYERNAME
@@ -189,6 +190,7 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
+                    diff_K = row[8]
 
                     # Calculate metrics
                     avg = round(diff_H / diff_AB, 3) if diff_AB > 0 else 0
@@ -199,16 +201,17 @@ class RankedBatStats(commands.Cog):
                     ops = round(obp + slg, 3)
                     doublerate = round(diff_DOUBLES / diff_AB, 3) if diff_AB > 0 else 0
                     doublehitrate = round(diff_DOUBLES / diff_H, 3) if diff_H > 0 else 0
+                    krate = diff_K/diff_AB
 
                     # Append the row
                     data.append([
-                        player_name, diff_AB, avg, diff_BB, walkrate, obp,
-                        diff_HR, hrrate, slg, ops, doublerate, doublehitrate, diff_RBI
+                        player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
+                        diff_HR, hrrate, slg, ops, doublerate, doublehitrate, diff_RBI, 
                     ])
 
                 # Define column headers
                 columns = [
-                    "Player Name", "AB", "Avg", "BB", "BB%", "OBP",
+                    "Player Name", "AB", "Avg", "BB", "BB%", "OBP", "K", "K%",
                     "HR", "HR%", "SLG", "OPS", "Double%", "Double% (Of hits)", "RBI"
                 ]
 
@@ -233,6 +236,16 @@ class RankedBatStats(commands.Cog):
                 table.auto_set_font_size(False)
                 table.set_fontsize(10)
                 table.auto_set_column_width(col=list(range(len(df.columns))))
+
+                # Apply conditional formatting for PR column
+                cell_dict = table.get_celld()
+                for (row, col), cell in cell_dict.items():
+                    if row == 0 or col == 0:
+                        cell.set_text_props(weight="bold")
+
+                row_height = 1 / len(df)  # Divide the figure height by the number of rows
+                for (row, col), cell in cell_dict.items():
+                    cell.set_height(row_height)  # Set height dynamically
 
                 # Save the table as an image in memory
                 buffer = BytesIO()
