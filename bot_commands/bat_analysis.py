@@ -122,6 +122,8 @@ class RankedBatStats(commands.Cog):
             newrow = []
             flag = False
             for i in range(len(raw_data)):
+                print(newrow)
+                print(data)
                 if flag : #should only be for nondash 9s
                     if raw_data[i] == "-":
                         newrow.append("0")
