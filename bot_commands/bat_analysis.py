@@ -159,8 +159,11 @@ class RankedBatStats(commands.Cog):
                         b.BB - a.BB AS diff_BB,
                         b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
                         b.DOUBLES - a.DOUBLES AS diff_DOUBLES,
-                        b.RBI - a.RBI AS diff_RBI
-                        b.BB/b.BBK - a.BB/a.BBK as diff_K
+                        b.RBI - a.RBI AS diff_RBI,
+                        CASE 
+                            WHEN b.BBK > 0 AND a.BBK > 0 THEN b.BB / b.BBK - a.BB / a.BBK
+                            ELSE NULL
+                        END AS diff_K
                     FROM rankedbatstats a
                     JOIN rankedbatstats b
                     ON a.PLAYERNAME = b.PLAYERNAME
@@ -171,6 +174,7 @@ class RankedBatStats(commands.Cog):
                     """,
                     (discord_id, discord_id)
                 )
+
 
                 # Fetch results
                 results = cursor.fetchall()
