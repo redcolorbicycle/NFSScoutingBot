@@ -138,26 +138,24 @@ class RankedBatStats(commands.Cog):
             self.connection.rollback()
 
 
-    @commands.command()
-    async def calculatestats(self, ctx):
-        try:
-            discord_id = ctx.author.id
-            results = self.fetch(discord_id)
-            await ctx.send(results)
-        except Exception as e:
-            print(f"Error retrieving data: {e}")
-            self.connection.rollback()
-
-    def fetch(self, discord_id):
+    def compare_stats(self, ctx):
         """
-        Retrieves all rows where the same PLAYERNAME appears in both TIMING = 'before' and TIMING = 'after'.
+        Compares 'before' and 'after' stats for each player and prints the differences.
         """
+        discord_id = ctx.author_id
         try:
             with self.connection.cursor() as cursor:
-                # Execute the SELECT query
+                # Execute the SQL query to fetch and calculate differences
                 cursor.execute(
                     """
-                    SELECT DISTINCT a.*
+                    SELECT a.PLAYERNAME,
+                        b.AB - a.AB AS diff_AB,
+                        b.H - a.H AS diff_H,
+                        b.HR - a.HR AS diff_HR,
+                        b.BB - a.BB AS diff_BB,
+                        b.SLG - a.SLG AS diff_SLG,
+                        b.DOUBLES - a.DOUBLES AS diff_DOUBLES,
+                        b.RBI - a.RBI AS diff_RBI
                     FROM rankedbatstats a
                     JOIN rankedbatstats b
                     ON a.PLAYERNAME = b.PLAYERNAME
@@ -168,9 +166,77 @@ class RankedBatStats(commands.Cog):
                     """,
                     (discord_id, discord_id)
                 )
+
+                # Fetch results
+                results = cursor.fetchall()
+
+                # Print differences
+                for row in results:
+                    player_name = row[0]
+                    diff_AB = row[1]
+                    diff_H = row[2]
+                    diff_HR = row[3]
+                    diff_BB = row[4]
+                    diff_SLG = row[5]
+                    diff_DOUBLES = row[6]
+                    diff_RBI = row[7]
+
+                    print(f"Player: {player_name}")
+                    print(f"  Difference in AB: {diff_AB}")
+                    print(f"  Difference in H: {diff_H}")
+                    print(f"  Difference in HR: {diff_HR}")
+                    print(f"  Difference in BB: {diff_BB}")
+                    print(f"  Difference in SLG: {diff_SLG:.3f}")
+                    print(f"  Difference in DOUBLES: {diff_DOUBLES}")
+                    print(f"  Difference in RBI: {diff_RBI}")
+                    print("---")
+
+        except Exception as e:
+            print(f"Error comparing stats: {e}")
+
+            
+
+    def fetch(self, discord_id):
+        """
+        Retrieves all rows where the same PLAYERNAME appears in both TIMING = 'before' and TIMING = 'after'.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                # Execute the SELECT query
+                cursor.execute(
+                    """
+                    SELECT a.*, 
+                    FROM rankedbatstats a
+                    JOIN rankedbatstats b
+                    ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s
+                    AND b.DISCORDID = %s
+                    AND a.TIMING = 'before'
+                    AND b.TIMING = 'after';
+
+                    """,
+                    (discord_id, discord_id)
+                )
                 # Fetch all matching rows
-                rows = cursor.fetchall()
-                return rows
+                rowsbefore = cursor.fetchall()
+                cursor.execute(
+                    """
+                    SELECT b.*, 
+                    FROM rankedbatstats a
+                    JOIN rankedbatstats b
+                    ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s
+                    AND b.DISCORDID = %s
+                    AND a.TIMING = 'before'
+                    AND b.TIMING = 'after';
+
+                    """,
+                    (discord_id, discord_id)
+                )
+                # Fetch all matching rows
+                rowsafter = cursor.fetchall()
+                return (rowsbefore, rowsafter)
+            
         except Exception as e:
             print(f"Error retrieving common players: {e}")
             return []
