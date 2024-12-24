@@ -124,7 +124,8 @@ class RankedBatStats(commands.Cog):
             for i in range(len(raw_data)):
                 if len(newrow) == 9:
                     data.append(newrow)
-                if len(newrow) == 0 and ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
+                    newrow = []
+                elif len(newrow) == 0 and ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
                     newrow = [raw_data[i]]
                     continue
                 elif len(newrow) == 8:
@@ -138,6 +139,8 @@ class RankedBatStats(commands.Cog):
                             
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
+            print(data)
+
                 
 
 
