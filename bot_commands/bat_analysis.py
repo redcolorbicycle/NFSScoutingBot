@@ -137,15 +137,17 @@ class RankedBatStats(commands.Cog):
                     if current_row[7] == 0:  # SB = 0
                         if raw_data[i+1] == "-":
                             i += 1
-                        current_row.append(0)  # SBPCT = 0
+                            current_row.append(0)  # SBPCT = 0
+                    else:
+                        val = raw_data[i + 1]
+                        current_row.append(val)
+                        i += 1
 
                     if len(current_row) == 9:  # Ensure SBPCT is added
                         current_row.append(timing)  # Add timing
-                        print(current_row)
-                        print(rows)
+                        
                         rows.append([discord_id] + current_row)
-                        print(current_row)
-                        print(rows)
+                        
                         current_row = []  # Reset for the next player
 
             # Insert rows into the database
