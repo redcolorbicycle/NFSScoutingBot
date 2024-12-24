@@ -120,7 +120,7 @@ class RankedBatStats(commands.Cog):
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
-            data = self.divide(raw_data)
+            data = [raw_data[i:i + 9] for i in range(0, len(raw_data), 9)]
             for i in data:
                 # Insert rows into the database
                 with self.connection.cursor() as cursor:
@@ -141,8 +141,6 @@ class RankedBatStats(commands.Cog):
             print(f"Error processing and inserting data: {e}")
             self.connection.rollback()
 
-    def divide(data):
-        return [data[i:i + 9] for i in range(0, len(data), 9)]
 
 
 
