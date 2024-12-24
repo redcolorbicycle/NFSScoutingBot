@@ -136,7 +136,7 @@ class RankedBatStats(commands.Cog):
             print(f"Error processing and inserting data: {e}")
             self.connection.rollback()
 
-
+    @commands.command()
     def compare_stats(self, ctx):
         """
         Compares 'before' and 'after' stats for each player and prints the differences.
