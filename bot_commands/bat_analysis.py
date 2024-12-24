@@ -31,8 +31,7 @@ class RankedBatStats(commands.Cog):
 
             # Perform the API call
             response = requests.post(self.endpoint, headers=headers, data=image_data)
-            print("CALLED!")
-            print(response)
+
 
             # Check for 202 response
             if response.status_code == 202:
@@ -56,6 +55,8 @@ class RankedBatStats(commands.Cog):
                         for read_result in result["analyzeResult"]["readResults"]:
                             for line in read_result["lines"]:
                                 extracted_text.append(line["text"])
+                        
+                        print("\n".join(extracted_text))
 
                         return "\n".join(extracted_text)
 
