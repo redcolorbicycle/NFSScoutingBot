@@ -127,7 +127,7 @@ class RankedBatStats(commands.Cog):
 
             for i, value in enumerate(raw_data):
                 if len(current_row) == 0:  # Start of a new player
-                    if value[0].isupper():
+                    if value[0].isupper() or "'" in value:
                         current_row.append(value)  # Add player name
                 elif len(current_row) < 8:  # Add non-sb attributes for the current player
                     try:
@@ -137,16 +137,17 @@ class RankedBatStats(commands.Cog):
                 if len(current_row) == 8:  # Check if player data is complete
                     # Handle SB = 0 and next value logic
                     if current_row[7] == 0:  # SB = 0
-                        next_value = raw_data[i + 1] if i + 1 < len(raw_data) else None
-                        if next_value == "-":
-                            current_row.append(0)  # SBPCT = 0
-                            raw_data[i + 1] = None  # Skip the "-"
-                        else:  # Assume next value is a new player's name
-                            current_row.append(0)  # SBPCT = 0
+                        if raw_data[i+1] == "-":
+                            i += 1
+                        current_row.append(0)  # SBPCT = 0
 
                     if len(current_row) == 9:  # Ensure SBPCT is added
                         current_row.append(timing)  # Add timing
+                        print(current_row)
+                        print(rows)
                         rows.append([discord_id] + current_row)
+                        print(current_row)
+                        print(rows)
                         current_row = []  # Reset for the next player
 
             # Insert rows into the database
