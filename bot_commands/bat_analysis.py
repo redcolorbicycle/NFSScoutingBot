@@ -194,7 +194,8 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
-                    diff_K = row[8]
+                    diff_K = round(row[8])  
+
 
                     # Calculate metrics
                     avg = round(diff_H / diff_AB, 3) if diff_AB > 0 else 0
@@ -205,7 +206,7 @@ class RankedBatStats(commands.Cog):
                     ops = round(obp + slg, 3)
                     doublerate = round(diff_DOUBLES / diff_AB, 3) if diff_AB > 0 else 0
                     doublehitrate = round(diff_DOUBLES / diff_H, 3) if diff_H > 0 else 0
-                    krate = diff_K/diff_AB
+                    krate = round(diff_K/diff_AB, 3)
 
                     # Append the row
                     data.append([
@@ -215,7 +216,7 @@ class RankedBatStats(commands.Cog):
 
                 # Define column headers
                 columns = [
-                    "Player Name", "AB", "Avg", "BB", "BB%", "OBP", "K", "K%",
+                    "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP"
                     "HR", "HR%", "SLG", "OPS", "Double%", "Double% (Of hits)", "RBI"
                 ]
 
