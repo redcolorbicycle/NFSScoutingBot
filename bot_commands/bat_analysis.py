@@ -120,54 +120,30 @@ class RankedBatStats(commands.Cog):
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
-            rows = []  # To store processed rows
-            current_row = []  # Current player's data
-
-            for i, value in enumerate(raw_data):
-                if len(current_row) == 0:  # Start of a new player
-                    if value[0].isupper() or "'" in value:
-                        current_row.append(value)  # Add player name
-                elif len(current_row) < 8:  # Add non-sb attributes for the current player
-                    try:
-                        current_row.append(float(value) if '.' in value else int(value))
-                    except ValueError:
-                        current_row.append(value)  # Handle invalid values gracefully
-                if len(current_row) == 8:  # Check if player data is complete
-                    # Handle SB = 0 and next value logic
-                    if current_row[7] == 0:  # SB = 0
-                        if raw_data[i+1] == "-":
-                            i += 1
-                            current_row.append(0)  # SBPCT = 0
-                    else:
-                        val = raw_data[i + 1]
-                        current_row.append(val)
-                        i += 1
-
-                    if len(current_row) == 9:  # Ensure SBPCT is added
-                        current_row.append(timing)  # Add timing
-                        
-                        rows.append([discord_id] + current_row)
-                        
-                        current_row = []  # Reset for the next player
-
-            # Insert rows into the database
-            with self.connection.cursor() as cursor:
-                for row in rows:
-                    cursor.execute(
-                        """
-                        INSERT INTO rankedbatstats (
-                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT, TIMING
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        """,
-                        row,
-                    )
-                self.connection.commit()
-            print(f"Inserted {len(rows)} rows into the database.")
+            data = self.divide(raw_data)
+            for i in data:
+                # Insert rows into the database
+                with self.connection.cursor() as cursor:
+                    for row in data:
+                        cursor.execute(
+                            """
+                            INSERT INTO rankedbatstats (
+                                DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            """,
+                            (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
+                        )
+                    self.connection.commit()
+                print(f"Inserted {len(data)} rows into the database.")
 
 
         except Exception as e:
             print(f"Error processing and inserting data: {e}")
             self.connection.rollback()
+
+    def divide(data):
+        return [data[i:i + 9] for i in range(0, len(data), 9)]
+
 
 
 async def setup(bot):
