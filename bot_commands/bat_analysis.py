@@ -137,7 +137,7 @@ class RankedBatStats(commands.Cog):
             self.connection.rollback()
 
     @commands.command()
-    def compare_stats(self, ctx):
+    async def compare_stats(self, ctx):
         """
         Compares 'before' and 'after' stats for each player and prints the differences.
         """
@@ -191,7 +191,7 @@ class RankedBatStats(commands.Cog):
                     print("---")
 
         except Exception as e:
-            print(f"Error comparing stats: {e}")
+            await ctx.send(f"Error comparing stats: {e}")
 
             
 
