@@ -122,7 +122,7 @@ class RankedBatStats(commands.Cog):
                         """
                         INSERT INTO rankedbatstats (
                             DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
                     )
@@ -145,6 +145,7 @@ class RankedBatStats(commands.Cog):
         try:
             with self.connection.cursor() as cursor:
                 # Execute the SQL query to fetch and calculate differences
+                message = ""
                 cursor.execute(
                     """
                     SELECT a.PLAYERNAME,
@@ -152,7 +153,7 @@ class RankedBatStats(commands.Cog):
                         b.H - a.H AS diff_H,
                         b.HR - a.HR AS diff_HR,
                         b.BB - a.BB AS diff_BB,
-                        b.SLG - a.SLG AS diff_SLG,
+                        b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
                         b.DOUBLES - a.DOUBLES AS diff_DOUBLES,
                         b.RBI - a.RBI AS diff_RBI
                     FROM rankedbatstats a
@@ -176,19 +177,16 @@ class RankedBatStats(commands.Cog):
                     diff_H = row[2]
                     diff_HR = row[3]
                     diff_BB = row[4]
-                    diff_SLG = row[5]
+                    diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
+                    message += f"{player_name} hit an average of {diff_H/diff_AB}, with a walk rate of {diff_BB/(diff_AB + diff_BB)} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB)}.\n"
+                    message += f"{player_name} hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB}, slugging {diff_BASES/diff_AB} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB}%, {diff_DOUBLES/diff_H}% of his hits).\n"
+                    message += f"{player_name} hit {diff_RBI} in {diff_H} hits and {diff_BB} walks."
+            await ctx.send(message)
+                    
 
-                    print(f"Player: {player_name}")
-                    print(f"  Difference in AB: {diff_AB}")
-                    print(f"  Difference in H: {diff_H}")
-                    print(f"  Difference in HR: {diff_HR}")
-                    print(f"  Difference in BB: {diff_BB}")
-                    print(f"  Difference in SLG: {diff_SLG:.3f}")
-                    print(f"  Difference in DOUBLES: {diff_DOUBLES}")
-                    print(f"  Difference in RBI: {diff_RBI}")
-                    print("---")
+                    
 
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
