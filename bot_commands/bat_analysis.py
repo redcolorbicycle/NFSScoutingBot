@@ -131,7 +131,7 @@ class RankedBatStats(commands.Cog):
                     if newrow[-1] == 0:
                         newrow.append(0)
                     else:
-                        newrow.append(raw_data[i])
+                        newrow.append(raw_data[i + 1])
                     data.append(newrow)
                     newrow = []
             print(data)
@@ -175,7 +175,7 @@ class RankedBatStats(commands.Cog):
                         b.H - a.H AS diff_H,
                         b.HR - a.HR AS diff_HR,
                         b.BB - a.BB AS diff_BB,
-                        b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
+                        b.SLG * b.AB - a.SLG * a.AB AS diff_BASES,
                         b.SB - a.SB AS diff_SB,
                         CASE 
                             WHEN b.SBPCT > 0 THEN (b.SB / b.SBPCT * 100) - (a.SB / a.SBPCT * 100)
