@@ -4,6 +4,4 @@ pandas
 matplotlib
 requests
 msrest
-azure-ai-vision-imageanalysis 
-azure-ai-vision
-azure-core-credentials
+azure-cognitiveservices-vision-computervision
