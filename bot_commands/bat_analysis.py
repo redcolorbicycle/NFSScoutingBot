@@ -72,7 +72,6 @@ class RankedBatStats(commands.Cog):
             return ""
 
 
-
     @commands.command()
     async def collect(self, ctx):
         """
@@ -85,18 +84,13 @@ class RankedBatStats(commands.Cog):
             return
 
         try:
-            def processfloats(lst):
-                lst = lst.split("\n")
-                for i in range(len(lst)):
-                    try:
-                        f = float(lst[i])
-                        if f >= 2:
-                            lst[i] = f / 1000
-                    except ValueError:
-                        pass
-                return lst
-
-            counter = 0
+            discord_id = ctx.author_id
+            with self.connection.cursor() as cursor:
+                # Execute the DELETE query
+                cursor.execute(
+                    "DELETE FROM rankedbatstats WHERE DISCORDID = %s;",
+                    (discord_id,)
+                )
 
             # Process each image
             for i, attachment in enumerate(attachments):
@@ -105,7 +99,6 @@ class RankedBatStats(commands.Cog):
                 data = self.parse_image(image_data)
 
                 # Insert into the database
-                discord_id = ctx.author.id  # Get the Discord ID of the user
                 try:
                     if i <= 1:
                         timing = "before"
@@ -117,6 +110,7 @@ class RankedBatStats(commands.Cog):
                     await ctx.send(f"An error occurred: {e}")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
+
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
@@ -144,6 +138,42 @@ class RankedBatStats(commands.Cog):
             self.connection.rollback()
 
 
+    @commands.command()
+    async def calculatestats(self, ctx):
+        try:
+            discord_id = ctx.author_id
+            results = self.fetch(discord_id)
+            await ctx.send(results)
+        except Exception as e:
+            print(f"Error retrieving data: {e}")
+            self.connection.rollback()
+
+    def fetch(self, discord_id):
+        """
+        Retrieves all rows where the same PLAYERNAME appears in both TIMING = 'before' and TIMING = 'after'.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                # Execute the SELECT query
+                cursor.execute(
+                    """
+                    SELECT DISTINCT a.*
+                    FROM rankedbatstats a
+                    JOIN rankedbatstats b
+                    ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s
+                    AND b.DISCORDID = %s
+                    AND a.TIMING = 'before'
+                    AND b.TIMING = 'after';
+                    """,
+                    (discord_id, discord_id)
+                )
+                # Fetch all matching rows
+                rows = cursor.fetchall()
+                return rows
+        except Exception as e:
+            print(f"Error retrieving common players: {e}")
+            return []
 
 
 async def setup(bot):
