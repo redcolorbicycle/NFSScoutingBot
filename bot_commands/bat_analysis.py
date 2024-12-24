@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
 import os
+from matplotlib import rcParams
+import shlex
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -142,13 +144,12 @@ class RankedBatStats(commands.Cog):
     @commands.command()
     async def compare_stats(self, ctx):
         """
-        Compares 'before' and 'after' stats for each player and prints the differences.
+        Compares 'before' and 'after' stats for each player and returns a table image with the differences.
         """
         discord_id = ctx.author.id
         try:
             with self.connection.cursor() as cursor:
                 # Execute the SQL query to fetch and calculate differences
-                message = ""
                 cursor.execute(
                     """
                     SELECT a.PLAYERNAME,
@@ -173,7 +174,12 @@ class RankedBatStats(commands.Cog):
                 # Fetch results
                 results = cursor.fetchall()
 
-                # Print differences
+                if not results:
+                    await ctx.send("No matching records found for comparison.")
+                    return
+
+                # Process data into a DataFrame
+                data = []
                 for row in results:
                     player_name = row[0]
                     diff_AB = row[1]
@@ -183,10 +189,64 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_DOUBLES = row[6]
                     diff_RBI = row[7]
-                    await ctx.send(f"{player_name} hit an average of {diff_H/diff_AB: .3}, with a walk rate of {diff_BB/(diff_AB + diff_BB) :.3} and an OBP of {(diff_H + diff_BB)/(diff_AB + diff_BB):.3}, scoring {diff_RBI} RBIs in {diff_AB} ABs with {diff_BB} walks. ")
-                    await ctx.send(f"He hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB :.3}, slugging {diff_BASES/diff_AB :.3} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB :.3}%, {diff_DOUBLES/diff_H :.3}% of his hits).\n")
+
+                    # Calculate metrics
+                    avg = round(diff_H / diff_AB, 3) if diff_AB > 0 else 0
+                    walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
+                    obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
+                    hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
+                    slg = round(diff_BASES / diff_AB, 3) if diff_AB > 0 else 0
+                    ops = round(obp + slg, 3)
+                    doublerate = round(diff_DOUBLES / diff_AB, 3) if diff_AB > 0 else 0
+                    doublehitrate = round(diff_DOUBLES / diff_H, 3) if diff_H > 0 else 0
+
+                    # Append the row
+                    data.append([
+                        player_name, diff_AB, avg, diff_BB, walkrate, obp,
+                        diff_HR, hrrate, slg, ops, doublerate, doublehitrate, diff_RBI
+                    ])
+
+                # Define column headers
+                columns = [
+                    "Player Name", "AB", "Avg", "BB", "BB%", "OBP",
+                    "HR", "HR%", "SLG", "OPS", "Double%", "Double% (Of hits)", "RBI"
+                ]
+
+                # Create DataFrame
+                df = pd.DataFrame(data, columns=columns)
+
+                # Sort DataFrame by OPS (optional)
+                df = df.sort_values(by="OPS", ascending=False)
+
+                # Plot the table using matplotlib
+                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Adjust size dynamically
+                ax.axis("tight")
+                ax.axis("off")
+                table = ax.table(
+                    cellText=df.values,
+                    colLabels=df.columns,
+                    cellLoc="center",
+                    loc="center",
+                )
+
+                # Adjust table style
+                table.auto_set_font_size(False)
+                table.set_fontsize(10)
+                table.auto_set_column_width(col=list(range(len(df.columns))))
+
+                # Save the table as an image in memory
+                buffer = BytesIO()
+                plt.savefig(buffer, format="png", bbox_inches="tight")
+                buffer.seek(0)
+                plt.close(fig)
+
+                # Send the image to Discord
+                file = discord.File(fp=buffer, filename="stats_comparison.png")
+                await ctx.send(file=file)
+
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
+
 
             
 
