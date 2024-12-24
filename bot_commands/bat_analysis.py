@@ -31,6 +31,8 @@ class RankedBatStats(commands.Cog):
 
             # Perform the API call
             response = requests.post(self.endpoint, headers=headers, data=image_data)
+            print("CALLED!")
+            print(response)
 
             # Check for 202 response
             if response.status_code == 202:
