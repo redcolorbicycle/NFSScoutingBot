@@ -141,7 +141,7 @@ class RankedBatStats(commands.Cog):
     @commands.command()
     async def calculatestats(self, ctx):
         try:
-            discord_id = ctx.author_id
+            discord_id = ctx.author.id
             results = self.fetch(discord_id)
             await ctx.send(results)
         except Exception as e:
