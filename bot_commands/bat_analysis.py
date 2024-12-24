@@ -94,7 +94,6 @@ class RankedBatStats(commands.Cog):
 
             # Process each image
             for i, attachment in enumerate(attachments):
-                counter += 1
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
 
