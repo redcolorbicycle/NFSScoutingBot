@@ -133,6 +133,8 @@ class RankedBatStats(commands.Cog):
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
                     )
+                    print(row)
+                    print("done!")
                 self.connection.commit()
             print(f"Inserted {len(data)} rows into the database.")
 
