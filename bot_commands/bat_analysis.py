@@ -178,7 +178,7 @@ class RankedBatStats(commands.Cog):
                         b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
                         b.SB - a.SB AS diff_SB,
                         CASE 
-                            WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN (b.SB / b.SBPCT * 100) - (a.SB / a.SBPCT * 100)
+                            WHEN b.SBPCT > 0 THEN (b.SB / b.SBPCT * 100) - (a.SB / a.SBPCT * 100)
                             ELSE 0
                         END AS diff_SBA,
                         CASE 
