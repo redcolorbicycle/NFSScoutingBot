@@ -121,20 +121,20 @@ class RankedBatStats(commands.Cog):
     def process_insert(self, raw_data, discord_id, timing):
         try:
             data = [raw_data[i:i + 9] for i in range(0, len(raw_data), 9)]
-            for i in data:
-                # Insert rows into the database
-                with self.connection.cursor() as cursor:
-                    for row in data:
-                        cursor.execute(
-                            """
-                            INSERT INTO rankedbatstats (
-                                DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            """,
-                            (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
-                        )
-                    self.connection.commit()
-                print(f"Inserted {len(data)} rows into the database.")
+            print(data)
+            # Insert rows into the database
+            with self.connection.cursor() as cursor:
+                for row in data:
+                    cursor.execute(
+                        """
+                        INSERT INTO rankedbatstats (
+                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, DOUBLES, RBI, TIMING
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
+                    )
+                self.connection.commit()
+            print(f"Inserted {len(data)} rows into the database.")
 
 
         except Exception as e:
