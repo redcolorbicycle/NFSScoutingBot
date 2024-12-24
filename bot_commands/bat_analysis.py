@@ -84,7 +84,7 @@ class RankedBatStats(commands.Cog):
             return
 
         try:
-            discord_id = ctx.author_id
+            discord_id = ctx.author.id
             with self.connection.cursor() as cursor:
                 # Execute the DELETE query
                 cursor.execute(
@@ -142,7 +142,7 @@ class RankedBatStats(commands.Cog):
         """
         Compares 'before' and 'after' stats for each player and prints the differences.
         """
-        discord_id = ctx.author_id
+        discord_id = ctx.author.id
         try:
             with self.connection.cursor() as cursor:
                 # Execute the SQL query to fetch and calculate differences
