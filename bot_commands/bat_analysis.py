@@ -177,7 +177,10 @@ class RankedBatStats(commands.Cog):
                         b.BB - a.BB AS diff_BB,
                         b.SLG * b.AB - a.SLG * a.AB AS diff_bases,
                         b.SB - a.SB AS diff_SB,
-                        b.SB/b.SBPCT * 100 - a.SB/a.SBPCT * 100 AS diff_SBA,
+                        CASE 
+                            WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN (b.SB / b.SBPCT * 100) - (a.SB / a.SBPCT * 100)
+                            ELSE 0
+                        END AS diff_SBA,
                         CASE 
                             WHEN b.BBK > 0 AND a.BBK > 0 THEN b.BB / b.BBK - a.BB / a.BBK
                             ELSE NULL
@@ -189,6 +192,7 @@ class RankedBatStats(commands.Cog):
                     AND b.DISCORDID = %s
                     AND a.TIMING = 'before'
                     AND b.TIMING = 'after';
+
                     """,
                     (discord_id, discord_id)
                 )
