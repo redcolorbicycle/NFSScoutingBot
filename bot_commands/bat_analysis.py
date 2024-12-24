@@ -15,7 +15,8 @@ class RankedBatStats(commands.Cog):
         self.initial_state = set()  # Cache for initial state (rows as tuples)
         self.final_state = set()    # Cache for final state (rows as tuples)
         self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
-        self.endpoint = os.getenv('AZURE_ENDPOINT')  # Replace with your Azure endpoint
+        self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
+
 
     def parse_image(self, image_data):
         """
@@ -23,8 +24,8 @@ class RankedBatStats(commands.Cog):
         """
         try:
             headers = {'Ocp-Apim-Subscription-Key': self.api_key, 'Content-Type': 'application/octet-stream'}
-            params = {'language': 'fr', 'detectOrientation': 'false'}
-            response = requests.post(self.endpoint, headers=headers, params=params, data=image_data)
+            #params = {'language': 'eng', 'detectOrientation': 'false'}
+            response = requests.post(self.endpoint, headers=headers, data=image_data)
             print(response)
             analysis = response.json()
             print(analysis)
