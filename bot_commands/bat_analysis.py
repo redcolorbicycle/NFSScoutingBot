@@ -104,6 +104,7 @@ class RankedBatStats(commands.Cog):
                     else:
                         timing = "after"
                     self.process_insert(data, discord_id, timing)
+                    await ctx.send("Data reset!")
                 except Exception as e:
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
@@ -133,8 +134,9 @@ class RankedBatStats(commands.Cog):
 
 
         except Exception as e:
-            print(f"Error processing and inserting data: {e}")
             self.connection.rollback()
+            print(f"Error processing and inserting data: {e}")
+            
 
     @commands.command()
     async def compare_stats(self, ctx):
@@ -184,10 +186,6 @@ class RankedBatStats(commands.Cog):
                     message += f"{player_name} hit {diff_HR} HRs for a HR rate of {diff_HR/diff_AB}, slugging {diff_BASES/diff_AB} and hitting {diff_DOUBLES} doubles({diff_DOUBLES/diff_AB}%, {diff_DOUBLES/diff_H}% of his hits).\n"
                     message += f"{player_name} hit {diff_RBI} in {diff_H} hits and {diff_BB} walks."
             await ctx.send(message)
-                    
-
-                    
-
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
 
