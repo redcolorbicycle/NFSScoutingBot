@@ -106,73 +106,68 @@ class RankedBatStats(commands.Cog):
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
 
-                
-                
-
-                player_names = groups[0].split("\n")
-                ab = groups[1].split("\n")
-                h = groups[2].split("\n")
-                bb = groups[3].split("\n")
-                slg = processfloats(groups[4])
-                bbk = processfloats(groups[5])
-                hr = groups[6].split("\n")
-                sb = groups[7].split("\n")
-                sbpct = groups[8].split("\n")
-
-                # Make all lists the same length
-                max_rows = max(len(player_names), len(ab), len(h), len(bb), len(slg), len(bbk), len(hr), len(sb), len(sbpct))
-                player_names += [""] * (max_rows - len(player_names))
-                ab += ["0"] * (max_rows - len(ab))
-                h += ["0"] * (max_rows - len(h))
-                bb += ["0"] * (max_rows - len(bb))
-                slg += ["0"] * (max_rows - len(slg))
-                bbk += ["0"] * (max_rows - len(bbk))
-                hr += ["0"] * (max_rows - len(hr))
-                sb += ["0"] * (max_rows - len(sb))
-                sbpct += ["0"] * (max_rows - len(sbpct))
-
-                def safe_float(value):
-                    try:
-                        return float(value)
-                    except ValueError:
-                        return 0.0
-
                 # Insert into the database
                 discord_id = ctx.author.id  # Get the Discord ID of the user
                 try:
-                    with self.connection.cursor() as cursor:
-                        for i in range(max_rows):
-                            timing = "before" if counter <= 2 else "after"
-                            cursor.execute(
-                                """
-                                INSERT INTO rankedbatstats (
-                                    DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT, TIMING 
-                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                """,
-                                (
-                                    discord_id,
-                                    player_names[i].strip(),
-                                    int(ab[i]) if ab[i].isdigit() else 0,
-                                    int(h[i]) if h[i].isdigit() else 0,
-                                    int(bb[i]) if bb[i].isdigit() else 0,
-                                    safe_float(slg[i]),
-                                    safe_float(bbk[i]),
-                                    int(hr[i]) if hr[i].isdigit() else 0,
-                                    int(sb[i]) if sb[i].isdigit() else 0,
-                                    int(sbpct[i]) if sbpct[i].isdigit() else 0,
-                                    timing
-                                ),
-                            )
-                        self.connection.commit()
-                    await ctx.send(f"Data successfully inserted for Discord ID {discord_id}.")
+                    if i <= 1:
+                        timing = "before"
+                    else:
+                        timing = "after"
+                    self.process_insert(data, discord_id, timing)
                 except Exception as e:
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
 
-    # Rest of the class remains unchanged
-    # (checktables, etc.)
+    def process_insert(self, raw_data, discord_id, timing):
+        try:
+            rows = []  # To store processed rows
+            current_row = []  # Current player's data
+
+            for i, value in enumerate(raw_data):
+                if len(current_row) == 0:  # Start of a new player
+                    if value[0].isupper():
+                        current_row.append(value)  # Add player name
+                elif len(current_row) < 8:  # Add non-sb attributes for the current player
+                    try:
+                        current_row.append(float(value) if '.' in value else int(value))
+                    except ValueError:
+                        current_row.append(value)  # Handle invalid values gracefully
+                if len(current_row) == 8:  # Check if player data is complete
+                    # Handle SB = 0 and next value logic
+                    if current_row[7] == 0:  # SB = 0
+                        next_value = raw_data[i + 1] if i + 1 < len(raw_data) else None
+                        if next_value == "-":
+                            current_row.append(0)  # SBPCT = 0
+                            raw_data[i + 1] = None  # Skip the "-"
+                        else:  # Assume next value is a new player's name
+                            current_row.append(0)  # SBPCT = 0
+
+                    if len(current_row) == 9:  # Ensure SBPCT is added
+                        current_row.append(timing)  # Add timing
+                        rows.append([discord_id] + current_row)
+                        current_row = []  # Reset for the next player
+
+            # Insert rows into the database
+            with self.connection.cursor() as cursor:
+                for row in rows:
+                    cursor.execute(
+                        """
+                        INSERT INTO rankedbatstats (
+                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT, TIMING
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        row,
+                    )
+                self.connection.commit()
+            print(f"Inserted {len(rows)} rows into the database.")
+
+
+        except Exception as e:
+            print(f"Error processing and inserting data: {e}")
+            self.connection.rollback()
+
 
 async def setup(bot):
     connection = bot.connection
