@@ -111,7 +111,7 @@ class RankedBatStats(commands.Cog):
                 except Exception as e:
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
-            await ctx.send("Data reset!")
+            await ctx.send("Data has been updated!")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
 
@@ -130,7 +130,7 @@ class RankedBatStats(commands.Cog):
                     flag = False
                     data.append(newrow)
                     continue
-                if (raw_data[i][0].isUpper() or "'" in raw_data[i]): #for 1
+                if (raw_data[i][0].isupper() or "'" in raw_data[i]): #for 1
                     newrow = []
                     newrow.append(raw_data[i])
                 elif len(newrow) == 8:
