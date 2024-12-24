@@ -122,15 +122,18 @@ class RankedBatStats(commands.Cog):
             newrow = []
             flag = False
             for i in range(len(raw_data)):
-                if flag == True: #should only be for nondash 9s
+                if flag : #should only be for nondash 9s
                     if raw_data[i] == "-":
                         newrow.append("0")
                     else:
                         newrow.append(raw_data[i])
                     flag = False
                     data.append(newrow)
-                    continue
-                if (raw_data[i][0].isupper() or "'" in raw_data[i]): #for 1
+                    if i == len(raw_data) - 1:
+                        break
+                    else:
+                        continue
+                if ((raw_data[i].isalpha() and raw_data[i][0].isupper()) or "'" in raw_data[i]): #for 1
                     newrow = []
                     newrow.append(raw_data[i])
                 elif len(newrow) == 8:
