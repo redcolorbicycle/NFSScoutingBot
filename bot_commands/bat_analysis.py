@@ -14,8 +14,8 @@ class RankedBatStats(commands.Cog):
         self.connection = connection
         self.initial_state = set()  # Cache for initial state (rows as tuples)
         self.final_state = set()    # Cache for final state (rows as tuples)
-        self.api_key = 'AZURE_API_KEY'  # Replace with your Azure API key
-        self.endpoint = 'AZURE_ENDPOINT'  # Replace with your Azure endpoint
+        self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
+        self.endpoint = os.getenv('AZURE_ENDPOINT')  # Replace with your Azure endpoint
 
     def parse_image(self, image_data):
         """
