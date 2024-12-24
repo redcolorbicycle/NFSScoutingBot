@@ -201,17 +201,22 @@ class RankedBatStats(commands.Cog):
                     avg = round(diff_H / diff_AB, 3) if diff_AB > 0 else 0
                     walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     walkrate *= 100
+                    walkrate = round(walkrate, 3)
                     obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
                     hrrate *= 100
+                    hrrate = round(hrrate, 3)
                     slg = round(diff_BASES / diff_AB, 3) if diff_AB > 0 else 0
                     ops = round(obp + slg, 3)
                     doublerate = round(diff_DOUBLES / diff_AB, 3) if diff_AB > 0 else 0
                     doublerate *= 100
+                    doublerate = round(doublerate, 3)
                     doublehitrate = round(diff_DOUBLES / diff_H, 3) if diff_H > 0 else 0
                     doublehitrate *= 100
+                    doublehitrate = round(doublehitrate, 3)
                     krate = round(diff_K/diff_AB, 3)
                     krate *= 100
+                    krate = round(krate, 3)
 
                     # Append the row
                     data.append([
