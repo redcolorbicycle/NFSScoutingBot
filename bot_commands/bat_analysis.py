@@ -216,7 +216,7 @@ class RankedBatStats(commands.Cog):
 
                 # Define column headers
                 columns = [
-                    "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP"
+                    "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
                     "HR", "HR%", "SLG", "OPS", "Double%", "Double% (Of hits)", "RBI"
                 ]
 
