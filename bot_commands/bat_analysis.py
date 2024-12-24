@@ -123,7 +123,6 @@ class RankedBatStats(commands.Cog):
             flag = False
             print(raw_data)
             for i in range(len(raw_data)):
-                print(newrow)
                 print(data)
                 if flag : #should only be for nondash 9s
                     if raw_data[i] == "-":
@@ -153,7 +152,6 @@ class RankedBatStats(commands.Cog):
                     newrow.append(raw_data[i])
 
 
-            print(raw_data)
             # Insert rows into the database
             with self.connection.cursor() as cursor:
                 for row in data:
