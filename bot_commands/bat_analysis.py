@@ -23,15 +23,54 @@ class RankedBatStats(commands.Cog):
         Extracts tabular data from an image using Azure Computer Vision API.
         """
         try:
-            headers = {'Ocp-Apim-Subscription-Key': self.api_key, 'Content-Type': 'application/octet-stream'}
-            #params = {'language': 'eng', 'detectOrientation': 'false'}
+            # Correct headers and endpoint
+            headers = {
+                'Ocp-Apim-Subscription-Key': self.api_key,
+                'Content-Type': 'application/octet-stream'
+            }
+
+            # Perform the API call
             response = requests.post(self.endpoint, headers=headers, data=image_data)
-            print(response)
-            analysis = response.json()
-            print(analysis)
+
+            # Check for 202 response
+            if response.status_code == 202:
+                # Extract the Operation-Location header
+                operation_location = response.headers["Operation-Location"]
+
+                # Poll for the result
+                import time
+                while True:
+                    result_response = requests.get(operation_location, headers=headers)
+                    if result_response.status_code != 200:
+                        print(f"Polling failed: {result_response.status_code}, {result_response.text}")
+                        return ""
+
+                    result = result_response.json()
+
+                    # Check if the operation is complete
+                    if result.get("status") == "succeeded":
+                        # Extract text from the result
+                        extracted_text = []
+                        for read_result in result["analyzeResult"]["readResults"]:
+                            for line in read_result["lines"]:
+                                extracted_text.append(line["text"])
+
+                        return "\n".join(extracted_text)
+
+                    elif result.get("status") == "failed":
+                        print("Text extraction failed.")
+                        return ""
+
+                    # Wait before polling again
+                    time.sleep(1)
+            else:
+                print(f"Error: {response.status_code}, {response.text}")
+                return ""
+
         except Exception as e:
             print(f"Error using Azure OCR API: {e}")
             return ""
+
 
 
     @commands.command()
