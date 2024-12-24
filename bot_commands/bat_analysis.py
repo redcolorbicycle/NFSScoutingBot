@@ -55,8 +55,7 @@ class RankedBatStats(commands.Cog):
                         for read_result in result["analyzeResult"]["readResults"]:
                             for line in read_result["lines"]:
                                 extracted_text.append(line["text"])
-                        
-                        print("\n".join(extracted_text))
+                        print(extracted_text)
 
                         return "\n".join(extracted_text)
 
@@ -107,14 +106,8 @@ class RankedBatStats(commands.Cog):
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
 
-                if not data.strip():
-                    await ctx.send("Error: Unable to extract data from one of the images.")
-                    return
-
-                groups = data.strip().split("\n\n")
-                if len(groups) < 9:  # Ensure there are at least 9 groups
-                    await ctx.send("Error: Insufficient data provided.")
-                    return
+                
+                
 
                 player_names = groups[0].split("\n")
                 ab = groups[1].split("\n")
