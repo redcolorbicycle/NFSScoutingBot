@@ -178,7 +178,9 @@ class RankedBatStats(commands.Cog):
                         b.SLG * b.AB - a.SLG * a.AB AS diff_BASES,
                         b.SB - a.SB AS diff_SB,
                         CASE 
-                            WHEN b.SBPCT > 0 THEN (b.SB / b.SBPCT * 100) - (a.SB / a.SBPCT * 100)
+                            WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN 
+                                ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) - 
+                                ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
                             ELSE 0
                         END AS diff_SBA,
                         CASE 
@@ -196,6 +198,7 @@ class RankedBatStats(commands.Cog):
                     """,
                     (discord_id, discord_id)
                 )
+
 
 
                 # Fetch results
