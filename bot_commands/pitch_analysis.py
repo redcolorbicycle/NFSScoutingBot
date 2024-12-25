@@ -120,7 +120,7 @@ class RankedPitchStats(commands.Cog):
         try:
             data = []
             newrow = []
-            print(raw_data)
+            
             for i in range(len(raw_data)):
                 if raw_data[i][0].isupper(): #for 1
                     newrow = [raw_data[i]]
@@ -131,12 +131,13 @@ class RankedPitchStats(commands.Cog):
                         if decimal_part == "1":
                             newrow.append(f"{integer_part}.333")
                         elif decimal_part == "2":
-                            newrow.append("{integer_part}.666")
+                            newrow.append(f"{integer_part}.666")
                         else:
                             newrow.append(raw_data[i])
                 else:
                     newrow.append(raw_data[i])
                     data.append(newrow)
+                    print(newrow)
             
             # Insert rows into the database
             with self.connection.cursor() as cursor:
@@ -159,7 +160,7 @@ class RankedPitchStats(commands.Cog):
             
 
     @commands.command()
-    async def compare_stats(self, ctx):
+    async def rankedpitch(self, ctx):
         """
         Compares 'before' and 'after' stats for each player and returns a table image with the differences.
         """
