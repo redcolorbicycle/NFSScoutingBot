@@ -10,7 +10,7 @@ import os
 from matplotlib import rcParams
 import shlex
 
-class RankedBatStats(commands.Cog):
+class RankedPitchStats(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
@@ -75,7 +75,7 @@ class RankedBatStats(commands.Cog):
 
 
     @commands.command()
-    async def batters(self, ctx):
+    async def pitchers(self, ctx):
         """
         Collect images for initial and final states, process them.
         Attach exactly 4 images to the command.
@@ -160,7 +160,7 @@ class RankedBatStats(commands.Cog):
             
 
     @commands.command()
-    async def rankedbat(self, ctx):
+    async def compare_stats(self, ctx):
         """
         Compares 'before' and 'after' stats for each player and returns a table image with the differences.
         """
@@ -348,4 +348,4 @@ class RankedBatStats(commands.Cog):
 
 async def setup(bot):
     connection = bot.connection
-    await bot.add_cog(RankedBatStats(bot, connection))
+    await bot.add_cog(RankedPitchStats(bot, connection))
