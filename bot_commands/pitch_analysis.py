@@ -236,7 +236,7 @@ class RankedPitchStats(commands.Cog):
                     diff_IP = float(diff_IP)
                     diff_SO = float(diff_SO)
 
-                    diff_AB = diff_H / diff_AVG
+                    diff_AB = diff_H / diff_AVG if diff_AVG > 0 and diff_H > 0 else 0
                     diff_AB = float(diff_AB)
                     ip = diff_IP 
                     era = diff_ERA
@@ -250,7 +250,7 @@ class RankedPitchStats(commands.Cog):
                     hrrate = round(hrrate, 1)
                     slg = diff_SLG if diff_AB > 0 else 0
                     ops = round(obp + slg, 3)
-                    krate = diff_SO / diff_AB
+                    krate = diff_SO / diff_AB if diff_AB > 0 else 0
                     krate *= 100
                     krate = round(krate, 1)
                     obp2 = diff_OBP
