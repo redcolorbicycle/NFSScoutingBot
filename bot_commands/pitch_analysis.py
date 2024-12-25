@@ -234,12 +234,11 @@ class RankedPitchStats(commands.Cog):
                     # Calculate metrics
                     diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
                     diff_IP = float(diff_IP)
-                    diff_SO = float(diff_SO)
 
                     diff_AB = diff_H / diff_AVG if diff_AVG > 0 and diff_H > 0 else 0
                     diff_AB = float(diff_AB)
                     ip = diff_IP 
-                    era = diff_ERA
+                    era = diff_ERA if diff_ERA > 0 else 0
                     avg = diff_AVG if diff_IP > 0 else 0
                     walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     walkrate *= 100
