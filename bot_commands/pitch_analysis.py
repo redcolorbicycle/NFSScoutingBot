@@ -170,16 +170,33 @@ class RankedPitchStats(commands.Cog):
                 # Execute the SQL query to fetch and calculate differences
                 cursor.execute(
                     """
-                    SELECT a.PLAYERNAME,
+                    SELECT 
+                        a.PLAYERNAME,
                         innings_converted(b.ip - a.ip) AS diff_IP,
-                        (b.era / 9 * b.ip - a.era / 9 * a.ip) / (b.ip - a.ip) * 9 as diff_ERA,
+                        CASE 
+                            WHEN b.ip - a.ip != 0 THEN 
+                                (b.era / 9 * b.ip - a.era / 9 * a.ip) / (b.ip - a.ip) * 9
+                            ELSE 0
+                        END AS diff_ERA,
                         b.h - a.h AS diff_H,
-                        b.bb - a.bb as diff_BB,
-                        (b.slg * b.h / b.avg - a.slg * a.h / a.avg)/(b.h / b.avg - a.h / a.avg) as diff_SLG,
-                        b.HR - a.HR as diff_HR,
-                        b.SO - a.SO as diff_SO,
-                        (b.h - a.h) / (b.h / b.avg - a.h / a.avg) as diff_AVG,
-                        (b.h + b.bb - a.h - a.bb) / (b.h / b.avg + b.bb - a.h / a.avg - a.bb) as diff_OBP,
+                        b.bb - a.bb AS diff_BB,
+                        CASE 
+                            WHEN b.h / b.avg - a.h / a.avg != 0 THEN 
+                                (b.slg * b.h / b.avg - a.slg * a.h / a.avg) / (b.h / b.avg - a.h / a.avg)
+                            ELSE 0
+                        END AS diff_SLG,
+                        b.HR - a.HR AS diff_HR,
+                        b.SO - a.SO AS diff_SO,
+                        CASE 
+                            WHEN b.h / b.avg - a.h / a.avg != 0 THEN 
+                                (b.h - a.h) / (b.h / b.avg - a.h / a.avg)
+                            ELSE 0
+                        END AS diff_AVG,
+                        CASE 
+                            WHEN b.h / b.avg + b.bb - a.h / a.avg - a.bb != 0 THEN 
+                                (b.h + b.bb - a.h - a.bb) / (b.h / b.avg + b.bb - a.h / a.avg - a.bb)
+                            ELSE 0
+                        END AS diff_OBP,
                         b.ip - a.ip AS actualinningdiff
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
@@ -188,6 +205,7 @@ class RankedPitchStats(commands.Cog):
                     AND b.DISCORDID = %s
                     AND a.TIMING = 'before'
                     AND b.TIMING = 'after';
+
 
                     """,
                     (discord_id, discord_id)
