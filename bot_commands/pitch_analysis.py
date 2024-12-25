@@ -235,9 +235,9 @@ class RankedPitchStats(commands.Cog):
                     diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
                     diff_IP = float(diff_IP)
                     diff_SO = float(diff_SO)
-                    diff_AB = float(diff_AB)
 
                     diff_AB = diff_H / diff_AVG
+                    diff_AB = float(diff_AB)
                     ip = diff_IP 
                     era = diff_ERA
                     avg = diff_AVG if diff_IP > 0 else 0
