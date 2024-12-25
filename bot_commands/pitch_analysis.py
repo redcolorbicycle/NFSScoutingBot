@@ -171,7 +171,7 @@ class RankedPitchStats(commands.Cog):
                 cursor.execute(
                     """
                     SELECT a.PLAYERNAME,
-                        innings_coverted(b.ip - a.ip) AS diff_IP,
+                        innings_converted(b.ip - a.ip) AS diff_IP,
                         (b.era / 9 * b.ip - a.era / 9 * a.ip) / (b.ip - a.ip) * 9 as diff_ERA,
                         b.h - a.h AS diff_H,
                         b.bb - a.bb as diff_BB,
