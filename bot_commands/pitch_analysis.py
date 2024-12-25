@@ -129,9 +129,9 @@ class RankedPitchStats(commands.Cog):
                     if "." in raw_data[i]:
                         integer_part, decimal_part = raw_data[i].split(".")
                         if decimal_part == "1":
-                            newrow.append(f"{integer_part}.333")
+                            newrow.append(f"{integer_part}.33")
                         elif decimal_part == "2":
-                            newrow.append(f"{integer_part}.666")
+                            newrow.append(f"{integer_part}.66")
                         else:
                             newrow.append(raw_data[i])
                 else:
