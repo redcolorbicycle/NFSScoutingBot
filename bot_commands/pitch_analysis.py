@@ -232,6 +232,11 @@ class RankedPitchStats(commands.Cog):
 
 
                     # Calculate metrics
+                    diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
+                    diff_IP = float(diff_IP)
+                    diff_SO = float(diff_SO)
+                    diff_AB = float(diff_AB)
+
                     diff_AB = diff_H / diff_AVG
                     ip = diff_IP 
                     era = diff_ERA
