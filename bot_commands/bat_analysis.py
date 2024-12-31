@@ -236,7 +236,7 @@ class RankedBatStats(commands.Cog):
                     sbrate = round(diff_SB / diff_SBA, 3) if (diff_SBA > 0 and diff_SB > 0) else 0
                     sbrate *= 100
                     sbrate = round(sbrate, 1)
-                    krate = round(diff_K/diff_AB, 3)
+                    krate = round(diff_K/diff_AB, 3) if diff_AB > 0 else 0
                     krate *= 100
                     krate = round(krate, 1)
 
