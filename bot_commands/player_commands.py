@@ -39,7 +39,7 @@ class PlayerCommands(commands.Cog):
                 """
                 SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
                        SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                       Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
+                       Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats
                 FROM Player
                 WHERE Name = %s
                 """,
@@ -52,7 +52,7 @@ class PlayerCommands(commands.Cog):
                 (
                     name, club, sp1_name, sp1_skills, sp2_name, sp2_skills,
                     sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                    nerf, batting_skill, pr, last_updated, nerf_updated, team_name
+                    nerf, pr, last_updated, nerf_updated, team_name, charbats, toolbats
                 ) = player
 
                 details = (
@@ -64,9 +64,10 @@ class PlayerCommands(commands.Cog):
                     f"**SP4**: {sp4_name} ({sp4_skills})\n"
                     f"**SP5**: {sp5_name} ({sp5_skills})\n"
                     f"**Nerf**: {nerf}\n"
-                    f"**Most Common Batting Skill**: {batting_skill}\n"
                     f"**Last Updated**: {last_updated}\n"
                     f"**Nerf Last Updated**: {nerf_updated}\n"
+                    f"**Charisma Bats**: {charbats}\n"
+                    f"**5 Tool Bats**: {toolbats}\n"
                 )
 
                 await ctx.send(details)
@@ -100,9 +101,10 @@ class PlayerCommands(commands.Cog):
                 "sp5name": "",
                 "sp5skills": "",
                 "nerf": "",
-                "battingskill": "",
                 "pr": 9999,
                 "teamdeck": "",
+                "charbats": 0,
+                "toolbats": 0,
             }
 
             # Parse arguments with shlex
@@ -120,6 +122,8 @@ class PlayerCommands(commands.Cog):
 
             # Validate PR
             defaults["pr"] = int(defaults["pr"])
+            defaults["charbats"] = int(defaults["charbats"])
+            defaults["toolbats"] = int(defaults["toolbats"])
             cursor = self.connection.cursor()
 
             # Check if the player already exists
@@ -136,9 +140,9 @@ class PlayerCommands(commands.Cog):
                         Name, Club_Name, SP1_Name, SP1_Skills,
                         SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
                         SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                        Nerf, Most_Common_Batting_Skill, PR, last_updated, nerf_updated, team_name
+                        Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s, %s, %s)
                     """,
                     (
                         name,
@@ -154,9 +158,10 @@ class PlayerCommands(commands.Cog):
                         defaults["sp5name"],
                         defaults["sp5skills"],
                         defaults["nerf"],
-                        defaults["battingskill"],
                         defaults["pr"],
                         defaults["teamdeck"],
+                        defaults["charbats"],
+                        defaults["toolbats"],
                     ),
                 )
                 self.connection.commit()
@@ -338,41 +343,6 @@ class PlayerCommands(commands.Cog):
 
 
     @commands.command()
-    async def updatebatskill(self, ctx, player_name: str, new_batting_skill: str):
-        """
-        Update the most common batting skill for a player.
-        Args:
-            player_name: The name of the player whose batting skill to update.
-            new_batting_skill: The new most common batting skill.
-        """
-        player_name = player_name.lower()
-        try:
-            with self.connection.cursor() as cursor:
-                # Check if the player exists
-                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
-                    await ctx.send(f"No player found with the name '{player_name}'.")
-                    return
-
-                # Update the batting skill for the player
-                cursor.execute(
-                    """
-                    UPDATE Player
-                    SET Most_Common_Batting_Skill = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
-                    (new_batting_skill, player_name),
-                )
-                self.connection.commit()
-                await self.scoutplayer(ctx, player_name)
-        except Exception as e:
-            self.connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
-
-
-    @commands.command()
     async def updateteamdeck(self, ctx, player_name: str, new_team_name: str):
         """
         Change the team name of a player.
@@ -498,7 +468,6 @@ class PlayerCommands(commands.Cog):
             column_mapping = {
                 "club": "club_name",
                 "nerf": "nerf",
-                "bat": "most_common_batting_skill",
                 "pr": "pr",
                 "teamdeck": "team_name",
                 "sp1n": "sp1_name",
@@ -511,6 +480,8 @@ class PlayerCommands(commands.Cog):
                 "sp4s": "sp4_skills",
                 "sp5n": "sp5_name",
                 "sp5s": "sp5_skills",
+                "char": "charbats",
+                "tool": "toolbats",
             }
 
             # Parse the key-value arguments using shlex.split

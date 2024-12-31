@@ -177,7 +177,7 @@ class ClubCommands(commands.Cog):
                 cursor.execute(
                     """
                     SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated
+                    sp5_skills, Nerf, PR, last_updated, charbats, toolbats
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -201,8 +201,9 @@ class ClubCommands(commands.Cog):
                         f"{player[9]} ({player[10]})",  # SP5 Info
                         player[11],  # Nerf
                         player[12],  # PR
-                        player[13],  # Batting Skill
-                        player[14],  # Last Updated
+                        player[14],  # Char
+                        player[15],  # Tool
+                        player[13],  # Last Updated
                     )
                     for player in players
                 ]
@@ -210,7 +211,7 @@ class ClubCommands(commands.Cog):
                 # Define new column headers
                 columns = [
                     "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
-                    "Nerf", "PR", "Batting Skill", "Last Updated"
+                    "Nerf", "PR", "Char", "Tool", "Last Updated"
                 ]
 
                 # Create a DataFrame from the processed data
@@ -288,7 +289,7 @@ class ClubCommands(commands.Cog):
                 # Fetch player details for the club
                 cursor.execute(
                     """
-                    SELECT Name, Nerf, PR, Most_Common_Batting_Skill, last_updated, nerf_updated, team_name
+                    SELECT Name, Nerf, PR, charbats, toolbats, last_updated, nerf_updated, team_name
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -301,7 +302,7 @@ class ClubCommands(commands.Cog):
                     return
 
                 # Create a DataFrame from the fetched data
-                columns = ["Name", "Nerf", "PR", "Batting Skill", "Last Updated", "Nerf Updated",
+                columns = ["Name", "Nerf", "PR", "Char", "Tool", "Last Updated", "Nerf Updated",
                         "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
                 df = df.sort_values(by = "PR")
