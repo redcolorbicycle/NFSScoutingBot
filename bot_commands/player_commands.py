@@ -305,6 +305,76 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def updatechar(self, ctx, player_name: str, new_char: int):
+        """
+        Update a player's char bats.
+        Args:
+            player_name: The name of the player whose PR to update.
+            new_char: The new number of char bats
+        """
+        player_name = player_name.lower()
+        try:
+            with self.connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Update the PR value for the player
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET charbats = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_char, player_name),
+                )
+                self.connection.commit()
+                await self.scoutplayer(ctx, player_name)
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+    @commands.command()
+    async def updatetool(self, ctx, player_name: str, new_tool: int):
+        """
+        Update a player's tool bats.
+        Args:
+            player_name: The name of the player whose PR to update.
+            new_tool: The new number of tool bats
+        """
+        player_name = player_name.lower()
+        try:
+            with self.connection.cursor() as cursor:
+                # Check if the player exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
+                player = cursor.fetchone()
+
+                if not player:
+                    await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                # Update the PR value for the player
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET toolbats = %s, last_updated = CURRENT_DATE
+                    WHERE Name = %s
+                    """,
+                    (new_tool, player_name),
+                )
+                self.connection.commit()
+                await self.scoutplayer(ctx, player_name)
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+    
+    
 
     @commands.command()
     async def updateclub(self, ctx, player_name: str, new_club: str):
