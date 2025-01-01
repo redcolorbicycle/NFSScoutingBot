@@ -380,6 +380,7 @@ class PlayerCommands(commands.Cog):
     async def updateclub(self, ctx, player_name: str, new_club: str):
         """Change a player's club and update both Player and Club tables."""
         player_name = player_name.lower()
+        new_club = new_club.lower()
         try:
             with self.connection.cursor() as cursor:
                 # Check if the player exists
