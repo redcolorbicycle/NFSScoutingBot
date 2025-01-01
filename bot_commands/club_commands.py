@@ -448,7 +448,7 @@ class ClubCommands(commands.Cog):
     @commands.command()
     async def scoutclubtrial(self, ctx, club_name: str):
         """
-        Fetch player details for a specific club and return them as a paginated table image.
+        Fetch player details for a specific club and return them as a paginated table image
         """
         club_name = club_name.lower()
         rows_per_page = 30  # Number of rows per page
