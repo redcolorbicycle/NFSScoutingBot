@@ -638,6 +638,22 @@ class PlayerCommands(commands.Cog):
         df["PR"].fillna(9999, inplace=True)
         df["charbats"].fillna(0, inplace=True)
         df["toolbats"].fillna(0, inplace=True)
+        df.fillna({
+                        "SP1_Name": "",
+                        "SP1_Skills": "",
+                        "SP2_Name": "",
+                        "SP2_Skills": "",
+                        "SP3_Name": "",
+                        "SP3_Skills": "",
+                        "SP4_Name": "",
+                        "SP4_Skills": "",
+                        "SP5_Name": "",
+                        "SP5_Skills": "",
+                        "Team_Name": "",
+                    }, inplace=True)
+        df["charbats"] = df["charbats"].astype(int)
+        df["toolbats"] = df["toolbats"].astype(int)
+
 
         try:
             cursor = self.connection.cursor()
