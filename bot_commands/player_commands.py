@@ -636,8 +636,8 @@ class PlayerCommands(commands.Cog):
         df["Club_Name"].fillna("no club", inplace=True)
         df["Nerf"].fillna("", inplace=True)
         df["PR"].fillna(9999, inplace=True)
-        df["charbats"].fillna(-1, inplace=True)
-        df["toolbats"].fillna(-1, inplace=True)
+        df["charbats"].fillna(0, inplace=True)
+        df["toolbats"].fillna(0, inplace=True)
 
         DATABASE_URL = os.getenv("DATABASE_URL")
         
