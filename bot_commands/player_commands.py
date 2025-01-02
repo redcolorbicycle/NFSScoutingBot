@@ -656,69 +656,58 @@ class PlayerCommands(commands.Cog):
         df["charbats"] = df["charbats"].astype(int)
         df["toolbats"] = df["toolbats"].astype(int)
 
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        result = urlparse(DATABASE_URL)
+        connection = psycopg2.connect(
+            database=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port,
+        )
 
         try:
-            cursor = self.connection.cursor()
-
-            # Iterate through rows and insert into the database
-            for _, row in df.iterrows():
-                try:
-                    club_name = row["Club_Name"].lower()
-
-                    # Check if the Club_Name exists
-                    cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                    club_exists = cursor.fetchone()
-
-                    # If the club doesn't exist, create it
-                    if not club_exists:
-                        cursor.execute(
-                            """
-                            INSERT INTO Club (Club_Name)
-                            VALUES (%s)
-                            """,
-                            (club_name,)
-                        )
-
-                    # Insert the player into the Player table
+            with connection.cursor() as cursor:
+                # Process clubs first to avoid duplication
+                clubs = df["Club_Name"].unique()
+                for club_name in clubs:
                     cursor.execute(
-                        """
-                        INSERT INTO Player (
-                            Name, Club_Name,
-                            SP1_Name, SP1_Skills,
-                            SP2_Name, SP2_Skills,
-                            SP3_Name, SP3_Skills,
-                            SP4_Name, SP4_Skills,
-                            SP5_Name, SP5_Skills,
-                            Nerf, PR, team_name, charbats, toolbats, last_updated
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
-                        """,
-                        (
-                            row["Name"],
-                            club_name,
-                            row.get("SP1_Name", ""), row.get("SP1_Skills", ""),
-                            row.get("SP2_Name", ""), row.get("SP2_Skills", ""),
-                            row.get("SP3_Name", ""), row.get("SP3_Skills", ""),
-                            row.get("SP4_Name", ""), row.get("SP4_Skills", ""),
-                            row.get("SP5_Name", ""), row.get("SP5_Skills", ""),
-                            row["Nerf"],
-                            row["PR"],
-                            row.get("Team_Name", ""),
-                            row.get("charbats", ""),
-                            row.get("toolbats", ""),
-                        )
+                        "INSERT INTO Club (Club_Name) VALUES (%s) ON CONFLICT (Club_Name) DO NOTHING",
+                        (club_name,)
                     )
-                except Exception as row_error:
-                    print(f"Error processing row: {row.to_dict()} - {row_error}")
 
-            self.connection.commit()  # Commit after processing all rows
-        except Exception as db_error:
-            self.connection.rollback()  # Rollback on any database error
-            raise db_error  # Rethrow for higher-level handling
+                # Prepare batch insert for players
+                player_data = [
+                    (
+                        row["Name"], row["Club_Name"], row["SP1_name"], row["SP1_skills"],
+                        row["SP2_name"], row["SP2_skills"], row["SP3_name"], row["SP3_skills"],
+                        row["SP4_name"], row["SP4_skills"], row["SP5_name"], row["SP5_skills"],
+                        row["Nerf"], row["PR"], row["Team_Name"], row["charbats"], row["toolbats"]
+                    )
+                    for _, row in df.iterrows()
+                ]
+
+                # Batch insert players
+                execute_batch(
+                    cursor,
+                    """
+                    INSERT INTO Player (
+                        Name, Club_Name, SP1_Name, SP1_Skills,
+                        SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
+                        SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
+                        Nerf, PR, team_name, charbats, toolbats, last_updated
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                    ON CONFLICT (Name) DO NOTHING
+                    """,
+                    player_data
+                )
+
+            connection.commit()  # Commit after processing all rows
+        except Exception as e:
+            connection.rollback()  # Rollback on any database error
+            raise e
         finally:
-            cursor.close()
-            self.connection.close()  # Ensure proper cleanup
-                    
-
+            connection.close()  # Ensure proper cleanup
 
 
     @commands.command()
