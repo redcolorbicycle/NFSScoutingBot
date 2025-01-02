@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import shlex
+import discord
 
 class PlayerCommands(commands.Cog):
     def __init__(self, bot, connection):
@@ -25,10 +26,22 @@ class PlayerCommands(commands.Cog):
         # Check if the user has at least one of the allowed roles
         user_roles = [role.name for role in ctx.author.roles]
         return any(role in allowed_roles for role in user_roles)
+    
 
+
+    @commands.command()
+    async def excel(ctx):
+        # Path to your preformatted Excel file
+        file_path = "uploadtemplate.xlsx"
         
+        # Send the file to the user
+        try:
+            await ctx.send(file=discord.File(file_path, filename="uploadtemplate.xlsx"))
+        except Exception as e:
+            await ctx.send(f"Error: Could not send the file. {e}")
 
 
+    
     @commands.command()
     async def scoutplayer(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
