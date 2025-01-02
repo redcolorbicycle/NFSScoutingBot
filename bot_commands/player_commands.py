@@ -623,7 +623,7 @@ class PlayerCommands(commands.Cog):
 
 
 
-    def upload_to_database(self, file_stream):
+    async def upload_to_database(self, file_stream):
         # Read the Excel file from the file-like object
         df = pd.read_excel(file_stream, engine="openpyxl")
 
@@ -701,9 +701,12 @@ class PlayerCommands(commands.Cog):
                         row.get("toolbats", ""),
                     )
                 )
+                cursor.close()
                 self.connection.commit()
-            except Exception as e:
                 self.connection.close()
+            except Exception as e:
+                print(f"Error: {e}")
+                
                 
 
 
