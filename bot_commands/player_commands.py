@@ -624,7 +624,7 @@ class PlayerCommands(commands.Cog):
 
 
     def upload_to_database(self, file_stream):
-        # Read the Excel file from the file-like object
+        # Read the Excel file
         df = pd.read_excel(file_stream, engine="openpyxl")
 
         # Format the names properly
@@ -632,82 +632,74 @@ class PlayerCommands(commands.Cog):
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
         df["Club_Name"] = df["Club_Name"].str.lower()
 
-        # Fill empty Club_Name values with "no club"
+        # Fill empty values
         df["Club_Name"].fillna("no club", inplace=True)
         df["Nerf"].fillna("", inplace=True)
         df["PR"].fillna(9999, inplace=True)
         df["charbats"].fillna(0, inplace=True)
         df["toolbats"].fillna(0, inplace=True)
 
-        DATABASE_URL = os.getenv("DATABASE_URL")
-        
-        cursor = self.connection.cursor()
+        try:
+            cursor = self.connection.cursor()
 
-        # Iterate through the rows and insert into the database
-        for _, row in df.iterrows():
-            try:
-                '''
-                # Check if the player already exists
-                cursor.execute("SELECT * FROM Player WHERE Name = %s", (row["Name"].lower(),))
-                player_exists = cursor.fetchone()
+            # Iterate through rows and insert into the database
+            for _, row in df.iterrows():
+                try:
+                    club_name = row["Club_Name"].lower()
 
-                # If the player exists, skip this row
-                if player_exists:
-                    continue
-                '''
-                
-                club_name = row["Club_Name"].lower() 
+                    # Check if the Club_Name exists
+                    cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+                    club_exists = cursor.fetchone()
 
-                # Check if the Club_Name exists
-                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                club_exists = cursor.fetchone()
+                    # If the club doesn't exist, create it
+                    if not club_exists:
+                        cursor.execute(
+                            """
+                            INSERT INTO Club (Club_Name)
+                            VALUES (%s)
+                            """,
+                            (club_name,)
+                        )
 
-                # If the club doesn't exist, create it
-                if not club_exists:
+                    # Insert the player into the Player table
                     cursor.execute(
                         """
-                        INSERT INTO Club (Club_Name)
-                        VALUES (%s)
+                        INSERT INTO Player (
+                            Name, Club_Name,
+                            SP1_Name, SP1_Skills,
+                            SP2_Name, SP2_Skills,
+                            SP3_Name, SP3_Skills,
+                            SP4_Name, SP4_Skills,
+                            SP5_Name, SP5_Skills,
+                            Nerf, PR, team_name, charbats, toolbats, last_updated
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                         """,
-                        (club_name,)
+                        (
+                            row["Name"],
+                            club_name,
+                            row.get("SP1_Name", ""), row.get("SP1_Skills", ""),
+                            row.get("SP2_Name", ""), row.get("SP2_Skills", ""),
+                            row.get("SP3_Name", ""), row.get("SP3_Skills", ""),
+                            row.get("SP4_Name", ""), row.get("SP4_Skills", ""),
+                            row.get("SP5_Name", ""), row.get("SP5_Skills", ""),
+                            row["Nerf"],
+                            row["PR"],
+                            row.get("Team_Name", ""),
+                            row.get("charbats", ""),
+                            row.get("toolbats", ""),
+                        )
                     )
+                except Exception as row_error:
+                    print(f"Error processing row: {row.to_dict()} - {row_error}")
 
-                # Insert the player into the Player table
-                cursor.execute(
-                    """
-                    INSERT INTO Player (
-                        Name, Club_Name,
-                        SP1_Name, SP1_Skills,
-                        SP2_Name, SP2_Skills,
-                        SP3_Name, SP3_Skills,
-                        SP4_Name, SP4_Skills,
-                        SP5_Name, SP5_Skills,
-                        Nerf, PR, team_name, charbats, toolbats, last_updated
-
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
-                    """,
-                    (
-                        row["Name"].lower(),
-                        club_name,
-                        row.get("SP1_Name", ""), row.get("SP1_Skills", ""),
-                        row.get("SP2_Name", ""), row.get("SP2_Skills", ""),
-                        row.get("SP3_Name", ""), row.get("SP3_Skills", ""),
-                        row.get("SP4_Name", ""), row.get("SP4_Skills", ""),
-                        row.get("SP5_Name", ""), row.get("SP5_Skills", ""),
-                        row["Nerf"],
-                        row["PR"],
-                        row.get("Team_Name", ""),
-                        row.get("charbats", ""),
-                        row.get("toolbats", ""),
-                    )
-                )
-                cursor.close()
-                self.connection.commit()
-                self.connection.close()
-            except Exception as e:
-                print(f"Error: {e}")
-                
-                
+            self.connection.commit()  # Commit after processing all rows
+        except Exception as db_error:
+            self.connection.rollback()  # Rollback on any database error
+            raise db_error  # Rethrow for higher-level handling
+        finally:
+            cursor.close()
+            self.connection.close()  # Ensure proper cleanup
+                    
 
 
 
