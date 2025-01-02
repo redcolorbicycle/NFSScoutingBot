@@ -30,7 +30,7 @@ class PlayerCommands(commands.Cog):
 
 
     @commands.command()
-    async def excel(ctx):
+    async def excel(self, ctx):
         # Path to your preformatted Excel file
         file_path = "uploadtemplate.xlsx"
         
