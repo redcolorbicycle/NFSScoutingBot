@@ -623,7 +623,7 @@ class PlayerCommands(commands.Cog):
 
 
 
-    async def upload_to_database(self, file_stream):
+    def upload_to_database(self, file_stream):
         # Read the Excel file from the file-like object
         df = pd.read_excel(file_stream, engine="openpyxl")
 
