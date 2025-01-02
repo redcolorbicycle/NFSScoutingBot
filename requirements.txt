@@ -5,3 +5,4 @@ matplotlib
 requests
 msrest
 azure-cognitiveservices-vision-computervision
+openpxyl
