@@ -689,7 +689,7 @@ class PlayerCommands(commands.Cog):
                             SP4_Name, SP4_Skills,
                             SP5_Name, SP5_Skills,
                             Nerf, PR, team_name, charbats, toolbats, last_updated
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                         """,
                         (
                             row["Name"],
