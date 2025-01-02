@@ -4,11 +4,17 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import shlex
 import discord
+import pandas as pd
+import psycopg2
+from urllib.parse import urlparse
+import os
+
 
 class PlayerCommands(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
+
 
     async def cog_check(self, ctx):
         """
@@ -28,7 +34,6 @@ class PlayerCommands(commands.Cog):
         return any(role in allowed_roles for role in user_roles)
     
 
-
     @commands.command()
     async def excel(self, ctx):
         # Path to your preformatted Excel file
@@ -41,7 +46,6 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"Error: Could not send the file. {e}")
 
 
-    
     @commands.command()
     async def scoutplayer(self, ctx, player_name: str):
         """Fetch all details of a specific player."""
@@ -617,6 +621,114 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
+
+    def upload_to_database(self, file_stream):
+        # Read the Excel file from the file-like object
+        df = pd.read_excel(file_stream, engine="openpyxl")
+
+        # Format the names properly
+        df["Name"] = df["Name"].astype(str)
+        df["Name"] = df["Name"].str.lower().str.replace(" ", "")
+        df["Club_Name"] = df["Club_Name"].str.lower()
+
+        # Fill empty Club_Name values with "no club"
+        df["Club_Name"].fillna("no club", inplace=True)
+        df["Nerf"].fillna("", inplace=True)
+        df["PR"].fillna(9999, inplace=True)
+        df["charbats"].fillna(-1, inplace=True)
+        df["toolbats"].fillna(-1, inplace=True)
+
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        
+        cursor = self.connection.cursor()
+
+        # Iterate through the rows and insert into the database
+        for _, row in df.iterrows():
+            try:
+                '''
+                # Check if the player already exists
+                cursor.execute("SELECT * FROM Player WHERE Name = %s", (row["Name"].lower(),))
+                player_exists = cursor.fetchone()
+
+                # If the player exists, skip this row
+                if player_exists:
+                    continue
+                '''
+                
+                club_name = row["Club_Name"].lower() 
+
+                # Check if the Club_Name exists
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+                club_exists = cursor.fetchone()
+
+                # If the club doesn't exist, create it
+                if not club_exists:
+                    cursor.execute(
+                        """
+                        INSERT INTO Club (Club_Name)
+                        VALUES (%s)
+                        """,
+                        (club_name,)
+                    )
+
+                # Insert the player into the Player table
+                cursor.execute(
+                    """
+                    INSERT INTO Player (
+                        Name, Club_Name,
+                        SP1_Name, SP1_Skills,
+                        SP2_Name, SP2_Skills,
+                        SP3_Name, SP3_Skills,
+                        SP4_Name, SP4_Skills,
+                        SP5_Name, SP5_Skills,
+                        Nerf, PR, team_name, charbats, toolbats, last_updated
+
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                    """,
+                    (
+                        row["Name"].lower(),
+                        club_name,
+                        row.get("SP1_Name", ""), row.get("SP1_Skills", ""),
+                        row.get("SP2_Name", ""), row.get("SP2_Skills", ""),
+                        row.get("SP3_Name", ""), row.get("SP3_Skills", ""),
+                        row.get("SP4_Name", ""), row.get("SP4_Skills", ""),
+                        row.get("SP5_Name", ""), row.get("SP5_Skills", ""),
+                        row["Nerf"],
+                        row["PR"],
+                        row.get("Team_Name", ""),
+                        row.get("charbats", ""),
+                        row.get("toolbats", ""),
+                    )
+                )
+                self.connection.commit()
+            except Exception as e:
+                self.connection.close()
+                
+
+
+
+    @commands.command()
+    async def upload(self, ctx):
+        # Check if a file is attached
+        if len(ctx.message.attachments) == 0:
+            await ctx.send("Please attach an Excel file with the command!")
+            return
+
+        # Get the attached file
+        attachment = ctx.message.attachments[0]
+        
+        # Download the file into a BytesIO object
+        file_stream = BytesIO()
+        await attachment.save(file_stream)
+        file_stream.seek(0)
+
+        try:
+            # Pass the file stream to the upload_to_database function
+            self.upload_to_database(file_stream)
+            await ctx.send("Data successfully uploaded to the database!")
+        except Exception as e:
+            await ctx.send(f"Error: {e}")
 
 
 
