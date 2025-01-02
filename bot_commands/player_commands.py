@@ -8,6 +8,7 @@ import pandas as pd
 import psycopg2
 from urllib.parse import urlparse
 import os
+import asyncio
 
 
 class PlayerCommands(commands.Cog):
@@ -737,7 +738,7 @@ class PlayerCommands(commands.Cog):
 
         try:
             # Pass the file stream to the upload_to_database function
-            self.upload_to_database(file_stream)
+            await asyncio.to_thread(self.upload_to_database, file_stream)
             await ctx.send("Data successfully uploaded to the database!")
         except Exception as e:
             await ctx.send(f"Error: {e}")
