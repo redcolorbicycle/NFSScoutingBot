@@ -176,6 +176,18 @@ class MiscCommands(commands.Cog):
             except Exception as e:
                 await message.channel.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def sunbot(self, ctx):
+        """Sends a list of everyday commands."""
+        message = (
+            "**Everyday commands for everybody:**\n"
+            "`!cmboost` - Pulls up the contact master table\n"
+            "`!fivetoolboost` - Pulls up the five tool table\n"
+            "`!fivetoolcalculator conbase congi powbase powgi eyebase eyegi spdbase spdgi fldbase fldgi fivetoolgoal supremeornot`\n"
+            "Example: `!fivetoolcalculator 79 19 79 19 78 17 60 12 50 8 100 yes`\n"
+        )
+        await ctx.send(message)
+
 
 
 
