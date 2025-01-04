@@ -691,9 +691,10 @@ class PlayerCommands(commands.Cog):
                         "SP3_name", "SP3_skills", "SP4_name", "SP4_skills",
                         "SP5_name", "SP5_skills", "Nerf", "PR", "Team_Name", "charbats", "toolbats"
                     ]:
-                        if pd.notna(row[column]):
+                        value = row[column]
+                        if pd.notna(value):
                             update_fields.append(f"{column} = %s")
-                            update_values.append(row[column])
+                            update_values.append(value)
                     if not update_fields:
                         update_fields.append("last_updated = CURRENT_DATE")  # Fallback to a valid no-op update
 
