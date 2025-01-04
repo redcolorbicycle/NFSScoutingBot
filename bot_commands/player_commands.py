@@ -624,7 +624,7 @@ class PlayerCommands(commands.Cog):
 
 
 
-    def upload_to_database(self, file_stream):
+    async def upload_to_database(self, file_stream):
         # Read the Excel file
         df = pd.read_excel(file_stream, engine="openpyxl")
 
@@ -757,7 +757,7 @@ class PlayerCommands(commands.Cog):
 
         try:
             # Pass the file stream to the upload_to_database function
-            await asyncio.to_thread(self.upload_to_database, file_stream)
+            await self.upload_to_database(file_stream)
             await ctx.send("Data successfully uploaded to the database!")
         except Exception as e:
             await ctx.send(f"Error: {e}")
