@@ -633,8 +633,9 @@ class PlayerCommands(commands.Cog):
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
         df["Club_Name"] = df["Club_Name"].fillna("no club")
         df["Club_Name"] = df["Club_Name"].str.lower()
-        if df["Club_Name"] != "no club":
-            df["Club Name"] = df["Club_Name"].replace(" ", "")
+        # Remove spaces in Club_Name only for rows where Club_Name is not "no club"
+        df.loc[df["Club_Name"] != "no club", "Club_Name"] = df["Club_Name"].str.replace(" ", "", regex=False)
+
 
 
 
