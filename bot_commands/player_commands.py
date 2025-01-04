@@ -633,12 +633,14 @@ class PlayerCommands(commands.Cog):
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
         df["Club_Name"] = df["Club_Name"].str.lower().replace(" ", "")
 
-        # Fill empty values
-        df["Club_Name"].fillna("no club", inplace=True)
-        df["Nerf"].fillna("", inplace=True)
-        df["PR"].fillna(9999, inplace=True)
-        df["charbats"].fillna(0, inplace=True)
-        df["toolbats"].fillna(0, inplace=True)
+        # Fill empty values for required fields
+        df["Club_Name"] = df["Club_Name"].fillna("no club")
+        df["Nerf"] = df["Nerf"].fillna("")
+        df["PR"] = df["PR"].fillna(9999)
+        df["charbats"] = df["charbats"].fillna(0)
+        df["toolbats"] = df["toolbats"].fillna(0)
+
+        # Optional columns filled with defaults
         df.fillna({
             "SP1_name": "",
             "SP1_skills": "",
@@ -655,7 +657,6 @@ class PlayerCommands(commands.Cog):
 
         df["charbats"] = df["charbats"].astype(int)
         df["toolbats"] = df["toolbats"].astype(int)
-
 
         try:
             cursor = self.connection.cursor()
@@ -679,52 +680,37 @@ class PlayerCommands(commands.Cog):
                             (club_name,)
                         )
 
-                    # Upsert (insert or update) the player into the Player table
+                    # Build the UPDATE part dynamically for non-blank values
+                    update_fields = []
+                    update_values = []
+
+                    for column in [
+                        "Club_Name", "SP1_Name", "SP1_Skills", "SP2_Name", "SP2_Skills",
+                        "SP3_Name", "SP3_Skills", "SP4_Name", "SP4_Skills",
+                        "SP5_Name", "SP5_Skills", "Nerf", "PR", "team_name", "charbats", "toolbats"
+                    ]:
+                        if pd.notna(row[column]):
+                            update_fields.append(f"{column} = %s")
+                            update_values.append(row[column])
+
+                    # Insert or Update the player in the Player table
                     cursor.execute(
-                        """
+                        f"""
                         INSERT INTO Player (
                             Name, Club_Name,
-                            SP1_Name, SP1_Skills,
-                            SP2_Name, SP2_Skills,
-                            SP3_Name, SP3_Skills,
-                            SP4_Name, SP4_Skills,
-                            SP5_Name, SP5_Skills,
-                            Nerf, PR, team_name, charbats, toolbats, last_updated
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                            SP1_Name, SP1_Skills, SP2_Name, SP2_Skills,
+                            SP3_Name, SP3_Skills, SP4_Name, SP4_Skills,
+                            SP5_Name, SP5_Skills, Nerf, PR, team_name,
+                            charbats, toolbats, last_updated
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                         ON CONFLICT (Name) DO UPDATE SET
-                            Club_Name = EXCLUDED.Club_Name,
-                            SP1_Name = EXCLUDED.SP1_Name,
-                            SP1_Skills = EXCLUDED.SP1_Skills,
-                            SP2_Name = EXCLUDED.SP2_Name,
-                            SP2_Skills = EXCLUDED.SP2_Skills,
-                            SP3_Name = EXCLUDED.SP3_Name,
-                            SP3_Skills = EXCLUDED.SP3_Skills,
-                            SP4_Name = EXCLUDED.SP4_Name,
-                            SP4_Skills = EXCLUDED.SP4_Skills,
-                            SP5_Name = EXCLUDED.SP5_Name,
-                            SP5_Skills = EXCLUDED.SP5_Skills,
-                            Nerf = EXCLUDED.Nerf,
-                            PR = EXCLUDED.PR,
-                            team_name = EXCLUDED.team_name,
-                            charbats = EXCLUDED.charbats,
-                            toolbats = EXCLUDED.toolbats,
+                            {", ".join(update_fields)},
                             last_updated = CURRENT_DATE
                         """,
-                        (
-                            row["Name"],
-                            club_name,
-                            row.get("SP1_Name", ""), row.get("SP1_Skills", ""),
-                            row.get("SP2_Name", ""), row.get("SP2_Skills", ""),
-                            row.get("SP3_Name", ""), row.get("SP3_Skills", ""),
-                            row.get("SP4_Name", ""), row.get("SP4_Skills", ""),
-                            row.get("SP5_Name", ""), row.get("SP5_Skills", ""),
-                            row["Nerf"],
-                            row["PR"],
-                            row.get("Team_Name", ""),
-                            row.get("charbats", ""),
-                            row.get("toolbats", ""),
-                        )
+                        [row["Name"], club_name] + update_values
                     )
+
                 except Exception as row_error:
                     print(f"Error processing row: {row.to_dict()} - {row_error}")
 
@@ -736,10 +722,6 @@ class PlayerCommands(commands.Cog):
             cursor.close()
 
 
-                    
-
-
-
     @commands.command()
     async def upload(self, ctx):
         # Check if a file is attached
@@ -747,10 +729,11 @@ class PlayerCommands(commands.Cog):
             await ctx.send("Please attach an Excel file with the command!")
             return
 
+        # Notify that the upload is starting
+        message = await ctx.send("Data is uploading. Please do not interrupt.")
+
         # Get the attached file
         attachment = ctx.message.attachments[0]
-        
-        # Download the file into a BytesIO object
         file_stream = BytesIO()
         await attachment.save(file_stream)
         file_stream.seek(0)
@@ -758,9 +741,11 @@ class PlayerCommands(commands.Cog):
         try:
             # Pass the file stream to the upload_to_database function
             await self.upload_to_database(file_stream)
-            await ctx.send("Data successfully uploaded to the database!")
+
+            # Notify completion
+            await message.edit(content="Data successfully uploaded to the database! You can scout now.")
         except Exception as e:
-            await ctx.send(f"Error: {e}")
+            await message.edit(content=f"Error: {e}")
 
 
 
