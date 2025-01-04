@@ -631,14 +631,12 @@ class PlayerCommands(commands.Cog):
         # Format the names properly
         df["Name"] = df["Name"].astype(str)
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
-        df["Club_Name"] = df["Club_Name"].str.lower().replace(" ", "")
-
-        # Fill empty values for required fields
         df["Club_Name"] = df["Club_Name"].fillna("no club")
-        df["Nerf"] = df["Nerf"].fillna("")
-        df["PR"] = df["PR"].fillna(9999)
-        df["charbats"] = df["charbats"].fillna(0)
-        df["toolbats"] = df["toolbats"].fillna(0)
+        df["Club_Name"] = df["Club_Name"].str.lower()
+        if df["Club_Name"] != "no club":
+            df["Club Name"] = df["Club_Name"].replace(" ", "")
+
+
 
         # Optional columns filled with defaults
         df.fillna({
@@ -653,6 +651,10 @@ class PlayerCommands(commands.Cog):
             "SP5_name": "",
             "SP5_skills": "",
             "Team_Name": "",
+            "Nerf":"",
+            "PR":9999,
+            "charbats":0,
+            "toolbats":0,
         }, inplace=True)
 
         df["charbats"] = df["charbats"].astype(int)
@@ -692,24 +694,29 @@ class PlayerCommands(commands.Cog):
                         if pd.notna(row[column]):
                             update_fields.append(f"{column} = %s")
                             update_values.append(row[column])
+                    if not update_fields:
+                        update_fields.append("last_updated = CURRENT_DATE")  # Fallback to a valid no-op update
 
-                    # Insert or Update the player in the Player table
-                    cursor.execute(
-                        f"""
-                        INSERT INTO Player (
-                            Name, Club_Name,
-                            SP1_name, SP1_skills, SP2_name, SP2_skills,
-                            SP3_name, SP3_skills, SP4_name, SP4_skills,
-                            SP5_name, SP5_skills, Nerf, PR, team_name,
-                            charbats, toolbats, last_updated
+
+                    try:
+                        cursor.execute(
+                            f"""
+                            INSERT INTO Player (
+                                Name, Club_Name,
+                                SP1_name, SP1_skills, SP2_name, SP2_skills,
+                                SP3_name, SP3_skills, SP4_name, SP4_skills,
+                                SP5_name, SP5_skills, Nerf, PR, team_name,
+                                charbats, toolbats, last_updated
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                            ON CONFLICT (Name) DO UPDATE SET
+                                {", ".join(update_fields)},
+                                last_updated = CURRENT_DATE
+                            """,
+                            [row["Name"], club_name] + update_values
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
-                        ON CONFLICT (Name) DO UPDATE SET
-                            {", ".join(update_fields)},
-                            last_updated = CURRENT_DATE
-                        """,
-                        [row["Name"], club_name] + update_values
-                    )
+                    except Exception as row_error:
+                        print(f"Error processing row: {row.to_dict()} - {row_error}")
 
                 except Exception as row_error:
                     print(f"Error processing row: {row.to_dict()} - {row_error}")
