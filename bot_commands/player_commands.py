@@ -663,16 +663,13 @@ class PlayerCommands(commands.Cog):
         try:
             cursor = self.connection.cursor()
 
-            # Iterate through rows and insert/update into the database
             for _, row in df.iterrows():
                 try:
+                    # Ensure the club exists or insert it
                     club_name = row["Club_Name"].lower()
-
-                    # Check if the Club_Name exists
                     cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
                     club_exists = cursor.fetchone()
 
-                    # If the club doesn't exist, create it
                     if not club_exists:
                         cursor.execute(
                             """
@@ -682,45 +679,56 @@ class PlayerCommands(commands.Cog):
                             (club_name,)
                         )
 
-                    # Build the UPDATE part dynamically for non-blank values
-                    update_fields = []
-                    update_values = []
-
-                    for column in [
-                        "Club_Name", "SP1_name", "SP1_skills", "SP2_name", "SP2_skills",
-                        "SP3_name", "SP3_skills", "SP4_name", "SP4_skills",
-                        "SP5_name", "SP5_skills", "Nerf", "PR", "Team_Name", "charbats", "toolbats"
-                    ]:
-                        value = row[column]
-                        if pd.notna(value):
-                            update_fields.append(f"{column} = %s")
-                            update_values.append(value)
-                    if not update_fields:
-                        update_fields.append("last_updated = CURRENT_DATE")  # Fallback to a valid no-op update
-
-
-                    try:
-                        cursor.execute(
-                            f"""
-                            INSERT INTO Player (
-                                Name, Club_Name,
-                                SP1_name, SP1_skills, SP2_name, SP2_skills,
-                                SP3_name, SP3_skills, SP4_name, SP4_skills,
-                                SP5_name, SP5_skills, Nerf, PR, team_name,
-                                charbats, toolbats, last_updated
-                            )
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
-                            ON CONFLICT (Name) DO UPDATE SET
-                                {", ".join(update_fields)},
-                                last_updated = CURRENT_DATE
-                            """,
-                            [row["Name"], club_name] + update_values
+                    # Insert or update the player data
+                    cursor.execute(
+                        """
+                        INSERT INTO Player (
+                            Name, Club_Name,
+                            SP1_name, SP1_skills, SP2_name, SP2_skills,
+                            SP3_name, SP3_skills, SP4_name, SP4_skills,
+                            SP5_name, SP5_skills, Nerf, PR, team_name,
+                            charbats, toolbats, last_updated
                         )
-                    except Exception as row_error:
-                        print(f"Error processing row: {row.to_dict()} - {row_error}")
-
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                        ON CONFLICT (Name) DO UPDATE SET
+                            Club_Name = EXCLUDED.Club_Name,
+                            SP1_name = EXCLUDED.SP1_name,
+                            SP1_skills = EXCLUDED.SP1_skills,
+                            SP2_name = EXCLUDED.SP2_name,
+                            SP2_skills = EXCLUDED.SP2_skills,
+                            SP3_name = EXCLUDED.SP3_name,
+                            SP3_skills = EXCLUDED.SP3_skills,
+                            SP4_name = EXCLUDED.SP4_name,
+                            SP4_skills = EXCLUDED.SP4_skills,
+                            SP5_name = EXCLUDED.SP5_name,
+                            SP5_skills = EXCLUDED.SP5_skills,
+                            Nerf = EXCLUDED.Nerf,
+                            PR = EXCLUDED.PR,
+                            team_name = EXCLUDED.team_name,
+                            charbats = EXCLUDED.charbats,
+                            toolbats = EXCLUDED.toolbats,
+                            last_updated = CURRENT_DATE
+                        """,
+                        (
+                            row["Name"],
+                            club_name,
+                            row.get("SP1_name", ""), row.get("SP1_skills", ""),
+                            row.get("SP2_name", ""), row.get("SP2_skills", ""),
+                            row.get("SP3_name", ""), row.get("SP3_skills", ""),
+                            row.get("SP4_name", ""), row.get("SP4_skills", ""),
+                            row.get("SP5_name", ""), row.get("SP5_skills", ""),
+                            row["Nerf"],
+                            row["PR"],
+                            row.get("Team_Name", ""),
+                            row["charbats"],
+                            row["toolbats"],
+                        )
+                    )
                 except Exception as row_error:
                     print(f"Error processing row: {row.to_dict()} - {row_error}")
+
+
+                
 
             self.connection.commit()  # Commit after processing all rows
         except Exception as db_error:
