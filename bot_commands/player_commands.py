@@ -687,7 +687,7 @@ class PlayerCommands(commands.Cog):
                     for column in [
                         "Club_Name", "SP1_name", "SP1_skills", "SP2_name", "SP2_skills",
                         "SP3_name", "SP3_skills", "SP4_name", "SP4_skills",
-                        "SP5_name", "SP5_skills", "Nerf", "PR", "team_name", "charbats", "toolbats"
+                        "SP5_name", "SP5_skills", "Nerf", "PR", "Team_Name", "charbats", "toolbats"
                     ]:
                         if pd.notna(row[column]):
                             update_fields.append(f"{column} = %s")
