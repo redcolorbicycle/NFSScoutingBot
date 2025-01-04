@@ -685,9 +685,9 @@ class PlayerCommands(commands.Cog):
                     update_values = []
 
                     for column in [
-                        "Club_Name", "SP1_Name", "SP1_Skills", "SP2_Name", "SP2_Skills",
-                        "SP3_Name", "SP3_Skills", "SP4_Name", "SP4_Skills",
-                        "SP5_Name", "SP5_Skills", "Nerf", "PR", "team_name", "charbats", "toolbats"
+                        "Club_Name", "SP1_name", "SP1_skills", "SP2_name", "SP2_skills",
+                        "SP3_name", "SP3_skills", "SP4_name", "SP4_skills",
+                        "SP5_name", "SP5_skills", "Nerf", "PR", "team_name", "charbats", "toolbats"
                     ]:
                         if pd.notna(row[column]):
                             update_fields.append(f"{column} = %s")
@@ -698,9 +698,9 @@ class PlayerCommands(commands.Cog):
                         f"""
                         INSERT INTO Player (
                             Name, Club_Name,
-                            SP1_Name, SP1_Skills, SP2_Name, SP2_Skills,
-                            SP3_Name, SP3_Skills, SP4_Name, SP4_Skills,
-                            SP5_Name, SP5_Skills, Nerf, PR, team_name,
+                            SP1_name, SP1_skills, SP2_name, SP2_skills,
+                            SP3_name, SP3_skills, SP4_name, SP4_skills,
+                            SP5_name, SP5_skills, Nerf, PR, team_name,
                             charbats, toolbats, last_updated
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
