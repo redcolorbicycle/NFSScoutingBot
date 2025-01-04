@@ -631,7 +631,7 @@ class PlayerCommands(commands.Cog):
         # Format the names properly
         df["Name"] = df["Name"].astype(str)
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
-        df["Club_Name"] = df["Club_Name"].str.lower()
+        df["Club_Name"] = df["Club_Name"].str.lower().replace(" ", "")
 
         # Fill empty values
         df["Club_Name"].fillna("no club", inplace=True)
@@ -660,7 +660,7 @@ class PlayerCommands(commands.Cog):
         try:
             cursor = self.connection.cursor()
 
-            # Iterate through rows and insert into the database
+            # Iterate through rows and insert/update into the database
             for _, row in df.iterrows():
                 try:
                     club_name = row["Club_Name"].lower()
@@ -679,7 +679,7 @@ class PlayerCommands(commands.Cog):
                             (club_name,)
                         )
 
-                    # Insert the player into the Player table
+                    # Upsert (insert or update) the player into the Player table
                     cursor.execute(
                         """
                         INSERT INTO Player (
@@ -691,6 +691,24 @@ class PlayerCommands(commands.Cog):
                             SP5_Name, SP5_Skills,
                             Nerf, PR, team_name, charbats, toolbats, last_updated
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                        ON CONFLICT (Name) DO UPDATE SET
+                            Club_Name = EXCLUDED.Club_Name,
+                            SP1_Name = EXCLUDED.SP1_Name,
+                            SP1_Skills = EXCLUDED.SP1_Skills,
+                            SP2_Name = EXCLUDED.SP2_Name,
+                            SP2_Skills = EXCLUDED.SP2_Skills,
+                            SP3_Name = EXCLUDED.SP3_Name,
+                            SP3_Skills = EXCLUDED.SP3_Skills,
+                            SP4_Name = EXCLUDED.SP4_Name,
+                            SP4_Skills = EXCLUDED.SP4_Skills,
+                            SP5_Name = EXCLUDED.SP5_Name,
+                            SP5_Skills = EXCLUDED.SP5_Skills,
+                            Nerf = EXCLUDED.Nerf,
+                            PR = EXCLUDED.PR,
+                            team_name = EXCLUDED.team_name,
+                            charbats = EXCLUDED.charbats,
+                            toolbats = EXCLUDED.toolbats,
+                            last_updated = CURRENT_DATE
                         """,
                         (
                             row["Name"],
@@ -716,6 +734,7 @@ class PlayerCommands(commands.Cog):
             raise db_error  # Rethrow for higher-level handling
         finally:
             cursor.close()
+
 
                     
 
