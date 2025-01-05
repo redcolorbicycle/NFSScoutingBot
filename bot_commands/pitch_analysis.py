@@ -241,15 +241,17 @@ class RankedPitchStats(commands.Cog):
                     krate *= 100
                     krate = round(krate, 1)
 
+                    whip = (diff_BB + diff_H)/diff_OUTS * 3
+
                     # Append the row
                     data.append([
-                        player_name, ip, era, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate
+                        player_name, ip, era, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
                     ])
 
                 # Define column headers
                 columns = [
                     "Player Name", "IP", "ERA", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
-                    "K%"
+                    "K%", "WHIP"
                 ]
 
                 # Create DataFrame
