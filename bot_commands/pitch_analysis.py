@@ -186,7 +186,7 @@ class RankedPitchStats(commands.Cog):
                             ELSE 0
                         END AS diff_SLG,
                         b.HR - a.HR AS diff_HR,
-                        b.SO - a.SO AS diff_SO,
+                        b.SO - a.SO AS diff_SO
                         
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
