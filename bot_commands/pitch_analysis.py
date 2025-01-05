@@ -266,7 +266,7 @@ class RankedPitchStats(commands.Cog):
                 # Create DataFrame
                 df = pd.DataFrame(data, columns=columns)
 
-                # Sort DataFrame by OPS (optional)
+                # Sort DataFrame by OPS 
                 df = df.sort_values(by="OPS", ascending=False)
 
                 # Plot the table using matplotlib
