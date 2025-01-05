@@ -236,7 +236,7 @@ class RankedPitchStats(commands.Cog):
                     
                     ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
                     era = round(diff_R / diff_OUTS * 27, 2) if diff_R > 0 else 0
-                    avg = diff_AVG if diff_H > 0 else 0
+                    avg = round(diff_H / diff_AB, 3) if diff_H > 0 else 0
 
                     walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     walkrate *= 100
