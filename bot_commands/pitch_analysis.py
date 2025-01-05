@@ -241,7 +241,7 @@ class RankedPitchStats(commands.Cog):
                     krate *= 100
                     krate = round(krate, 1)
 
-                    whip = (diff_BB + diff_H)/diff_OUTS * 3
+                    whip = (diff_BB + diff_H)/diff_OUTS * 3 if diff_OUTS > 0 else 0
 
                     # Append the row
                     data.append([
