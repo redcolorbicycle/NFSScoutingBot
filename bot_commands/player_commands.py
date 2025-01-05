@@ -324,6 +324,65 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def updateprs(self, ctx, *, args: str = ""):
+        """Update the PRs of players.
+        Args must be in pairs: player_name PR_value player_name PR_value ...
+        """
+        try:
+            # Split the arguments
+            parsed_args = shlex.split(args)
+
+            # Validate input
+            if len(parsed_args) % 2 != 0:
+                await ctx.send("Error: Arguments must be in pairs: player_name PR_value.")
+                return
+
+            updates = []  # List to hold (player_name, PR_value) pairs
+            for i in range(0, len(parsed_args), 2):
+                player_name = parsed_args[i].lower()  # Player name
+                try:
+                    pr_value = int(parsed_args[i + 1])  # PR value
+                except ValueError:
+                    await ctx.send(f"Error: '{parsed_args[i + 1]}' is not a valid integer for PR value.")
+                    return
+
+                updates.append((player_name, pr_value))
+
+            # Begin database transaction
+            with self.connection.cursor() as cursor:
+                for player_name, pr_value in updates:
+                    # Check if the player exists
+                    cursor.execute(
+                        """
+                        SELECT Name
+                        FROM Player
+                        WHERE Name = %s
+                        """,
+                        (player_name,),
+                    )
+                    player = cursor.fetchone()
+
+                    if player:
+                        # Update the PR value
+                        cursor.execute(
+                            """
+                            UPDATE Player
+                            SET PR = %s
+                            WHERE Name = %s
+                            """,
+                            (pr_value, player_name),
+                        )
+                        await ctx.send(f"Updated PR for **{player_name}** to **{pr_value}**.")
+                    else:
+                        await ctx.send(f"Error: Player **{player_name}** does not exist in the database.")
+
+                self.connection.commit()
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
+    @commands.command()
     async def updatechar(self, ctx, player_name: str, new_char: int):
         """
         Update a player's char bats.
