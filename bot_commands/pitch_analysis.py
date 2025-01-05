@@ -123,6 +123,7 @@ class RankedPitchStats(commands.Cog):
             newrow = []
             
             for i in range(len(raw_data)):
+                print(raw_data[i])
                 if raw_data[i][0].isupper() or (raw_data[i][0:2] == "0." and raw_data[i][2].isalpha()):
                     newrow = [raw_data[i]]
                     continue
@@ -135,7 +136,7 @@ class RankedPitchStats(commands.Cog):
                         elif decimal_part == "2":
                             newrow.append(integer_part * 3 + 2)
                         else:
-                            newrow.append(raw_data[i])
+                            newrow.append(integer_part * 3)
                 else:
                     newrow.append(raw_data[i])
                     data.append(newrow)
