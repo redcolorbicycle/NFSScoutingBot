@@ -122,16 +122,17 @@ class RankedPitchStats(commands.Cog):
             newrow = []
             
             for i in range(len(raw_data)):
-                if raw_data[i][0].isupper(): #for 1
+                if raw_data[i][0].isupper() or raw_data[i][0] == "0": #for 1
                     newrow = [raw_data[i]]
                     continue
                 elif len(newrow) == 1:
                     if "." in raw_data[i]:
                         integer_part, decimal_part = raw_data[i].split(".")
+                        integer_part = int(integer_part)  # Convert integer_part to an integer
                         if decimal_part == "1":
-                            newrow.append(f"{integer_part}.33")
+                            newrow.append(integer_part * 3 + 1)
                         elif decimal_part == "2":
-                            newrow.append(f"{integer_part}.66")
+                            newrow.append(integer_part * 3 + 2)
                         else:
                             newrow.append(raw_data[i])
                 else:
@@ -145,7 +146,7 @@ class RankedPitchStats(commands.Cog):
                     cursor.execute(
                         """
                         INSERT INTO rankedpitchstats (
-                            DISCORDID, PLAYERNAME, IP, ERA, H, BB, SLG, HR, SO, TIMING, AVG
+                            DISCORDID, PLAYERNAME, OUTS, R, H, BB, SLG, HR, SO, TIMING, AVG
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], timing, row[8])
@@ -172,32 +173,28 @@ class RankedPitchStats(commands.Cog):
                     """
                     SELECT 
                         a.PLAYERNAME,
-                        innings_converted(b.ip - a.ip) AS diff_IP,
-                        CASE 
-                            WHEN b.ip - a.ip != 0 THEN 
-                                (b.era / 9 * b.ip - a.era / 9 * a.ip) / (b.ip - a.ip) * 9
-                            ELSE 0
-                        END AS diff_ERA,
+                        b.OUTS - a.OUTS AS diff_OUTS,
+                        b.R - a.R AS diff_R,
                         b.h - a.h AS diff_H,
                         b.bb - a.bb AS diff_BB,
                         CASE 
-                            WHEN b.h / b.avg - a.h / a.avg != 0 THEN 
-                                (b.slg * b.h / b.avg - a.slg * a.h / a.avg) / (b.h / b.avg - a.h / a.avg)
+                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
+                                (b.slg * (b.h + b.outs) - a.slg * (a.h + a.outs))/((b.h + b.outs) - (a.h + a.outs))
                             ELSE 0
                         END AS diff_SLG,
                         b.HR - a.HR AS diff_HR,
                         b.SO - a.SO AS diff_SO,
                         CASE 
-                            WHEN b.h / b.avg - a.h / a.avg != 0 THEN 
-                                (b.h - a.h) / (b.h / b.avg - a.h / a.avg)
+                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
+                                (b.h / (b.h + b.outs) - a.h / (a.h + a.outs)) / ((b.h + b.outs) - (a.h + a.outs))
                             ELSE 0
                         END AS diff_AVG,
                         CASE 
-                            WHEN b.h / b.avg + b.bb - a.h / a.avg - a.bb != 0 THEN 
-                                (b.h + b.bb - a.h - a.bb) / (b.h / b.avg + b.bb - a.h / a.avg - a.bb)
+                            WHEN b.h + b.outs + b.bb - a.h - a.outs - a.bb != 0 THEN 
+                                (b.h + b.bb - a.h - a.bb) / (b.h + b.outs + b.bb - a.h - a.outs - a.bb)
                             ELSE 0
                         END AS diff_OBP,
-                        b.ip - a.ip AS actualinningdiff
+                        
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
                     ON a.PLAYERNAME = b.PLAYERNAME
@@ -220,8 +217,8 @@ class RankedPitchStats(commands.Cog):
                 data = []
                 for row in results:
                     player_name = row[0]
-                    diff_IP = row[1]
-                    diff_ERA = round(row[2], 2)
+                    diff_OUTS = row[1]
+                    diff_R = round(row[2], 2)
                     diff_H = row[3]
                     diff_BB = row[4]
                     diff_SLG = round(row[5], 3)
@@ -233,13 +230,13 @@ class RankedPitchStats(commands.Cog):
 
                     # Calculate metrics
                     diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
-                    diff_IP = float(diff_IP)
+                    diff_AB = diff_H + diff_OUTS
+                    
+                    ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
 
-                    diff_AB = diff_H / diff_AVG if diff_AVG > 0 and diff_H > 0 else 0
-                    diff_AB = float(diff_AB)
-                    ip = diff_IP 
-                    era = diff_ERA if diff_ERA > 0 else 0
-                    avg = diff_AVG if diff_IP > 0 else 0
+                    era = round(diff_R / diff_OUTS * 27, 2) if diff_R > 0 else 0
+
+                    avg = diff_AVG if diff_H > 0 else 0
                     walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     walkrate *= 100
                     walkrate = round(walkrate, 1)
