@@ -176,8 +176,8 @@ class RankedPitchStats(commands.Cog):
                     """
                     SELECT 
                         a.PLAYERNAME,
-                        b.OUTS - a.OUTS AS diff_OUTS,
-                        b.R - a.R AS diff_R,
+                        b.outs - a.outs AS diff_OUTS,
+                        b.r - a.r AS diff_R,
                         b.h - a.h AS diff_H,
                         b.bb - a.bb AS diff_BB,
                         CASE 
@@ -189,7 +189,7 @@ class RankedPitchStats(commands.Cog):
                         b.SO - a.SO AS diff_SO,
                         CASE 
                             WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
-                                (b.h / (b.h + b.outs) - a.h / (a.h + a.outs)) / ((b.h + b.outs) - (a.h + a.outs))
+                                (b.h - a.h) / ((b.h + b.outs) - (a.h + a.outs))
                             ELSE 0
                         END AS diff_AVG,
                         CASE 
@@ -221,37 +221,38 @@ class RankedPitchStats(commands.Cog):
                 for row in results:
                     player_name = row[0]
                     diff_OUTS = row[1]
-                    diff_R = round(row[2], 2)
+                    diff_R = row[2]
                     diff_H = row[3]
                     diff_BB = row[4]
                     diff_SLG = round(row[5], 3)
                     diff_HR = row[6]
                     diff_SO = row[7]
                     diff_AVG = round(row[8], 3)
-                    diff_OBP = round(row[9], 8)
-
+                    diff_OBP = round(row[9], 3)
 
                     # Calculate metrics
                     diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
                     diff_AB = diff_H + diff_OUTS
                     
                     ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
-
                     era = round(diff_R / diff_OUTS * 27, 2) if diff_R > 0 else 0
-
                     avg = diff_AVG if diff_H > 0 else 0
+
                     walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     walkrate *= 100
                     walkrate = round(walkrate, 1)
+
                     obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
                     hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
                     hrrate *= 100
                     hrrate = round(hrrate, 1)
                     slg = diff_SLG if diff_AB > 0 else 0
                     ops = round(obp + slg, 3)
+
                     krate = diff_SO / diff_AB if diff_AB > 0 else 0
                     krate *= 100
                     krate = round(krate, 1)
+
                     obp2 = diff_OBP
 
                     # Append the row
@@ -268,8 +269,8 @@ class RankedPitchStats(commands.Cog):
                 # Create DataFrame
                 df = pd.DataFrame(data, columns=columns)
 
-                # Sort DataFrame by OPS 
-                df = df.sort_values(by="OPS", ascending=False)
+                # Sort DataFrame by era
+                df = df.sort_values(by="ERA")
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Adjust size dynamically
