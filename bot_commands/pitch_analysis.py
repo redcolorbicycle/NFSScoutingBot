@@ -187,16 +187,6 @@ class RankedPitchStats(commands.Cog):
                         END AS diff_SLG,
                         b.HR - a.HR AS diff_HR,
                         b.SO - a.SO AS diff_SO,
-                        CASE 
-                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
-                                (b.h - a.h) / ((b.h + b.outs) - (a.h + a.outs))
-                            ELSE 0
-                        END AS diff_AVG,
-                        CASE 
-                            WHEN b.h + b.outs + b.bb - a.h - a.outs - a.bb != 0 THEN 
-                                (b.h + b.bb - a.h - a.bb) / (b.h + b.outs + b.bb - a.h - a.outs - a.bb)
-                            ELSE 0
-                        END AS diff_OBP
                         
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
@@ -227,11 +217,9 @@ class RankedPitchStats(commands.Cog):
                     diff_SLG = round(row[5], 3)
                     diff_HR = row[6]
                     diff_SO = row[7]
-                    diff_AVG = round(row[8], 3)
-                    diff_OBP = round(row[9], 3)
+
 
                     # Calculate metrics
-                    diff_AVG = float(diff_AVG)  # Convert if coming from SQL as a string
                     diff_AB = diff_H + diff_OUTS
                     
                     ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
@@ -253,16 +241,14 @@ class RankedPitchStats(commands.Cog):
                     krate *= 100
                     krate = round(krate, 1)
 
-                    obp2 = diff_OBP
-
                     # Append the row
                     data.append([
-                        player_name, ip, era, avg, obp, obp2, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate
+                        player_name, ip, era, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate
                     ])
 
                 # Define column headers
                 columns = [
-                    "Player Name", "IP", "ERA", "AVG", "OBP", "OBP2", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
+                    "Player Name", "IP", "ERA", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
                     "K%"
                 ]
 
