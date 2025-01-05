@@ -123,7 +123,9 @@ class RankedBatStats(commands.Cog):
             newrow = []
             print(raw_data)
             for i in range(len(raw_data)):
-                if raw_data[i][0].isupper(): #for 1
+                if i <= 27:
+                    continue
+                if raw_data[i][0].isupper() or raw_data[i][0] == "0": #for 1
                     newrow = [raw_data[i]]
                     continue
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
