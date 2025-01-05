@@ -145,7 +145,7 @@ class RankedBatStats(commands.Cog):
                     cursor.execute(
                         """
                         INSERT INTO rankedbatstats (
-                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, BBK, HR, SB, SBPCT, TIMING
+                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, K, HR, SB, SBPCT, TIMING
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
@@ -183,10 +183,7 @@ class RankedBatStats(commands.Cog):
                                 ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
                             ELSE 0
                         END AS diff_SBA,
-                        CASE 
-                            WHEN b.BBK > 0 AND a.BBK > 0 THEN b.BB / b.BBK - a.BB / a.BBK
-                            ELSE NULL
-                        END AS diff_K
+                        b.K - a.K AS diff_K
                     FROM rankedbatstats a
                     JOIN rankedbatstats b
                     ON a.PLAYERNAME = b.PLAYERNAME
@@ -219,7 +216,7 @@ class RankedBatStats(commands.Cog):
                     diff_BASES = row[5]
                     diff_SB = row[6]
                     diff_SBA = row[7]
-                    diff_K = round(row[8])  
+                    diff_K = row[8]
 
 
                     # Calculate metrics
