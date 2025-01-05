@@ -88,6 +88,7 @@ class RankedBatStats(commands.Cog):
         try:
             discord_id = ctx.author.id
             await ctx.send(discord_id)
+            await ctx.send("Please wait...")
             with self.connection.cursor() as cursor:
                 # Execute the DELETE query
                 cursor.execute(

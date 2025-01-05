@@ -88,6 +88,7 @@ class RankedPitchStats(commands.Cog):
         try:
             discord_id = ctx.author.id
             await ctx.send(discord_id)
+            await ctx.send("Please wait...")
             with self.connection.cursor() as cursor:
                 # Execute the DELETE query
                 cursor.execute(
@@ -193,7 +194,7 @@ class RankedPitchStats(commands.Cog):
                             WHEN b.h + b.outs + b.bb - a.h - a.outs - a.bb != 0 THEN 
                                 (b.h + b.bb - a.h - a.bb) / (b.h + b.outs + b.bb - a.h - a.outs - a.bb)
                             ELSE 0
-                        END AS diff_OBP,
+                        END AS diff_OBP
                         
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
