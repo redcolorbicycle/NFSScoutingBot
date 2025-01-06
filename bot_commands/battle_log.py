@@ -143,11 +143,94 @@ class BattleLog(commands.Cog):
             await self.upload_log_to_database(file_stream)
 
             # Notify completion
-            await message.edit(content="Data successfully uploaded to the database! You can log now.")
+            await message.edit(content="Data successfully uploaded to the database!")
         except Exception as e:
             await message.edit(content=f"Error: {e}")
 
-    
+    @commands.command()
+    async def analyse(self, ctx, club_name: str):
+        """
+        Analyse and display the win, loss, and draw records against a specified opponent club.
+        """
+        club_name = club_name.lower()
+        rows_per_page = 30  # Number of rows per page
+        try:
+            with self.connection.cursor() as cursor:
+                # Query to fetch date, home club, and total wins, losses, and draws against the specified opponent club
+                cursor.execute(
+                    """
+                    SELECT 
+                        battle_date,
+                        player_club AS home_club,
+                        COUNT(CASE WHEN result = 'w' THEN 1 END) AS total_wins,
+                        COUNT(CASE WHEN result = 'l' THEN 1 END) AS total_losses,
+                        COUNT(CASE WHEN result = 'd' THEN 1 END) AS total_draws
+                    FROM club_records
+                    WHERE opponent_club = %s
+                    GROUP BY battle_date, player_club
+                    ORDER BY battle_date;
+                    """,
+                    (club_name,)
+                )
+                # Fetch results
+                results = cursor.fetchall()
+
+                # If no records found
+                if not results:
+                    await ctx.send(f"No records found against the opponent club **{club_name}**.")
+                    return
+
+                # Process the data into a DataFrame
+                columns = ["Date", "Home Club", "Total Wins", "Total Losses", "Total Draws"]
+                df = pd.DataFrame(results, columns=columns)
+
+                # Paginate the table
+                total_pages = (len(df) + rows_per_page - 1) // rows_per_page
+                for page in range(total_pages):
+                    start = page * rows_per_page
+                    end = start + rows_per_page
+                    df_page = df.iloc[start:end]
+
+                    # Plot the table using matplotlib
+                    fig, ax = plt.subplots(figsize=(24, len(df_page) * 0.5 + 1))  # Dynamic height based on rows
+                    ax.axis("tight")
+                    ax.axis("off")
+                    table = ax.table(
+                        cellText=df_page.values,
+                        colLabels=df_page.columns,
+                        cellLoc="center",
+                        loc="center",
+                    )
+
+                    # Adjust table style
+                    table.auto_set_font_size(False)
+                    table.set_fontsize(10)
+                    table.auto_set_column_width(col=list(range(len(df_page.columns))))
+
+                    # Bold the headers and the first column
+                    cell_dict = table.get_celld()
+                    for (row, col), cell in cell_dict.items():
+                        if row == 0 or col == 0:
+                            cell.set_text_props(weight="bold")
+
+                        # Adjust the row height dynamically
+                        row_height = 1 / len(df_page)
+                        cell.set_height(row_height)
+
+                    # Save the table as an image in memory
+                    buffer = BytesIO()
+                    plt.savefig(buffer, format="png", bbox_inches="tight")
+                    buffer.seek(0)
+                    plt.close(fig)
+
+                    # Send the image to Discord
+                    file = discord.File(fp=buffer, filename=f"club_table_page_{page + 1}.png")
+                    await ctx.send(f"**Page {page + 1} of {total_pages}:**", file=file)
+
+                    buffer.close()
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
 
 
 async def setup(bot):
