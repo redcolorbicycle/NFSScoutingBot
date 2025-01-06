@@ -170,10 +170,7 @@ class BattleLog(commands.Cog):
                                 COUNT(CASE WHEN result = 'l' THEN 1 END) + 
                                 COUNT(CASE WHEN result = 'd' THEN 1 END) > 0 
                             THEN ROUND(
-                                COUNT(CASE WHEN result = 'w' THEN 1 END)::decimal / 
-                                (COUNT(CASE WHEN result = 'w' THEN 1 END) + 
-                                COUNT(CASE WHEN result = 'l' THEN 1 END) + 
-                                COUNT(CASE WHEN result = 'd' THEN 1 END)), 
+                                total_wins/(total_wins + total_losses + total_draws)), 
                                 2
                             )
                             ELSE 0
