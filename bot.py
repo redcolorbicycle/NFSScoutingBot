@@ -48,9 +48,9 @@ async def load_extensions(bot):
             await bot.load_extension("bot_commands.misc_commands")
             await bot.load_extension("bot_commands.server_commands")
             await bot.load_extension("bot_commands.notice_scraper")
-            await bot.load_extension("bot_commands.battle_setup")
+
             await bot.load_extension("bot_commands.battle_log")
-            await bot.load_extension("bot_commands.battle_manager")
+
             await bot.load_extension("bot_commands.bat_analysis")
             await bot.load_extension("bot_commands.pitch_analysis")
     except Exception as e:
