@@ -164,11 +164,25 @@ class BattleLog(commands.Cog):
                         player_club AS home_club,
                         COUNT(CASE WHEN result = 'w' THEN 1 END) AS total_wins,
                         COUNT(CASE WHEN result = 'l' THEN 1 END) AS total_losses,
-                        COUNT(CASE WHEN result = 'd' THEN 1 END) AS total_draws
+                        COUNT(CASE WHEN result = 'd' THEN 1 END) AS total_draws,
+                        CASE 
+                            WHEN COUNT(CASE WHEN result = 'w' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'l' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'd' THEN 1 END) > 0 
+                            THEN ROUND(
+                                COUNT(CASE WHEN result = 'w' THEN 1 END)::decimal / 
+                                (COUNT(CASE WHEN result = 'w' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'l' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'd' THEN 1 END)), 
+                                2
+                            )
+                            ELSE 0
+                        END AS win_rate
                     FROM club_records
                     WHERE opponent_club = %s
                     GROUP BY battle_date, player_club
                     ORDER BY battle_date;
+
                     """,
                     (club_name,)
                 )
@@ -181,7 +195,7 @@ class BattleLog(commands.Cog):
                     return
 
                 # Process the data into a DataFrame
-                columns = ["Date", "Home Club", "Total Wins", "Total Losses", "Total Draws"]
+                columns = ["Date", "Home Club", "Total Wins", "Total Losses", "Total Draws", "Win Percentage"]
                 df = pd.DataFrame(results, columns=columns)
 
                 # Paginate the table
