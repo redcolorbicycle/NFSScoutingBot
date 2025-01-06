@@ -1,4 +1,14 @@
 from discord.ext import commands
+import pandas as pd
+import matplotlib.pyplot as plt
+from io import BytesIO
+import shlex
+import discord
+import pandas as pd
+import psycopg2
+from urllib.parse import urlparse
+import os
+import asyncio
 
 class BattleLog(commands.Cog):
     def __init__(self, bot, connection):
@@ -132,6 +142,17 @@ class BattleLog(commands.Cog):
             # Rollback the entire transaction on any error
             self.connection.rollback()
             await ctx.send(f"An error occurred, and the transaction was rolled back: {e}")
+
+    @commands.command()
+    async def logsheet(self, ctx):
+        # Path to your preformatted Excel file
+        file_path = "battlelogs.xlsx"
+        
+        # Send the file to the user
+        try:
+            await ctx.send(file=discord.File(file_path, filename="uploadtemplate.xlsx"))
+        except Exception as e:
+            await ctx.send(f"Error: Could not send the file. {e}")
 
 
 async def setup(bot):
