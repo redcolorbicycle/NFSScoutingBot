@@ -251,12 +251,12 @@ class RankedPitchStats(commands.Cog):
 
                     # Append the row
                     data.append([
-                        player_name, ip, era, avgera, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
+                        player_name, diff_G, ip, era, avgera, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
                     ])
 
                 # Define column headers
                 columns = [
-                    "Player Name", "IP", "ERA", "AVG ERA/G", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
+                    "Player Name", "G", "IP", "ERA", "AVG ERA/G", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
                     "K%", "WHIP"
                 ]
 
