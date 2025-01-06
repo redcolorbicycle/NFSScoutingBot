@@ -149,7 +149,7 @@ class RankedPitchStats(commands.Cog):
                     cursor.execute(
                         """
                         INSERT INTO rankedpitchstats (
-                            DISCORDID, PLAYERNAME, OUTS, R, H, BB, SLG, HR, SO, TIMING, AVG
+                            DISCORDID, PLAYERNAME, OUTS, R, H, BB, SLG, HR, SO, TIMING, G
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                         """,
                         (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], timing, row[8])
@@ -186,7 +186,9 @@ class RankedPitchStats(commands.Cog):
                             ELSE 0
                         END AS diff_SLG,
                         b.HR - a.HR AS diff_HR,
-                        b.SO - a.SO AS diff_SO
+                        b.SO - a.SO AS diff_SO,
+                        b.G - a.G as diff_G
+
                         
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
@@ -217,6 +219,7 @@ class RankedPitchStats(commands.Cog):
                     diff_SLG = round(row[5], 3)
                     diff_HR = row[6]
                     diff_SO = row[7]
+                    diff_G = row[8]
 
 
                     # Calculate metrics
@@ -244,14 +247,16 @@ class RankedPitchStats(commands.Cog):
                     whip = (diff_BB + diff_H)/diff_OUTS * 3 if diff_OUTS > 0 else 0
                     whip = round(whip, 3)
 
+                    avgera = round(float(diff_R/diff_G)/float(ip/diff_G),3) if diff_G > 0 else 0
+
                     # Append the row
                     data.append([
-                        player_name, ip, era, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
+                        player_name, ip, era, avgera, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
                     ])
 
                 # Define column headers
                 columns = [
-                    "Player Name", "IP", "ERA", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
+                    "Player Name", "IP", "ERA", "AVG ERA/G", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
                     "K%", "WHIP"
                 ]
 
