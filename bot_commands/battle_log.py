@@ -170,7 +170,10 @@ class BattleLog(commands.Cog):
                                 COUNT(CASE WHEN result = 'l' THEN 1 END) + 
                                 COUNT(CASE WHEN result = 'd' THEN 1 END) > 0 
                             THEN ROUND(
-                                total_wins/(total_wins + total_losses + total_draws)), 
+                                COUNT(CASE WHEN result = 'w' THEN 1 END)::decimal * 100 / 
+                                (COUNT(CASE WHEN result = 'w' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'l' THEN 1 END) + 
+                                COUNT(CASE WHEN result = 'd' THEN 1 END)), 
                                 2
                             )
                             ELSE 0
@@ -179,6 +182,7 @@ class BattleLog(commands.Cog):
                     WHERE opponent_club = %s
                     GROUP BY battle_date, player_club
                     ORDER BY battle_date;
+
 
                     """,
                     (club_name,)
