@@ -28,120 +28,6 @@ class BattleLog(commands.Cog):
         user_roles = [role.name for role in ctx.author.roles]
         return any(role in allowed_roles for role in user_roles)
 
-    @commands.command()
-    async def log(self, ctx, hometeam: str, opponentteam: str, *args):
-        """
-        Log battles into the club_records table.
-        Usage: !log <hometeam> <opponentteam> <player_number> <opponent_number> <result> ...
-        """
-        hometeam = hometeam.lower()
-        opponentteam = opponentteam.lower()
-        if len(args) % 3 != 0:
-            await ctx.send("Error: Arguments must be in groups of 3 (player_number opponent_number result).")
-            return
-
-        try:
-            with self.connection.cursor() as cursor:
-                response_messages = []
-                battle_date = None
-
-                # Retrieve the locked battle_date
-                cursor.execute("SELECT locked_date FROM battle_date WHERE id = 1")
-                battle_date_row = cursor.fetchone()
-                if not battle_date_row:
-                    await ctx.send("Error: Battle date is not set. Please start a battle first with !startbattle hometeam opponent.")
-                    return
-
-                battle_date = battle_date_row[0]
-
-                for i in range(0, len(args), 3):
-                    # Parse arguments
-                    player_number = int(args[i])
-                    opponent_number = int(args[i + 1])
-                    result = args[i + 2].upper()
-
-                    if result not in ("W", "L", "D"):
-                        raise ValueError(f"Invalid result: {result}")
-
-                    # Fetch player and opponent details
-                    cursor.execute(
-                        """
-                        SELECT player, homeclub, sp
-                        FROM hometeam
-                        WHERE designated_number = %s AND homeclub = %s
-                        """,
-                        (player_number, hometeam)
-                    )
-                    player_row = cursor.fetchone()
-
-                    cursor.execute(
-                        """
-                        SELECT opponent, opponentclub, sp
-                        FROM opponents
-                        WHERE designated_number = %s AND opponentclub = %s
-                        """,
-                        (opponent_number, opponentteam)
-                    )
-                    opponent_row = cursor.fetchone()
-
-                    if not player_row or not opponent_row:
-                        raise ValueError(f"Player {player_number} or opponent {opponent_number} does not exist in the roster.")
-
-                    player_name, player_club, player_sp = player_row
-                    opponent_name, opponent_club, opponent_sp = opponent_row
-
-                    # Insert into club_records
-                    cursor.execute(
-                        """
-                        INSERT INTO club_records (
-                            battle_date, player_name, opponent_name, result,
-                            opponent_club, player_club, player_sp_number, opponent_sp_number
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        """,
-                        (
-                            battle_date,
-                            player_name, opponent_name, result,
-                            opponent_club, player_club,
-                            player_sp, opponent_sp,
-                        ),
-                    )
-
-                    # Update SP numbers
-                    next_player_sp = 1 if player_sp == 5 else player_sp + 1
-                    next_opponent_sp = 1 if opponent_sp == 5 else opponent_sp + 1
-
-                    cursor.execute(
-                        """
-                        UPDATE hometeam
-                        SET sp = %s
-                        WHERE designated_number = %s AND homeclub = %s
-                        """,
-                        (next_player_sp, player_number, hometeam),
-                    )
-
-                    cursor.execute(
-                        """
-                        UPDATE opponents
-                        SET sp = %s
-                        WHERE designated_number = %s AND opponentclub = %s
-                        """,
-                        (next_opponent_sp, opponent_number, opponentteam),
-                    )
-
-                    # Add success message for this operation
-                    response_messages.append(
-                        f"Logged: Player {player_name} ({player_number}) vs Opponent {opponent_name} ({opponent_number}), Result: {result}."
-                    )
-
-                # Commit all operations if no errors occurred
-                self.connection.commit()
-                await ctx.send("\n".join(response_messages))
-
-        except Exception as e:
-            # Rollback the entire transaction on any error
-            self.connection.rollback()
-            await ctx.send(f"An error occurred, and the transaction was rolled back: {e}")
 
     @commands.command()
     async def logsheet(self, ctx):
@@ -150,9 +36,118 @@ class BattleLog(commands.Cog):
         
         # Send the file to the user
         try:
-            await ctx.send(file=discord.File(file_path, filename="uploadtemplate.xlsx"))
+            await ctx.send(file=discord.File(file_path, filename="battlelogs.xlsx"))
         except Exception as e:
             await ctx.send(f"Error: Could not send the file. {e}")
+
+
+
+    async def upload_log_to_database(self, file_stream):
+        # Read the Excel file
+        df = pd.read_excel(file_stream, engine="openpyxl")
+
+        # Format the names properly
+        df["Home Club"] = df["Home Club"].astype(str)
+        df["Home Club"] = df["Home Club"].str.lower().str.replace(" ", "")
+        df["Opponent Club"] = df["Opponent Club"].astype(str)
+        df["Opponent Club"] = df["Opponent Club"].str.lower().str.replace(" ", "")
+        df["Player Name"] = df["Player Name"].astype(str)
+        df["Player Name"] = df["Player Name"].str.lower().str.replace(" ", "")
+        df["Opponent Name"] = df["Opponent Name"].astype(str)
+        df["Opponent Name"] = df["Opponent Name"].str.lower().str.replace(" ", "")
+        df["Player Nerf"] = df["Player Nerf"].str.lower().str.replace(" ", "")
+        df["Result"] = df["Result"].str.lower().str.replace(" ", "")
+        df["Player SP Number"] = df["Player SP Number"].astype(int)
+        df["Opponent SP Number"] = df["Opponent SP Number"].astype(int)
+        df["Battle Date"] = df["Battle Date"].dt.strftime("%d-%m-%Y")
+
+        try:
+            cursor = self.connection.cursor()
+
+            for _, row in df.iterrows():
+                try:
+                    # Check if the record already exists
+                    cursor.execute(
+                        """
+                        SELECT 1 FROM club_records
+                        WHERE battle_date = %s
+                        AND player_name = %s
+                        AND opponent_name = %s
+                        AND player_sp_number = %s
+                        AND opponent_sp_number = %s
+                        """,
+                        (
+                            row["Battle Date"],
+                            row["Player Name"],
+                            row["Opponent Name"],
+                            row["Player SP Number"],
+                            row["Opponent SP Number"],
+                        ),
+                    )
+                    record_exists = cursor.fetchone()
+
+                    if record_exists:
+                        # Skip if record already exists
+                        continue
+
+                    # Insert the row into the database
+                    cursor.execute(
+                        """
+                        INSERT INTO club_records (
+                            battle_date, player_name, opponent_name, result, opponent_club,
+                            player_club, player_sp_number, opponent_sp_number, nerf
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            row["Battle Date"],
+                            row["Player Name"],
+                            row["Opponent Name"],
+                            row["Result"],
+                            row["Opponent Club"],
+                            row["Home Club"],
+                            row["Player SP Number"],
+                            row["Opponent SP Number"],
+                            row["Player Nerf"],
+                        ),
+                    )
+                except Exception as row_error:
+                    print(f"Error processing row: {row.to_dict()} - {row_error}")
+        
+            self.connection.commit()  # Commit after processing all rows
+        except Exception as db_error:
+            self.connection.rollback()  # Rollback on any database error
+            raise db_error  # Rethrow for higher-level handling
+        finally:
+            cursor.close()
+
+
+    @commands.command()
+    async def log(self, ctx):
+        # Check if a file is attached
+        if len(ctx.message.attachments) == 0:
+            await ctx.send("Please attach an Excel file with the command!")
+            return
+
+        # Notify that the upload is starting
+        message = await ctx.send("Data is uploading. Please do not interrupt.")
+
+        # Get the attached file
+        attachment = ctx.message.attachments[0]
+        file_stream = BytesIO()
+        await attachment.save(file_stream)
+        file_stream.seek(0)
+
+        try:
+            # Pass the file stream to the upload_to_database function
+            await self.upload_log_to_database(file_stream)
+
+            # Notify completion
+            await message.edit(content="Data successfully uploaded to the database! You can log now.")
+        except Exception as e:
+            await message.edit(content=f"Error: {e}")
+
+    
 
 
 async def setup(bot):
