@@ -247,16 +247,16 @@ class RankedPitchStats(commands.Cog):
                     whip = (diff_BB + diff_H)/diff_OUTS * 3 if diff_OUTS > 0 else 0
                     whip = round(whip, 3)
 
-                    avgera = round(float(diff_R/diff_G)/float(ip/diff_G),3) if diff_G > 0 else 0
+                    ipg = round(float(ip/diff_G), 3) if diff_G > 0 else 0
 
                     # Append the row
                     data.append([
-                        player_name, diff_G, ip, era, avgera, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
+                        player_name, diff_G, ip, ipg, era, avg, obp, slg, ops, diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
                     ])
 
                 # Define column headers
                 columns = [
-                    "Player Name", "G", "IP", "ERA", "AVG ERA/G", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
+                    "Player Name", "G", "IP", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K",
                     "K%", "WHIP"
                 ]
 
