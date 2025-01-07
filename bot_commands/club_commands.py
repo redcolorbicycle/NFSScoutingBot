@@ -270,8 +270,6 @@ class ClubCommands(commands.Cog):
                 # Send the image to Discord
                 file = discord.File(fp=buffer, filename="club_table.png")
                 await ctx.send("Applebee's 🍎")
-                await ctx.send("we Eatn Good in the neighborhood")
-                await ctx.send("unless Bieber's the waiter")
                 await ctx.send(file=file)
         except Exception as e:
             self.connection.rollback()
