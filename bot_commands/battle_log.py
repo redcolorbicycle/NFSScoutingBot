@@ -334,9 +334,9 @@ class BattleLog(commands.Cog):
                         ) AS average_home_sp
                     FROM club_records
                     WHERE 
-                        TO_CHAR(battle_date, 'DD/MM/YYYY') = %s AND
-                        player_club = %s AND 
-                        opponent_club = %s
+                        TO_CHAR(battle_date, 'YYYY-MM-DD') = %s AND
+                        LOWER(player_club) = %s AND 
+                        LOWER(opponent_club) = %s
                     GROUP BY opponent_name, battle_date
                     ORDER BY overall_win_rate ASC;
                     """,
