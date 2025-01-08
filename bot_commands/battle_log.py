@@ -9,6 +9,8 @@ import psycopg2
 from urllib.parse import urlparse
 import os
 import asyncio
+import datetime
+
 
 class BattleLog(commands.Cog):
     def __init__(self, bot, connection):
@@ -289,6 +291,7 @@ class BattleLog(commands.Cog):
             # Ensure input date is in the correct format
             
 
+            battle_date = datetime.datetime.strptime(battle_date, "%Y/%m/%d").date()
             home_club = home_club.lower()
             opponent_club = opponent_club.lower()
 
@@ -334,7 +337,7 @@ class BattleLog(commands.Cog):
                         battle_date = %s AND 
                         player_club = %s AND 
                         opponent_club = %s
-                    GROUP BY opponent_name
+                    GROUP BY opponent_name, battle_date
                     ORDER BY overall_win_rate ASC;
                     """,
                     (battle_date, home_club, opponent_club)
