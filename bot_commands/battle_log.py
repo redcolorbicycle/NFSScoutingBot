@@ -280,6 +280,133 @@ class BattleLog(commands.Cog):
             await message.edit(content=f"Error: {e}")
 
 
+    @commands.command()
+    async def analyse_date(self, ctx, battle_date: str, home_club: str, opponent_club: str):
+        """
+        Analyse win percentages and SP-specific stats for a specific date, home club, and opponent club.
+        """
+        try:
+            # Ensure input date is in the correct format
+            battle_date = pd.to_datetime(battle_date, format="%d/%m/%Y").date()
+            home_club = home_club.lower()
+            opponent_club = opponent_club.lower()
+
+            rows_per_page = 20  # Limit rows per page to 20
+
+            with self.connection.cursor() as cursor:
+                # Query to fetch the opponent player stats for the specific date and clubs
+                cursor.execute(
+                    """
+                    SELECT 
+                        opponent_name,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' THEN 1 END)::decimal * 100 / 
+                            NULLIF(
+                                COUNT(CASE WHEN result IN ('w', 'l', 'd') THEN 1 END), 0
+                            ), 2
+                        ) AS overall_win_rate,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' AND opponent_sp_number = 1 THEN 1 END)::decimal * 100 / 
+                            NULLIF(COUNT(CASE WHEN opponent_sp_number = 1 THEN 1 END), 0), 2
+                        ) AS sp1_win_rate,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' AND opponent_sp_number = 2 THEN 1 END)::decimal * 100 / 
+                            NULLIF(COUNT(CASE WHEN opponent_sp_number = 2 THEN 1 END), 0), 2
+                        ) AS sp2_win_rate,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' AND opponent_sp_number = 3 THEN 1 END)::decimal * 100 / 
+                            NULLIF(COUNT(CASE WHEN opponent_sp_number = 3 THEN 1 END), 0), 2
+                        ) AS sp3_win_rate,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' AND opponent_sp_number = 4 THEN 1 END)::decimal * 100 / 
+                            NULLIF(COUNT(CASE WHEN opponent_sp_number = 4 THEN 1 END), 0), 2
+                        ) AS sp4_win_rate,
+                        ROUND(
+                            COUNT(CASE WHEN result = 'w' AND opponent_sp_number = 5 THEN 1 END)::decimal * 100 / 
+                            NULLIF(COUNT(CASE WHEN opponent_sp_number = 5 THEN 1 END), 0), 2
+                        ) AS sp5_win_rate,
+                        ROUND(
+                            AVG(player_sp_number::decimal), 2
+                        ) AS average_home_sp
+                    FROM club_records
+                    WHERE 
+                        battle_date = %s AND 
+                        player_club = %s AND 
+                        opponent_club = %s
+                    GROUP BY opponent_name
+                    ORDER BY overall_win_rate ASC;
+                    """,
+                    (battle_date, home_club, opponent_club)
+                )
+
+                # Fetch results
+                results = cursor.fetchall()
+
+                # If no records found
+                if not results:
+                    await ctx.send(
+                        f"No records found for **{home_club}** against **{opponent_club}** on **{battle_date.strftime('%d/%m/%Y')}**."
+                    )
+                    return
+
+                # Process the data into a DataFrame
+                columns = [
+                    "Opponent Name", "Overall Win %", "SP1 Win %", "SP2 Win %", 
+                    "SP3 Win %", "SP4 Win %", "SP5 Win %", "Average Home SP"
+                ]
+                df = pd.DataFrame(results, columns=columns)
+
+                # Paginate the table
+                total_pages = (len(df) + rows_per_page - 1) // rows_per_page
+                for page in range(total_pages):
+                    start = page * rows_per_page
+                    end = start + rows_per_page
+                    df_page = df.iloc[start:end]
+
+                    # Plot the table using matplotlib
+                    fig, ax = plt.subplots(figsize=(24, len(df_page) * 0.5 + 1))  # Dynamic height based on rows
+                    ax.axis("tight")
+                    ax.axis("off")
+                    table = ax.table(
+                        cellText=df_page.values,
+                        colLabels=df_page.columns,
+                        cellLoc="center",
+                        loc="center",
+                    )
+
+                    # Adjust table style
+                    table.auto_set_font_size(False)
+                    table.set_fontsize(10)
+                    table.auto_set_column_width(col=list(range(len(df_page.columns))))
+
+                    # Bold the headers and the first column
+                    cell_dict = table.get_celld()
+                    for (row, col), cell in cell_dict.items():
+                        if row == 0 or col == 0:
+                            cell.set_text_props(weight="bold")
+
+                        # Adjust the row height dynamically
+                        row_height = 1 / len(df_page)
+                        cell.set_height(row_height)
+
+                    # Save the table as an image in memory
+                    buffer = BytesIO()
+                    plt.savefig(buffer, format="png", bbox_inches="tight")
+                    buffer.seek(0)
+                    plt.close(fig)
+
+                    # Send the image to Discord
+                    file = discord.File(fp=buffer, filename=f"opponent_stats_page_{page + 1}.png")
+                    await ctx.send(f"**Page {page + 1} of {total_pages}:**", file=file)
+
+                    buffer.close()
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
+    
+
+
 
 async def setup(bot):
     connection = bot.connection  # Retrieve the connection from the bot instance
