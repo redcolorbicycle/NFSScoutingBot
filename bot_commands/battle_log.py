@@ -346,7 +346,7 @@ class BattleLog(commands.Cog):
                 # If no records found
                 if not results:
                     await ctx.send(
-                        f"No records found for **{home_club}** against **{opponent_club}** on **{battle_date.strftime('%d/%m/%Y')}**."
+                        f"No records found for **{home_club}** against **{opponent_club}** on **{battle_date}**."
                     )
                     return
 
