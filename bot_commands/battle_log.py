@@ -55,10 +55,13 @@ class BattleLog(commands.Cog):
         df["Player Name"] = df["Player Name"].str.lower().str.replace(" ", "")
         df["Opponent Name"] = df["Opponent Name"].astype(str)
         df["Opponent Name"] = df["Opponent Name"].str.lower().str.replace(" ", "")
+        df["Player Nerf"] = df["Player Nerf"].astype(str)
         df["Player Nerf"] = df["Player Nerf"].str.lower().str.replace(" ", "")
+        df["Result"] = df["Result"].astype(str)
         df["Result"] = df["Result"].str.lower().str.replace(" ", "")
         df["Player SP Number"] = df["Player SP Number"].astype(int)
         df["Opponent SP Number"] = df["Opponent SP Number"].astype(int)
+        df["Battle Date"] = df["Battle Date"].astype(str)
         df["Battle Date"] = df["Battle Date"].dt.strftime("%d-%m-%Y")
 
         try:
