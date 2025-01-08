@@ -287,7 +287,7 @@ class BattleLog(commands.Cog):
         """
         try:
             # Ensure input date is in the correct format
-            battle_date = pd.to_datetime(battle_date, format="%Y/%m/%d").date()
+            
 
             home_club = home_club.lower()
             opponent_club = opponent_club.lower()
