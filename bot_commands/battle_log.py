@@ -334,13 +334,13 @@ class BattleLog(commands.Cog):
                         ) AS average_home_sp
                     FROM club_records
                     WHERE 
-                        battle_date = %s AND 
+                        
                         player_club = %s AND 
                         opponent_club = %s
                     GROUP BY opponent_name, battle_date
                     ORDER BY overall_win_rate ASC;
                     """,
-                    (battle_date, home_club, opponent_club)
+                    ( home_club, opponent_club)
                 )
 
                 # Fetch results
