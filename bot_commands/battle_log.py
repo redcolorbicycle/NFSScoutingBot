@@ -61,8 +61,12 @@ class BattleLog(commands.Cog):
         df["Result"] = df["Result"].str.lower().str.replace(" ", "")
         df["Player SP Number"] = df["Player SP Number"].astype(int)
         df["Opponent SP Number"] = df["Opponent SP Number"].astype(int)
-        df["Battle Date"] = df["Battle Date"].astype(str)
+        # Convert the Battle Date column to datetime format
+        df["Battle Date"] = pd.to_datetime(df["Battle Date"], format="%d/%m/%Y", errors='coerce')
+
+        # Reformat the datetime column to the desired format (dd-mm-yyyy)
         df["Battle Date"] = df["Battle Date"].dt.strftime("%d-%m-%Y")
+
 
         try:
             cursor = self.connection.cursor()
