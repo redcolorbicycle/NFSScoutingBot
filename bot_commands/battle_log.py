@@ -291,7 +291,7 @@ class BattleLog(commands.Cog):
             # Ensure input date is in the correct format
             
 
-            battle_date = datetime.datetime.strptime(battle_date, "%Y/%m/%d").date()
+        
             home_club = home_club.lower()
             opponent_club = opponent_club.lower()
 
