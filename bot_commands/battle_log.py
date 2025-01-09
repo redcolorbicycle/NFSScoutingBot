@@ -9,7 +9,7 @@ import psycopg2
 from urllib.parse import urlparse
 import os
 import asyncio
-import datetime
+
 
 
 class BattleLog(commands.Cog):
@@ -163,10 +163,7 @@ class BattleLog(commands.Cog):
         df["Player SP Number"] = df["Player SP Number"].astype(int)
         df["Opponent SP Number"] = df["Opponent SP Number"].astype(int)
         # Convert the Battle Date column to datetime format
-        df["Battle Date"] = pd.to_datetime(df["Battle Date"], format="%d/%m/%Y", errors='coerce')
-
-        # Reformat the datetime column to the desired format (dd-mm-yyyy)
-        df["Battle Date"] = df["Battle Date"].dt.strftime("%d-%m-%Y")
+        df["Battle Date"] = df["Battle Date"].astype(str)
 
 
         try:
@@ -290,8 +287,6 @@ class BattleLog(commands.Cog):
         try:
             # Ensure input date is in the correct format
             
-
-            battle_date = pd.to_datetime(battle_date, format="%d/%m/%Y").strftime("%Y-%m-%d")
             home_club = home_club.lower()
             opponent_club = opponent_club.lower()
 
