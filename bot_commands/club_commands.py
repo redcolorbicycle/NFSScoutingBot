@@ -172,7 +172,6 @@ class ClubCommands(commands.Cog):
         Fetch player details for a specific club and return them as a table image.
         """
         club_name = club_name.lower()
-        club_name = re.sub(r'[^\w\s]', '', club_name).lower()
 
         try:
             with self.connection.cursor() as cursor:
