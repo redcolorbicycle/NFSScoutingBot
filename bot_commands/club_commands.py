@@ -171,12 +171,12 @@ class ClubCommands(commands.Cog):
         """
         Fetch player details for a specific club and return them as a table image.
         """
-        club_name = club_name.lower()
-        club_name = re.sub(r'[^\w\s]', '', club_name).lower()
-
         try:
+            # Normalize the club name (case-insensitive)
+            club_name = club_name.lower()
+
             with self.connection.cursor() as cursor:
-                # Fetch player details for the club
+                # Fetch players for the club
                 cursor.execute(
                     """
                     SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
@@ -184,34 +184,41 @@ class ClubCommands(commands.Cog):
                     FROM Player
                     WHERE Club_Name = %s
                     """,
-                    (club_name,),
+                    (club_name,)
                 )
                 players = cursor.fetchall()
 
                 if not players:
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
-                    
 
-                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
-                processed_players = [
-                    (
-                        player[0],  # Name
-                        f"{player[1]} ({player[2]})",  # SP1 Info
-                        f"{player[3]} ({player[4]})",  # SP2 Info
-                        f"{player[5]} ({player[6]})",  # SP3 Info
-                        f"{player[7]} ({player[8]})",  # SP4 Info
-                        f"{player[9]} ({player[10]})",  # SP5 Info
-                        player[11],  # Nerf
-                        player[12],  # PR
-                        player[14],  # Char
-                        player[15],  # Tool
-                        player[13],  # Last Updated
-                    )
-                    for player in players
-                ]
+                # Process player data
+                processed_players = []
+                for player in players:
+                    try:
+                        # Add player details to the processed list
+                        processed_players.append((
+                            player[0],  # Name
+                            f"{player[1]} ({player[2]})",  # SP1 Info
+                            f"{player[3]} ({player[4]})",  # SP2 Info
+                            f"{player[5]} ({player[6]})",  # SP3 Info
+                            f"{player[7]} ({player[8]})",  # SP4 Info
+                            f"{player[9]} ({player[10]})",  # SP5 Info
+                            player[11],  # Nerf
+                            player[12],  # PR
+                            player[14],  # Char
+                            player[15],  # Tool
+                            player[13],  # Last Updated
+                        ))
+                    except Exception as e:
+                        # Log the error for debugging, but skip the problematic row
+                        print(f"Skipping problematic player row: {player} - Error: {e}")
+                        continue
 
-                # Define new column headers
+                # Debugging: Check processed data
+                print(f"Processed players: {processed_players}")
+
+                # Define column headers
                 columns = [
                     "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
                     "Nerf", "PR", "Char", "Tool", "Last Updated"
@@ -219,7 +226,7 @@ class ClubCommands(commands.Cog):
 
                 # Create a DataFrame from the processed data
                 df = pd.DataFrame(processed_players, columns=columns)
-                df = df.sort_values(by = "PR")
+                df = df.sort_values(by="PR")
 
                 # Plot the table using matplotlib
                 fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
@@ -232,38 +239,6 @@ class ClubCommands(commands.Cog):
                     loc="center",
                 )
 
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
-
-                # Apply conditional formatting for PR column
-                cell_dict = table.get_celld()
-                pr_index = columns.index("PR")  # Find the index of the PR column
-                for (row, col), cell in cell_dict.items():
-                    if col == pr_index and row > 0:  # Exclude header row
-                        pr_value = df.iloc[row - 1, pr_index]  # Get PR value
-                        if pr_value <= 50:
-                            cell.set_facecolor("#FF0000")  # Sharp red for top 50
-                        elif pr_value <= 200:
-                            cell.set_facecolor("#FFA500")  # Orange for 51-200
-                        elif pr_value <= 500:
-                            cell.set_facecolor("#FFFF00")  # Yellow for 200-500
-                        elif pr_value <= 1000:
-                            cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
-                        elif pr_value <= 2000:
-                            cell.set_facecolor("#D397F8")  # Purple for 1001-2000
-
-                for (row, col), cell in cell_dict.items():
-                    if row == 0 or col == 0:
-                        cell.set_text_props(weight="bold")
-
-
-                    #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
-                row_height = 1 / len(df)  # Divide the figure height by the number of rows
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(row_height)  # Set height dynamically
-
                 # Save the table as an image in memory
                 buffer = BytesIO()
                 plt.savefig(buffer, format="png", bbox_inches="tight")
@@ -272,11 +247,13 @@ class ClubCommands(commands.Cog):
 
                 # Send the image to Discord
                 file = discord.File(fp=buffer, filename="club_table.png")
-                await ctx.send("Applebee's 🍎")
+                await ctx.send(f"Here are the players for the club '{club_name}':")
                 await ctx.send(file=file)
+
         except Exception as e:
             self.connection.rollback()
-            await ctx.send(f"An error occurred: {e}")
+            await ctx.send(f"An error occurred: {type(e).__name__} - {e}")
+
 
 
     @commands.command()
