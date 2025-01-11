@@ -30,6 +30,26 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def trainers(self, ctx):
+        """
+        Send the Trainers image
+        """
+        try:
+            # Fixed path to the image
+            image_path = "assets/trainers.jpg"  # Adjust this path as needed
+
+            # Check if the image exists
+            if not os.path.isfile(image_path):
+                await ctx.send("The fixed image file was not found.")
+                return
+
+            # Send the image
+            file = discord.File(image_path, filename="trainers.jpg")
+            await ctx.send(file=file)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def fivetoolboost(self, ctx):
         """
         Send the 5 Tool Player image
