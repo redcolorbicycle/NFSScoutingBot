@@ -17,7 +17,7 @@ class ClubCommands(commands.Cog):
 
     async def cog_check(self, ctx):
         """
-        Restrict commands to users with specific roles.
+        Restrict commands to users with specific roles
         Only users with the specified roles can call the commands.
         """
         # List of allowed roles
