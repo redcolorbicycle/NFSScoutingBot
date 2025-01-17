@@ -411,6 +411,7 @@ class ClubCommands(commands.Cog):
                     parsed_args = shlex.split(args)  # Split the player names
 
                     for player_name in parsed_args:
+                        player_name = player_name.lower()
                         # Check if the player exists
                         cursor.execute(
                             """
