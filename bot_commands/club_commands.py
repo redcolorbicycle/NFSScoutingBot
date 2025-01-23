@@ -9,6 +9,10 @@ from bot_commands.player_commands import PlayerCommands
 import matplotlib
 import re
 
+matplotlib.rcParams['font.sans-serif'] = ['Noto Sans CJK SC']  # Replace with a font that supports Chinese characters
+matplotlib.rcParams['axes.unicode_minus'] = False  # Ensure minus signs are displayed properly
+
+
 
 class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
