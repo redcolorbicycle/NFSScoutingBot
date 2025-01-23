@@ -102,6 +102,8 @@ class PlayerCommands(commands.Cog):
         Add a new player to the database using the first argument as the name and optional keyword arguments.
         """
         name = name.lower()
+        if "$" in name:
+            await ctx.send("Please replace $ with S. If the player already exists, replace it with @.")
         args = args.replace("“", '"').replace("”", '"')
 
         try:

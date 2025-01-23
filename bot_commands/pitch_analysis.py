@@ -4,8 +4,6 @@ import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
 import os
 from matplotlib import rcParams
 import shlex
