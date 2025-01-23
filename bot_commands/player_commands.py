@@ -377,7 +377,8 @@ class PlayerCommands(commands.Cog):
                         )
                         await ctx.send(f"Updated PR for **{player_name}** to **{pr_value}**.")
                     else:
-                        await ctx.send(f"Error: Player **{player_name}** does not exist in the database.")
+                        await self.addplayer(ctx, player_name, args=f"pr={pr_value}")
+                        await ctx.send(f"Added Player **{player_name}**.")
 
                 self.connection.commit()
         except Exception as e:
