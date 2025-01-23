@@ -5,7 +5,3 @@ matplotlib
 requests
 
 openpyxl
-paddleocr
-paddlepaddle
-opencv-python-headless
-pillow-simd

@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib import rcParams
 import shlex
-from paddleocr import PaddleOCR
-import cv2
 import numpy as np
 from io import BytesIO
 
@@ -18,22 +16,7 @@ class RankedBatStats(commands.Cog):
         self.connection = connection
         self.ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Initialize PaddleOCR for English
 
-    def parse_image(self, image_data):
-        try:
-            nparr = np.frombuffer(image_data, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-            results = self.ocr.ocr(img, det=True, rec=True)
-
-            extracted_text = []
-            for result in results[0]:
-                text = result[1][0]
-                extracted_text.append(text)
-
-            return extracted_text
-        except Exception as e:
-            print(f"Error using PaddleOCR: {e}")
-            return []
+    
         
     @commands.command()
     async def testocr(self, ctx):
