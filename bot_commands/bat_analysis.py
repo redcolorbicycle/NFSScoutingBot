@@ -44,18 +44,34 @@ class RankedBatStats(commands.Cog):
                 processed_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC
             )
 
-            # Use Tesseract OCR with specific configurations for numbers
-            config = '--psm 6 -c tessedit_char_whitelist="0123456789.-"'
+            # Use Tesseract OCR to extract text (no character whitelist, as text is present too)
+            config = '--psm 6'
             extracted_text = pytesseract.image_to_string(processed_img, config=config)
 
             # Split the text into lines and clean up whitespace
             lines = [line.strip() for line in extracted_text.splitlines() if line.strip()]
 
-            # Return the cleaned lines as a list
-            return lines
+            # Extract floats using a regular expression
+            float_pattern = r"-?\d+\.\d+"  # Matches floats (including negatives)
+            floats = []
+            for line in lines:
+                floats.extend(re.findall(float_pattern, line))  # Find all floats in the line
+
+            # Convert floats from strings to actual float type
+            float_array = [float(num) for num in floats]
+
+            # Return the cleaned lines and extracted floats
+            return {
+                "lines": lines,       # Original text lines
+                "floats": float_array  # Extracted floats as an array
+            }
         except Exception as e:
             print(f"Error using Tesseract OCR: {e}")
-            return []
+            return {
+                "lines": [],
+                "floats": []
+            }
+
 
 
     @commands.command()
