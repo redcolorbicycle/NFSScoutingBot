@@ -7,13 +7,17 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib import rcParams
 import shlex
-import cv2
 import numpy as np
 from io import BytesIO
-import pytesseract
 from PIL import Image
 import requests
 from io import BytesIO
+import sys
+import io
+import cv2
+import pytesseract
+import re
+
 
 
 class RankedBatStats(commands.Cog):
