@@ -104,6 +104,7 @@ class PlayerCommands(commands.Cog):
         name = name.lower()
         if "$" in name:
             await ctx.send("Please replace $ with S. If the player already exists, replace it with @.")
+            return
         args = args.replace("“", '"').replace("”", '"')
 
         try:
