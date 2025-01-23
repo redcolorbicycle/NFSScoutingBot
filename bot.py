@@ -43,12 +43,9 @@ async def load_extensions(bot):
         if bot == bot1:
             await bot.load_extension("bot_commands.player_commands")
             await bot.load_extension("bot_commands.club_commands")
-            await bot.load_extension("bot_commands.stevie_commands")
         elif bot == bot2:
             await bot.load_extension("bot_commands.misc_commands")
             await bot.load_extension("bot_commands.server_commands")
-            await bot.load_extension("bot_commands.notice_scraper")
-
             await bot.load_extension("bot_commands.battle_log")
 
             await bot.load_extension("bot_commands.bat_analysis")
