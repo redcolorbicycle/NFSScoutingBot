@@ -6,3 +6,8 @@ requests
 msrest
 azure-cognitiveservices-vision-computervision
 openpyxl
+paddleocr
+paddlepaddle==2.5.0  # Use the appropriate version for your platform (CPU or GPU)
+numpy
+opencv-python-headless
+pillow
