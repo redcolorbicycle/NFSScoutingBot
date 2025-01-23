@@ -34,14 +34,29 @@ class RankedBatStats(commands.Cog):
             # Convert the image to grayscale for better OCR results
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # Use Tesseract OCR to extract text
-            extracted_text = pytesseract.image_to_string(gray)
+            # Apply adaptive thresholding to enhance the text visibility
+            processed_img = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            )
 
-            # Split the text into lines and return as a list
-            return extracted_text.splitlines()
+            # Optionally, increase image size to improve OCR results
+            processed_img = cv2.resize(
+                processed_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC
+            )
+
+            # Use Tesseract OCR with specific configurations for numbers
+            config = '--psm 6 -c tessedit_char_whitelist="0123456789.-"'
+            extracted_text = pytesseract.image_to_string(processed_img, config=config)
+
+            # Split the text into lines and clean up whitespace
+            lines = [line.strip() for line in extracted_text.splitlines() if line.strip()]
+
+            # Return the cleaned lines as a list
+            return lines
         except Exception as e:
             print(f"Error using Tesseract OCR: {e}")
             return []
+
 
     @commands.command()
     async def testocr(self, ctx):
