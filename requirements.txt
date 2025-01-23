@@ -6,7 +6,7 @@ requests
 msrest
 azure-cognitiveservices-vision-computervision
 openpyxl
-paddleocr
+easyocr
 paddlepaddle-lite
 opencv-python-headless
 pillow

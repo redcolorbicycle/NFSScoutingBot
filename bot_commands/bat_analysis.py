@@ -11,6 +11,8 @@ from paddleocr import PaddleOCR
 import cv2
 import numpy as np
 from io import BytesIO
+import easyocr
+import re
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -20,17 +22,16 @@ class RankedBatStats(commands.Cog):
 
     def parse_image(self, image_data):
         try:
-            nparr = np.frombuffer(image_data, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            reader = easyocr.Reader(['en'])
+            results = reader.readtext(image_path)
 
-            results = self.ocr.ocr(img, det=True, rec=True)
+            extracted_numbers = []
+            for _, text, _ in results:
+                # Extract only numbers (integers or decimals)
+                numbers = re.findall(r'\d+\.?\d*', text)
+                extracted_numbers.extend(numbers)
 
-            extracted_text = []
-            for result in results[0]:
-                text = result[1][0]
-                extracted_text.append(text)
-
-            return extracted_text
+            return extracted_numbers
         except Exception as e:
             print(f"Error using PaddleOCR: {e}")
             return []
