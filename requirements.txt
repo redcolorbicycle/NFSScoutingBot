@@ -3,9 +3,6 @@ psycopg2-binary
 pandas
 matplotlib
 requests
-
 openpyxl
-paddleocr
-paddlepaddle
+pytesseract
 opencv-python-headless
-pillow-simd
