@@ -3,9 +3,9 @@ psycopg2-binary
 pandas
 matplotlib
 requests
-msrest
-azure-cognitiveservices-vision-computervision
+
 openpyxl
-easyocr
+paddleocr
+paddlepaddle
 opencv-python-headless
-pillow
+pillow-simd
