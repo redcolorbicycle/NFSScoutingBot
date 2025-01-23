@@ -7,41 +7,45 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib import rcParams
 import shlex
-from paddleocr import PaddleOCR
 import cv2
 import numpy as np
 from io import BytesIO
+import pytesseract
+from PIL import Image
+import requests
+from io import BytesIO
+
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
-        self.ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Initialize PaddleOCR for English
-
+        
     def parse_image(self, image_data):
         try:
+            # Convert image data to a NumPy array
             nparr = np.frombuffer(image_data, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-            results = self.ocr.ocr(img, det=True, rec=True)
+            # Convert the image to grayscale for better OCR results
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            extracted_text = []
-            for result in results[0]:
-                text = result[1][0]
-                extracted_text.append(text)
+            # Use Tesseract OCR to extract text
+            extracted_text = pytesseract.image_to_string(gray)
 
-            return extracted_text
+            # Split the text into lines and return as a list
+            return extracted_text.splitlines()
         except Exception as e:
-            print(f"Error using PaddleOCR: {e}")
+            print(f"Error using Tesseract OCR: {e}")
             return []
-        
+
     @commands.command()
     async def testocr(self, ctx):
         attachments = ctx.message.attachments
         for i, attachment in enumerate(attachments):
-                image_data = await attachment.read()
-                data = self.parse_image(image_data)
-                await ctx.send(data)
+            image_data = await attachment.read()
+            data = self.parse_image(image_data)
+            await ctx.send(data)
 
     @commands.command()
     async def batters(self, ctx):
@@ -76,12 +80,6 @@ class RankedBatStats(commands.Cog):
 
 
 
-
-
-
-
-   
-    
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
@@ -313,3 +311,11 @@ class RankedBatStats(commands.Cog):
 async def setup(bot):
     connection = bot.connection
     await bot.add_cog(RankedBatStats(bot, connection))
+
+
+
+
+
+
+
+
