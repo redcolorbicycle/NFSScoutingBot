@@ -9,8 +9,10 @@ from bot_commands.player_commands import PlayerCommands
 import matplotlib
 import re
 
-matplotlib.rcParams['font.sans-serif'] = ['Noto Sans CJK SC']  # Replace with a font that supports Chinese characters
-matplotlib.rcParams['axes.unicode_minus'] = False  # Ensure minus signs are displayed properly
+font_path = "./fonts/Noto_Sans_TC/NotoSansTC-VariableFont_wght.ttf"
+font_prop = fm.FontProperties(fname=font_path)
+rcParams['font.sans-serif'] = [font_prop.get_name()]
+rcParams['axes.unicode_minus'] = False
 
 
 
