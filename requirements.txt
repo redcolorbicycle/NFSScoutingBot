@@ -7,6 +7,5 @@ msrest
 azure-cognitiveservices-vision-computervision
 openpyxl
 easyocr
-paddlepaddle-lite
 opencv-python-headless
 pillow
