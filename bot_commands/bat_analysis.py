@@ -86,13 +86,7 @@ class RankedBatStats(commands.Cog):
             print(f"Error using Azure OCR API: {e}")
             return ""
 
-    @commands.command()
-    async def identify(self, ctx):
-        try:
-            discord_id = ctx.author.id
-            await ctx.send(discord_id)
-        except Exception as e:
-            await ctx.send(f"Error occurred: {e}")
+    
 
     @commands.command()
     async def batters(self, ctx):

@@ -10,6 +10,14 @@ class MiscCommands(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    async def identify(self, ctx):
+        try:
+            discord_id = ctx.author.id
+            await ctx.send(discord_id)
+        except Exception as e:
+            await ctx.send(f"Error occurred: {e}")
+
+    @commands.command()
     async def cmboost(self, ctx):
         """
         Send the Control Master image
