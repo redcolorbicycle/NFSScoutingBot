@@ -4,6 +4,8 @@ import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from msrest.authentication import CognitiveServicesCredentials
 import os
 from matplotlib import rcParams
 import shlex
@@ -16,6 +18,19 @@ class RankedPitchStats(commands.Cog):
         self.final_state = set()    # Cache for final state (rows as tuples)
         self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
         self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
+
+    async def cog_check(self, ctx):
+        """
+        Restrict commands to users with specific Discord IDs
+        Only users with the specified IDs can call the commands.
+        """
+        # List of allowed user IDs
+        allowed_user_ids = [
+            
+        ]
+
+        # Check if the user's ID is in the list of allowed IDs
+        return ctx.author.id in allowed_user_ids
 
 
     def parse_image(self, image_data):

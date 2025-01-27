@@ -19,6 +19,19 @@ class RankedBatStats(commands.Cog):
         self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
         self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
 
+    async def cog_check(self, ctx):
+        """
+        Restrict commands to users with specific Discord IDs
+        Only users with the specified IDs can call the commands.
+        """
+        # List of allowed user IDs
+        allowed_user_ids = [
+            
+        ]
+
+        # Check if the user's ID is in the list of allowed IDs
+        return ctx.author.id in allowed_user_ids
+
 
     def parse_image(self, image_data):
         """
@@ -73,6 +86,13 @@ class RankedBatStats(commands.Cog):
             print(f"Error using Azure OCR API: {e}")
             return ""
 
+    @commands.command()
+    async def identify(self, ctx):
+        try:
+            discord_id = ctx.author.id
+            await ctx.send(discord_id)
+        except Exception as e:
+            await ctx.send(f"Error occurred: {e}")
 
     @commands.command()
     async def batters(self, ctx):
