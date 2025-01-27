@@ -26,7 +26,7 @@ class RankedPitchStats(commands.Cog):
         """
         # List of allowed user IDs
         allowed_user_ids = [
-            
+            355004588186796035,
         ]
 
         # Check if the user's ID is in the list of allowed IDs
