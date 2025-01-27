@@ -3,6 +3,6 @@ psycopg2-binary
 pandas
 matplotlib
 requests
+msrest
+azure-cognitiveservices-vision-computervision
 openpyxl
-pytesseract
-opencv-python-headless

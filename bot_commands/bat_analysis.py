@@ -4,86 +4,82 @@ import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from msrest.authentication import CognitiveServicesCredentials
 import os
 from matplotlib import rcParams
 import shlex
-import numpy as np
-from io import BytesIO
-from PIL import Image
-import requests
-from io import BytesIO
-import sys
-import io
-import cv2
-import pytesseract
-import re
-
-
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
-        
+        self.initial_state = set()  # Cache for initial state (rows as tuples)
+        self.final_state = set()    # Cache for final state (rows as tuples)
+        self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
+        self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
+
+
     def parse_image(self, image_data):
+        """
+        Extracts tabular data from an image using Azure Computer Vision API.
+        """
         try:
-            # Convert image data to a NumPy array
-            nparr = np.frombuffer(image_data, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-            # Convert the image to grayscale for better OCR results
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-            # Apply adaptive thresholding to enhance the text visibility
-            processed_img = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-            )
-
-            # Optionally, increase image size to improve OCR results
-            processed_img = cv2.resize(
-                processed_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC
-            )
-
-            # Use Tesseract OCR to extract text (no character whitelist, as text is present too)
-            config = '--psm 6'
-            extracted_text = pytesseract.image_to_string(processed_img, config=config)
-
-            # Split the text into lines and clean up whitespace
-            lines = [line.strip() for line in extracted_text.splitlines() if line.strip()]
-
-            # Extract floats using a regular expression
-            float_pattern = r"-?\d+\.\d+"  # Matches floats (including negatives)
-            floats = []
-            for line in lines:
-                floats.extend(re.findall(float_pattern, line))  # Find all floats in the line
-
-            # Convert floats from strings to actual float type
-            float_array = [float(num) for num in floats]
-
-            # Return the cleaned lines and extracted floats
-            return {
-                "lines": lines,       # Original text lines
-                "floats": float_array  # Extracted floats as an array
+            # Correct headers and endpoint
+            headers = {
+                'Ocp-Apim-Subscription-Key': self.api_key,
+                'Content-Type': 'application/octet-stream'
             }
+
+            # Perform the API call
+            response = requests.post(self.endpoint, headers=headers, data=image_data)
+
+
+            # Check for 202 response
+            if response.status_code == 202:
+                # Extract the Operation-Location header
+                operation_location = response.headers["Operation-Location"]
+
+                # Poll for the result
+                import time
+                while True:
+                    result_response = requests.get(operation_location, headers=headers)
+                    if result_response.status_code != 200:
+                        print(f"Polling failed: {result_response.status_code}, {result_response.text}")
+                        return ""
+
+                    result = result_response.json()
+
+                    # Check if the operation is complete
+                    if result.get("status") == "succeeded":
+                        # Extract text from the result
+                        extracted_text = []
+                        for read_result in result["analyzeResult"]["readResults"]:
+                            for line in read_result["lines"]:
+                                extracted_text.append(line["text"])
+                        return extracted_text
+
+                    elif result.get("status") == "failed":
+                        print("Text extraction failed.")
+                        return ""
+
+                    # Wait before polling again
+                    time.sleep(1)
+            else:
+                print(f"Error: {response.status_code}, {response.text}")
+                return ""
+
         except Exception as e:
-            print(f"Error using Tesseract OCR: {e}")
-            return {
-                "lines": [],
-                "floats": []
-            }
+            print(f"Error using Azure OCR API: {e}")
+            return ""
 
-
-
-    @commands.command()
-    async def testocr(self, ctx):
-        attachments = ctx.message.attachments
-        for i, attachment in enumerate(attachments):
-            image_data = await attachment.read()
-            data = self.parse_image(image_data)
-            await ctx.send(data)
 
     @commands.command()
     async def batters(self, ctx):
+        """
+        Collect images for initial and final states, process them.
+        Attach exactly 4 images to the command.
+        """
         attachments = ctx.message.attachments
         if len(attachments) != 4:
             await ctx.send("Please attach exactly 4 images: first 2 for the initial state, last 2 for the final state.")
@@ -91,29 +87,34 @@ class RankedBatStats(commands.Cog):
 
         try:
             discord_id = ctx.author.id
+            await ctx.send(discord_id)
             await ctx.send("Please wait...")
-
             with self.connection.cursor() as cursor:
+                # Execute the DELETE query
                 cursor.execute(
                     "DELETE FROM rankedbatstats WHERE DISCORDID = %s;",
                     (discord_id,)
                 )
 
+            # Process each image
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
                 data = self.parse_image(image_data)
+
+                # Insert into the database
                 try:
-                    timing = "before" if i <= 1 else "after"
+                    if i <= 1:
+                        timing = "before"
+                    else:
+                        timing = "after"
                     self.process_insert(data, discord_id, timing)
+                    
                 except Exception as e:
                     self.connection.rollback()
                     await ctx.send(f"An error occurred: {e}")
-
             await ctx.send("Data has been updated!")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
-
-
 
 
     def process_insert(self, raw_data, discord_id, timing):
@@ -346,11 +347,3 @@ class RankedBatStats(commands.Cog):
 async def setup(bot):
     connection = bot.connection
     await bot.add_cog(RankedBatStats(bot, connection))
-
-
-
-
-
-
-
-
