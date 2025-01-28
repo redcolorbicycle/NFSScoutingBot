@@ -29,10 +29,11 @@ class RankedPitchStats(commands.Cog):
             355004588186796035, 
             327567846567575554,
             249243533246988292,
-            1209287557121318974
+            1209287557121318974,
+            635463073712570385
         ]
 
-        #me, flatline, buthead, #hustleman
+        #me, flatline, buthead, #hustleman, #crazed
 
 
         # Check if the user's ID is in the list of allowed IDs
