@@ -26,8 +26,12 @@ class RankedBatStats(commands.Cog):
         """
         # List of allowed user IDs
         allowed_user_ids = [
-            355004588186796035, 327567846567575554,
+            355004588186796035, 
+            327567846567575554,
+            249243533246988292
         ]
+
+        #me, flatline, buthead
 
         # Check if the user's ID is in the list of allowed IDs
         return ctx.author.id in allowed_user_ids
