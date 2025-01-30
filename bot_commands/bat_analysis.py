@@ -29,11 +29,12 @@ class RankedBatStats(commands.Cog):
             327567846567575554,
             249243533246988292,
             1209287557121318974,
-            635463073712570385
+            635463073712570385,
+            237066640448159746
         ]
 
-        #me, flatline, buthead, #hustleman, #crazed
-        
+        #me, flatline, buthead, #hustleman, #crazed, #cyclops
+
         # Check if the user's ID is in the list of allowed IDs
         return ctx.author.id in allowed_user_ids
 
