@@ -378,7 +378,7 @@ class PlayerCommands(commands.Cog):
                         await ctx.send(f"Updated PR for **{player_name}** to **{pr_value}**.")
                     else:
                         await self.addplayer(ctx, player_name, args=f"pr={pr_value}")
-                        await ctx.send(f"Added Player **{player_name}**.")
+                        await ctx.send(f"Player **{player_name}** does not exist in the database.")
 
                 self.connection.commit()
         except Exception as e:
@@ -685,8 +685,6 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
-
-
     async def upload_to_database(self, file_stream):
         # Read the Excel file
         df = pd.read_excel(file_stream, engine="openpyxl")
@@ -696,11 +694,7 @@ class PlayerCommands(commands.Cog):
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
         df["Club_Name"] = df["Club_Name"].fillna("no club")
         df["Club_Name"] = df["Club_Name"].str.lower()
-        # Remove spaces in Club_Name only for rows where Club_Name is not "no club"
         df.loc[df["Club_Name"] != "no club", "Club_Name"] = df["Club_Name"].str.replace(" ", "", regex=False)
-
-
-
 
         # Optional columns filled with defaults
         df.fillna({
@@ -715,10 +709,10 @@ class PlayerCommands(commands.Cog):
             "SP5_name": "",
             "SP5_skills": "",
             "Team_Name": "",
-            "Nerf":"",
-            "PR":9999,
-            "charbats":0,
-            "toolbats":0,
+            "Nerf": "",
+            "PR": None,  # Set PR to None instead of a default value
+            "charbats": 0,
+            "toolbats": 0,
         }, inplace=True)
 
         df["charbats"] = df["charbats"].astype(int)
@@ -767,7 +761,7 @@ class PlayerCommands(commands.Cog):
                             SP5_name = EXCLUDED.SP5_name,
                             SP5_skills = EXCLUDED.SP5_skills,
                             Nerf = EXCLUDED.Nerf,
-                            PR = EXCLUDED.PR,
+                            PR = COALESCE(EXCLUDED.PR, Player.PR),
                             team_name = EXCLUDED.team_name,
                             charbats = EXCLUDED.charbats,
                             toolbats = EXCLUDED.toolbats,
@@ -791,15 +785,13 @@ class PlayerCommands(commands.Cog):
                 except Exception as row_error:
                     print(f"Error processing row: {row.to_dict()} - {row_error}")
 
-
-                
-
             self.connection.commit()  # Commit after processing all rows
         except Exception as db_error:
             self.connection.rollback()  # Rollback on any database error
             raise db_error  # Rethrow for higher-level handling
         finally:
             cursor.close()
+
 
 
     @commands.command()
