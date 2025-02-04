@@ -24,16 +24,19 @@ class RankedPitchStats(commands.Cog):
         Restrict commands to users with specific Discord IDs
         Only users with the specified IDs can call the commands.
         """
-        # List of allowed user IDs
         allowed_user_ids = [
             355004588186796035, 
             327567846567575554,
             249243533246988292,
             1209287557121318974,
-            635463073712570385
+            635463073712570385,
+            237066640448159746,
+            460950294893690880,
+            1231605248041156653,
+            698184128478314566
         ]
 
-        #me, flatline, buthead, #hustleman, #crazed
+        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot
 
 
         # Check if the user's ID is in the list of allowed IDs
