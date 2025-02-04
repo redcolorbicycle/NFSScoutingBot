@@ -9,6 +9,7 @@ import psycopg2
 from urllib.parse import urlparse
 import os
 import asyncio
+import numpy as np
 
 
 class PlayerCommands(commands.Cog):
@@ -710,7 +711,7 @@ class PlayerCommands(commands.Cog):
             "SP5_skills": "",
             "Team_Name": "",
             "Nerf": "",
-            "PR": None,  # Set PR to None instead of a default value
+            "PR": np.nan,  # Set PR to None instead of a default value
             "charbats": 0,
             "toolbats": 0,
         }, inplace=True)
