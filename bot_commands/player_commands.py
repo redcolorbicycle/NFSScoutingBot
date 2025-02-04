@@ -693,9 +693,17 @@ class PlayerCommands(commands.Cog):
         # Format the names properly
         df["Name"] = df["Name"].astype(str)
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
-        df["Club_Name"] = df["Club_Name"].fillna("no club")
-        df["Club_Name"] = df["Club_Name"].str.lower()
+        df["Club_Name"] = df["Club_Name"].fillna("no club")  # Replace NaNs first
+        df["Club_Name"] = df["Club_Name"].astype(str).str.strip()  # Ensure it's a string and remove surrounding spaces
+        df["Club_Name"] = df["Club_Name"].replace("", "no club")  # Replace empty strings with "no club"
+        df["Club_Name"] = df["Club_Name"].str.lower()  # Convert to lowercase
+
+# Ensure spaces are removed, but ONLY if it’s not "no club"
         df.loc[df["Club_Name"] != "no club", "Club_Name"] = df["Club_Name"].str.replace(" ", "", regex=False)
+
+# Debugging output
+        print(df[["Name", "Club_Name"]].head())  # Check if transformation is working correctly
+
 
         # Optional columns filled with defaults
         df.fillna({
