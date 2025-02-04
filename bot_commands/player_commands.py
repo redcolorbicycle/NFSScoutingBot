@@ -9,7 +9,6 @@ import psycopg2
 from urllib.parse import urlparse
 import os
 import asyncio
-import numpy as np
 
 
 class PlayerCommands(commands.Cog):
@@ -686,6 +685,8 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
+
     async def upload_to_database(self, file_stream):
         # Read the Excel file
         df = pd.read_excel(file_stream, engine="openpyxl")
@@ -693,17 +694,10 @@ class PlayerCommands(commands.Cog):
         # Format the names properly
         df["Name"] = df["Name"].astype(str)
         df["Name"] = df["Name"].str.lower().str.replace(" ", "")
-        df["Club_Name"] = df["Club_Name"].fillna("no club")  # Replace NaNs first
-        df["Club_Name"] = df["Club_Name"].astype(str).str.strip()  # Ensure it's a string and remove surrounding spaces
-        df["Club_Name"] = df["Club_Name"].replace("", "no club")  # Replace empty strings with "no club"
-        df["Club_Name"] = df["Club_Name"].str.lower()  # Convert to lowercase
-
-# Ensure spaces are removed, but ONLY if it’s not "no club"
+        df["Club_Name"] = df["Club_Name"].fillna("no club")
+        df["Club_Name"] = df["Club_Name"].str.lower()
+        # Remove spaces in Club_Name only for rows where Club_Name is not "no club"
         df.loc[df["Club_Name"] != "no club", "Club_Name"] = df["Club_Name"].str.replace(" ", "", regex=False)
-
-# Debugging output
-        print(df[["Name", "Club_Name"]].head())  # Check if transformation is working correctly
-
 
         # Optional columns filled with defaults
         df.fillna({
@@ -718,8 +712,8 @@ class PlayerCommands(commands.Cog):
             "SP5_name": "",
             "SP5_skills": "",
             "Team_Name": "",
-            "Nerf": "",
-            "PR": np.nan,  # Set PR to None instead of a default value
+            "Nerf":"",
+            "PR": 9999,
             "charbats": 0,
             "toolbats": 0,
         }, inplace=True)
@@ -770,7 +764,7 @@ class PlayerCommands(commands.Cog):
                             SP5_name = EXCLUDED.SP5_name,
                             SP5_skills = EXCLUDED.SP5_skills,
                             Nerf = EXCLUDED.Nerf,
-                            PR = COALESCE(EXCLUDED.PR, Player.PR),
+                            PR = CASE WHEN EXCLUDED.PR <> 9999 THEN EXCLUDED.PR ELSE Player.PR END,
                             team_name = EXCLUDED.team_name,
                             charbats = EXCLUDED.charbats,
                             toolbats = EXCLUDED.toolbats,
