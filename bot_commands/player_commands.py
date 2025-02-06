@@ -714,8 +714,8 @@ class PlayerCommands(commands.Cog):
             "Team_Name": "",
             "Nerf":"",
             "PR": 9999,
-            "charbats": 0,
-            "toolbats": 0,
+            "charbats": 10,
+            "toolbats": 10,
         }, inplace=True)
 
         df["charbats"] = df["charbats"].astype(int)
@@ -753,21 +753,21 @@ class PlayerCommands(commands.Cog):
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                         ON CONFLICT (Name) DO UPDATE SET
                             Club_Name = EXCLUDED.Club_Name,
-                            SP1_name = EXCLUDED.SP1_name,
-                            SP1_skills = EXCLUDED.SP1_skills,
-                            SP2_name = EXCLUDED.SP2_name,
-                            SP2_skills = EXCLUDED.SP2_skills,
-                            SP3_name = EXCLUDED.SP3_name,
-                            SP3_skills = EXCLUDED.SP3_skills,
-                            SP4_name = EXCLUDED.SP4_name,
-                            SP4_skills = EXCLUDED.SP4_skills,
-                            SP5_name = EXCLUDED.SP5_name,
-                            SP5_skills = EXCLUDED.SP5_skills,
-                            Nerf = EXCLUDED.Nerf,
+                            SP1_name = CASE WHEN EXCLUDED.SP1_name <> "" THEN EXCLUDED.SP1_name ELSE Player.SP1_name END,
+                            SP1_skills = CASE WHEN EXCLUDED.SP1_skills <> "" THEN EXCLUDED.SP1_skills ELSE Player.SP1_skills END,
+                            SP2_name = CASE WHEN EXCLUDED.SP2_name <> "" THEN EXCLUDED.SP2_name ELSE Player.SP2_name END,
+                            SP2_skills = CASE WHEN EXCLUDED.SP2_skills <> "" THEN EXCLUDED.SP2_skills ELSE Player.SP2_skills END,
+                            SP3_name = CASE WHEN EXCLUDED.SP3_name <> "" THEN EXCLUDED.SP3_name ELSE Player.SP3_name END,
+                            SP3_skills = CASE WHEN EXCLUDED.SP3_skills <> "" THEN EXCLUDED.SP3_skills ELSE Player.SP3_skills END,
+                            SP4_name = CASE WHEN EXCLUDED.SP4_name <> "" THEN EXCLUDED.SP4_name ELSE Player.SP4_name END,
+                            SP4_skills = CASE WHEN EXCLUDED.SP4_skills <> "" THEN EXCLUDED.SP4_skills ELSE Player.SP4_skills END,
+                            SP5_name = CASE WHEN EXCLUDED.SP5_name <> "" THEN EXCLUDED.SP5_name ELSE Player.SP5_name END,
+                            SP5_skills = CASE WHEN EXCLUDED.SP5_skills <> "" THEN EXCLUDED.SP5_skills ELSE Player.SP5_skills END,
+                            Nerf = CASE WHEN EXCLUDED.Nerf <> "" THEN EXCLUDED.Nerf ELSE Player.Nerf END,
                             PR = CASE WHEN EXCLUDED.PR <> 9999 THEN EXCLUDED.PR ELSE Player.PR END,
-                            team_name = EXCLUDED.team_name,
-                            charbats = EXCLUDED.charbats,
-                            toolbats = EXCLUDED.toolbats,
+                            team_name = CASE WHEN EXCLUDED.team_name <> "" THEN EXCLUDED.team_name ELSE Player.team_name END,
+                            charbats = CASE WHEN EXCLUDED.charbats <> 10 THEN EXCLUDED.charbats ELSE Player.charbats END,
+                            toolbats = CASE WHEN EXCLUDED.toolbats <> 10 THEN EXCLUDED.toolbats ELSE Player.toolbats END,
                             last_updated = CURRENT_DATE
                         """,
                         (
