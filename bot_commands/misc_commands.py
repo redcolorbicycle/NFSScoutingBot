@@ -183,8 +183,6 @@ class MiscCommands(commands.Cog):
             image_path = "assets/steviegif.mp4"  # Adjust this path as needed
             file = discord.File(image_path, filename="steviegif.mp4")
             await ctx.send(file=file)
-            image_path2 = "assets/sitdownandshutup.mp4"
-            file = discord.File(image_path2, filename="sitdownandshutup.mp4")
             #await ctx.send(file=file)
 
         except Exception as e:
