@@ -35,10 +35,12 @@ class RankedPitchStats(commands.Cog):
             1231605248041156653,
             698184128478314566,
             958512461500276736,
-            629122681261785118
+            629122681261785118,
+            143909682237538304,
+            1145543271330881599
         ]
 
-        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes
+        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski
 
 
         # Check if the user's ID is in the list of allowed IDs
