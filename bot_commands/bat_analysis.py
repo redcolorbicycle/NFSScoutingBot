@@ -40,10 +40,11 @@ class RankedBatStats(commands.Cog):
             1145543271330881599,
             1091901514848678061,
             536258698461577236,
-            1042374780550135868
+            1042374780550135868,
+            200767106453733366
         ]
 
-        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski, #jedijays, #smashburn, #premboss
+        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski, #jedijays, #smashburn, #premboss, #sveinson
 
 
         # Check if the user's ID is in the list of allowed IDs
