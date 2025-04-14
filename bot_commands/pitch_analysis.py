@@ -44,10 +44,11 @@ class RankedPitchStats(commands.Cog):
             200767106453733386,
             617029165597720592,
             308760445160783882,
-            788709027570778123
+            788709027570778123,
+            789922571834884107
         ]
 
-        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski, #jedijays, #smashburn, #premboss, #sveinson, #sunbro, #dcmtg, #bghoosier
+        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski, #jedijays, #smashburn, #premboss, #sveinson, #sunbro, #dcmtg, #bghoosier, #tito
 
         # Check if the user's ID is in the list of allowed IDs
         return ctx.author.id in allowed_user_ids
