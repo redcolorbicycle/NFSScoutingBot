@@ -20,7 +20,7 @@ class MiscCommands(commands.Cog):
     @commands.command()
     async def cmboost(self, ctx):
         """
-        Send the Control Master image
+        Send the Contact Master image
         """
         try:
             # Fixed path to the image
@@ -242,6 +242,59 @@ class MiscCommands(commands.Cog):
             "Example: `!fivetoolcalculator 79 19 79 19 78 17 60 12 50 8 100 yes`\n"
         )
         await ctx.send(message)
+
+
+    @commands.command()
+    async def pcoboost(self, ctx):
+        """
+        Send the Pitching Coordinator image
+        """
+        try:
+            # Fixed path to the image
+            image_path = "assets/PCO.jpg"  # Adjust this path as needed
+
+            # Check if the image exists
+            if not os.path.isfile(image_path):
+                await ctx.send("The fixed image file was not found.")
+                return
+
+            # Send the image
+            file = discord.File(image_path, filename="PCO.jpg")
+            await ctx.send(file=file)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def mrpboost(self, ctx):
+        """
+        Send the Mr Perfect image
+        """
+        try:
+            # Fixed path to the image
+            image_path = "assets/MRP.jpg"  # Adjust this path as needed
+
+            # Check if the image exists
+            if not os.path.isfile(image_path):
+                await ctx.send("The fixed image file was not found.")
+                return
+
+            # Send the image
+            file = discord.File(image_path, filename="MRP.jpg")
+            await ctx.send(file=file)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def toolswebpage(self, ctx):
+        """
+        Send Murph's webpage
+        """
+        try:
+            await ctx.send("https://9inningstools.app/")
+            return
+        except Exception as e:
+            await ctx.send(f"An error occured: {e}")
+
 
 
 
