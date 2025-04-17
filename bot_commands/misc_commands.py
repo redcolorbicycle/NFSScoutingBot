@@ -271,7 +271,7 @@ class MiscCommands(commands.Cog):
         """
         try:
             # Fixed path to the image
-            image_path = "assets/MRP.jpg"  # Adjust this path as needed
+            image_path = "assets/MrPerfect.jpg"  # Adjust this path as needed
 
             # Check if the image exists
             if not os.path.isfile(image_path):
