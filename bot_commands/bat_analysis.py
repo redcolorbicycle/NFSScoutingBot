@@ -1,161 +1,69 @@
 import discord
 from discord.ext import commands
+import asyncio
 import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
 import os
-from matplotlib import rcParams
-import shlex
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
-        self.initial_state = set()  # Cache for initial state (rows as tuples)
-        self.final_state = set()    # Cache for final state (rows as tuples)
-        self.api_key = os.getenv('AZURE_API_KEY')  # Replace with your Azure API key
+        self.api_key = os.getenv('AZURE_API_KEY')
         self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
 
     async def cog_check(self, ctx):
-        """
-        Restrict commands to users with specific Discord IDs
-        Only users with the specified IDs can call the commands.
-        """
         allowed_user_ids = [
-            355004588186796035, 
-            327567846567575554,
-            249243533246988292,
-            1209287557121318974,
-            635463073712570385,
-            237066640448159746,
-            460950294893690880,
-            1231605248041156653,
-            698184128478314566,
-            958512461500276736,
-            629122681261785118,
-            143909682237538304,
-            1145543271330881599,
-            1091901514848678061,
-            536258698461577236,
-            1042374780550135868,
-            200767106453733386,
-            617029165597720592,
-            308760445160783882,
-            788709027570778123,
-            789922571834884107
+            355004588186796035, 327567846567575554, 249243533246988292,
+            1209287557121318974, 635463073712570385, 237066640448159746,
+            460950294893690880, 1231605248041156653, 698184128478314566,
+            958512461500276736, 629122681261785118, 143909682237538304,
+            1145543271330881599, 1091901514848678061, 536258698461577236,
+            1042374780550135868, 200767106453733386, 617029165597720592,
+            308760445160783882, 788709027570778123, 789922571834884107
         ]
-
-        #me, flatline, buthead, #hustleman, #crazed, #cyclops, #retrometro, #nyy2023, #tokyogroot, #masturbatter #letsgosnakes, #lakenona, #dankbrewski, #jedijays, #smashburn, #premboss, #sveinson, #sunbro, #dcmtg, #bghoosier, #tito
-        # Check if the user's ID is in the list of allowed IDs
         return ctx.author.id in allowed_user_ids
 
-
     def parse_image(self, image_data):
-        """
-        Extracts tabular data from an image using Azure Computer Vision API.
-        """
         try:
-            # Correct headers and endpoint
             headers = {
                 'Ocp-Apim-Subscription-Key': self.api_key,
                 'Content-Type': 'application/octet-stream'
             }
-
-            # Perform the API call
             response = requests.post(self.endpoint, headers=headers, data=image_data)
-
-
-            # Check for 202 response
             if response.status_code == 202:
-                # Extract the Operation-Location header
                 operation_location = response.headers["Operation-Location"]
-
-                # Poll for the result
                 import time
                 while True:
                     result_response = requests.get(operation_location, headers=headers)
                     if result_response.status_code != 200:
-                        print(f"Polling failed: {result_response.status_code}, {result_response.text}")
                         return ""
-
                     result = result_response.json()
-
-                    # Check if the operation is complete
                     if result.get("status") == "succeeded":
-                        # Extract text from the result
-                        extracted_text = []
-                        for read_result in result["analyzeResult"]["readResults"]:
-                            for line in read_result["lines"]:
-                                extracted_text.append(line["text"])
-                        return extracted_text
-
+                        return [line["text"] for read_result in result["analyzeResult"]["readResults"] for line in read_result["lines"]]
                     elif result.get("status") == "failed":
-                        print("Text extraction failed.")
                         return ""
-
-                    # Wait before polling again
                     time.sleep(1)
             else:
-                print(f"Error: {response.status_code}, {response.text}")
                 return ""
-
         except Exception as e:
-            print(f"Error using Azure OCR API: {e}")
+            print(f"OCR Error: {e}")
             return ""
 
-    
-
-    @commands.command()
-    async def batters(self, ctx):
-        """
-        Collect images for initial and final states, process them.
-        Attach exactly 4 images to the command.
-        """
-        attachments = ctx.message.attachments
-        if len(attachments) != 4:
-            await ctx.send("Please attach exactly 4 images: first 2 for the initial state, last 2 for the final state.")
-            return
-
+    def delete_user_data(self, discord_id):
         try:
-            discord_id = ctx.author.id
-            await ctx.send(discord_id)
-            await ctx.send("Please wait...")
             with self.connection.cursor() as cursor:
-                # Execute the DELETE query
-                cursor.execute(
-                    "DELETE FROM rankedbatstats WHERE DISCORDID = %s;",
-                    (discord_id,)
-                )
-
-            # Process each image
-            for i, attachment in enumerate(attachments):
-                image_data = await attachment.read()
-                data = self.parse_image(image_data)
-
-                # Insert into the database
-                try:
-                    if i <= 1:
-                        timing = "before"
-                    else:
-                        timing = "after"
-                    self.process_insert(data, discord_id, timing)
-                    
-                except Exception as e:
-                    self.connection.rollback()
-                    await ctx.send(f"An error occurred: {e}")
-            await ctx.send("Data has been updated!")
+                cursor.execute("DELETE FROM rankedbatstats WHERE DISCORDID = %s;", (discord_id,))
+            self.connection.commit()
         except Exception as e:
-            await ctx.send(f"Error occurred: {e}")
-
+            self.connection.rollback()
+            print(f"Delete Error: {e}")
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
-            data = []
-            newrow = []
-            print(raw_data)
+            data, newrow = [], []
             for i in range(len(raw_data)):
                 if raw_data[i][0].isupper() or (raw_data[i][0:2] == "0." and raw_data[i][2].isalpha()):
                     newrow = [raw_data[i]]
@@ -163,220 +71,110 @@ class RankedBatStats(commands.Cog):
                 elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
                     newrow.append(raw_data[i])
                 if len(newrow) == 8:
-                    if newrow[-1] == "0":
-                        newrow.append("0")
-                    else:
-                        newrow.append(raw_data[i + 1])
+                    newrow.append("0" if newrow[-1] == "0" else raw_data[i + 1])
                     data.append(newrow)
                     newrow = []
-            print(data)
-
-                
-
-
-            # Insert rows into the database
             with self.connection.cursor() as cursor:
                 for row in data:
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         INSERT INTO rankedbatstats (
                             DISCORDID, PLAYERNAME, AB, H, BB, SLG, K, HR, SB, SBPCT, TIMING
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
-                        """,
-                        (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], timing)
-                    )
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
+                    """, (discord_id, *row, timing))
                 self.connection.commit()
-            print(f"Inserted {len(data)} rows into the database.")
-
-
         except Exception as e:
             self.connection.rollback()
-            print(f"Error processing and inserting data: {e}")
-            
+            print(f"Insert Error: {e}")
+
+    @commands.command()
+    async def batters(self, ctx):
+        attachments = ctx.message.attachments
+        if len(attachments) != 4:
+            await ctx.send("Please attach exactly 4 images.")
+            return
+
+        discord_id = ctx.author.id
+        await ctx.send(f"Processing for {discord_id}...")
+
+        try:
+            await asyncio.to_thread(self.delete_user_data, discord_id)
+
+            for i, attachment in enumerate(attachments):
+                image_data = await attachment.read()
+                extracted_data = await asyncio.to_thread(self.parse_image, image_data)
+                timing = "before" if i <= 1 else "after"
+                await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
+
+            await ctx.send("✅ Data updated!")
+        except Exception as e:
+            await ctx.send(f"⚠️ Error: {e}")
+
+    def fetch_comparison_data(self, discord_id):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT a.PLAYERNAME,
+                        b.AB - a.AB, b.H - a.H, b.HR - a.HR, b.BB - a.BB,
+                        b.SLG * b.AB - a.SLG * a.AB, b.SB - a.SB,
+                        CASE WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN
+                            ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) -
+                            ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
+                        ELSE 0 END,
+                        b.K - a.K
+                    FROM rankedbatstats a
+                    JOIN rankedbatstats b ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
+                    AND a.TIMING = 'before' AND b.TIMING = 'after';
+                """, (discord_id, discord_id))
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Fetch Error: {e}")
+            return []
+
+    def create_comparison_plot(self, results):
+        data = []
+        for row in results:
+            player_name, diff_AB, diff_H, diff_HR, diff_BB, diff_BASES, diff_SB, diff_SBA, diff_K = row
+            avg = round(diff_H / diff_AB, 3) if diff_AB else 0
+            walkrate = round((diff_BB / (diff_AB + diff_BB)) * 100, 1) if (diff_AB + diff_BB) else 0
+            obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) else 0
+            hrrate = round((diff_HR / diff_AB) * 100, 1) if diff_AB else 0
+            slg = round(diff_BASES / diff_AB, 3) if diff_AB else 0
+            ops = round(obp + slg, 3)
+            sbrate = round((diff_SB / diff_SBA) * 100, 1) if (diff_SBA > 0 and diff_SB > 0) else 0
+            krate = round((diff_K / diff_AB) * 100, 1) if diff_AB else 0
+            data.append([player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp, diff_HR, hrrate, slg, ops, diff_SB, sbrate])
+
+        columns = ["Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP", "HR", "HR%", "SLG", "OPS", "SB", "SB%"]
+        df = pd.DataFrame(data, columns=columns)
+        df = df.sort_values(by="OPS", ascending=False)
+
+        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
+        ax.axis("off")
+        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.auto_set_column_width(col=list(range(len(df.columns))))
+        buffer = BytesIO()
+        plt.savefig(buffer, format="png", bbox_inches="tight")
+        buffer.seek(0)
+        plt.close(fig)
+        return buffer
 
     @commands.command()
     async def rankedbat(self, ctx):
-        """
-        Compares 'before' and 'after' stats for each player and returns a table image with the differences.
-        """
         discord_id = ctx.author.id
         try:
-            with self.connection.cursor() as cursor:
-                # Execute the SQL query to fetch and calculate differences
-                cursor.execute(
-                    """
-                    SELECT a.PLAYERNAME,
-                        b.AB - a.AB AS diff_AB,
-                        b.H - a.H AS diff_H,
-                        b.HR - a.HR AS diff_HR,
-                        b.BB - a.BB AS diff_BB,
-                        b.SLG * b.AB - a.SLG * a.AB AS diff_BASES,
-                        b.SB - a.SB AS diff_SB,
-                        CASE 
-                            WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN 
-                                ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) - 
-                                ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
-                            ELSE 0
-                        END AS diff_SBA,
-                        b.K - a.K AS diff_K
-                    FROM rankedbatstats a
-                    JOIN rankedbatstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
-
-                    """,
-                    (discord_id, discord_id)
-                )
-
-
-
-                # Fetch results
-                results = cursor.fetchall()
-
-                if not results:
-                    await ctx.send("No matching records found for comparison.")
-                    return
-
-                # Process data into a DataFrame
-                data = []
-                for row in results:
-                    player_name = row[0]
-                    diff_AB = row[1]
-                    diff_H = row[2]
-                    diff_HR = row[3]
-                    diff_BB = row[4]
-                    diff_BASES = row[5]
-                    diff_SB = row[6]
-                    diff_SBA = row[7]
-                    diff_K = row[8]
-
-
-                    # Calculate metrics
-                    avg = round(diff_H / diff_AB, 3) if diff_AB > 0 else 0
-                    walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
-                    walkrate *= 100
-                    walkrate = round(walkrate, 1)
-                    obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
-                    hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
-                    hrrate *= 100
-                    hrrate = round(hrrate, 1)
-                    slg = round(diff_BASES / diff_AB, 3) if diff_AB > 0 else 0
-                    ops = round(obp + slg, 3)
-                    sbrate = round(diff_SB / diff_SBA, 3) if (diff_SBA > 0 and diff_SB > 0) else 0
-                    sbrate *= 100
-                    sbrate = round(sbrate, 1)
-                    krate = round(diff_K/diff_AB, 3) if diff_AB > 0 else 0
-                    krate *= 100
-                    krate = round(krate, 1)
-
-                    # Append the row
-                    data.append([
-                        player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
-                        diff_HR, hrrate, slg, ops, diff_SB, sbrate
-                    ])
-
-                # Define column headers
-                columns = [
-                    "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
-                    "HR", "HR%", "SLG", "OPS", "SB", "SB%"
-                ]
-
-                # Create DataFrame
-                df = pd.DataFrame(data, columns=columns)
-
-                # Sort DataFrame by OPS (optional)
-                df = df.sort_values(by="OPS", ascending=False)
-
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Adjust size dynamically
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
-                )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
-
-                # Apply conditional formatting for PR column
-                cell_dict = table.get_celld()
-                for (row, col), cell in cell_dict.items():
-                    if row == 0 or col == 0:
-                        cell.set_text_props(weight="bold")
-
-                row_height = 1 / len(df)  # Divide the figure height by the number of rows
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(row_height)  # Set height dynamically
-
-                # Save the table as an image in memory
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="stats_comparison.png")
-                await ctx.send(file=file)
-
+            results = await asyncio.to_thread(self.fetch_comparison_data, discord_id)
+            if not results:
+                await ctx.send("No matching records found.")
+                return
+            buffer = await asyncio.to_thread(self.create_comparison_plot, results)
+            file = discord.File(fp=buffer, filename="stats_comparison.png")
+            await ctx.send(file=file)
         except Exception as e:
-            await ctx.send(f"Error comparing stats: {e}")
-
-
-            
-
-    def fetch(self, discord_id):
-        """
-        Retrieves all rows where the same PLAYERNAME appears in both TIMING = 'before' and TIMING = 'after'.
-        """
-        try:
-            with self.connection.cursor() as cursor:
-                # Execute the SELECT query
-                cursor.execute(
-                    """
-                    SELECT a.*, 
-                    FROM rankedbatstats a
-                    JOIN rankedbatstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
-
-                    """,
-                    (discord_id, discord_id)
-                )
-                # Fetch all matching rows
-                rowsbefore = cursor.fetchall()
-                cursor.execute(
-                    """
-                    SELECT b.*, 
-                    FROM rankedbatstats a
-                    JOIN rankedbatstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
-
-                    """,
-                    (discord_id, discord_id)
-                )
-                # Fetch all matching rows
-                rowsafter = cursor.fetchall()
-                return (rowsbefore, rowsafter)
-            
-        except Exception as e:
-            print(f"Error retrieving common players: {e}")
-            return []
-
+            await ctx.send(f"⚠️ Error comparing stats: {e}")
 
 async def setup(bot):
     connection = bot.connection
