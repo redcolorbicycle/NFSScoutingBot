@@ -115,8 +115,9 @@ class RankedPitchStats(commands.Cog):
                 extracted_data = await asyncio.to_thread(self.parse_image, image_data)
                 timing = "before" if i <= 1 else "after"
                 await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
+            discord_id = ctx.author.id
 
-            await ctx.send("✅ Data updated!")
+            await ctx.send(f"✅ Data updated for {discord_id}!")
         except Exception as e:
             await ctx.send(f"⚠️ Error: {e}")
 
