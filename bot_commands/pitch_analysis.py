@@ -39,24 +39,17 @@ class RankedPitchStats(commands.Cog):
                 while True:
                     result_response = requests.get(operation_location, headers=headers)
                     if result_response.status_code != 200:
-                        print(f"Polling failed: {result_response.status_code}, {result_response.text}")
                         return ""
                     result = result_response.json()
                     if result.get("status") == "succeeded":
-                        extracted_text = []
-                        for read_result in result["analyzeResult"]["readResults"]:
-                            for line in read_result["lines"]:
-                                extracted_text.append(line["text"])
-                        return extracted_text
+                        return [line["text"] for read_result in result["analyzeResult"]["readResults"] for line in read_result["lines"]]
                     elif result.get("status") == "failed":
-                        print("Text extraction failed.")
                         return ""
                     time.sleep(1)
             else:
-                print(f"Error: {response.status_code}, {response.text}")
                 return ""
         except Exception as e:
-            print(f"Error using Azure OCR API: {e}")
+            print(f"OCR Error: {e}")
             return ""
 
     def delete_user_data(self, discord_id):
@@ -66,12 +59,13 @@ class RankedPitchStats(commands.Cog):
             self.connection.commit()
         except Exception as e:
             self.connection.rollback()
-            print(f"Error deleting user data: {e}")
+            print(f"Delete Error: {e}")
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
             data = []
             newrow = []
+
             for i in range(len(raw_data)):
                 if raw_data[i] == "...":
                     continue
@@ -105,37 +99,7 @@ class RankedPitchStats(commands.Cog):
             print(f"Inserted {len(data)} rows into the database.")
         except Exception as e:
             self.connection.rollback()
-            print(f"Error processing and inserting data: {e}")
-
-    def fetch(self, discord_id):
-        try:
-            with self.connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT a.*, 
-                    FROM rankedpitchstats a
-                    JOIN rankedpitchstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
-                """, (discord_id, discord_id))
-                rowsbefore = cursor.fetchall()
-                cursor.execute("""
-                    SELECT b.*, 
-                    FROM rankedpitchstats a
-                    JOIN rankedpitchstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
-                """, (discord_id, discord_id))
-                rowsafter = cursor.fetchall()
-                return (rowsbefore, rowsafter)
-        except Exception as e:
-            print(f"Error retrieving common players: {e}")
-            return []
+            print(f"Insert Error: {e}")
 
     @commands.command()
     async def pitchers(self, ctx):
@@ -145,7 +109,7 @@ class RankedPitchStats(commands.Cog):
             return
 
         discord_id = ctx.author.id
-        await ctx.send(discord_id)
+        await ctx.send(f"{discord_id}")
         await ctx.send("Please wait...")
 
         try:
@@ -166,60 +130,89 @@ class RankedPitchStats(commands.Cog):
     async def rankedpitch(self, ctx):
         discord_id = ctx.author.id
         try:
-            rowsbefore, rowsafter = await asyncio.to_thread(self.fetch, discord_id)
-            if not rowsbefore or not rowsafter:
+            results = await asyncio.to_thread(self.fetch_comparison_data, discord_id)
+
+            if not results:
                 await ctx.send("No matching records found for comparison.")
                 return
 
             data = []
-            for a, b in zip(rowsbefore, rowsafter):
-                player_name = a[1]
-                diff_OUTS = b[2] - a[2]
-                diff_R = b[3] - a[3]
-                diff_H = b[4] - a[4]
-                diff_BB = b[5] - a[5]
-                diff_SLG = (b[6] * (b[4] + b[2]) - a[6] * (a[4] + a[2])) / ((b[4] + b[2]) - (a[4] + a[2])) if (b[4] + b[2]) != (a[4] + a[2]) else 0
-                diff_HR = b[7] - a[7]
-                diff_SO = b[8] - a[8]
-                diff_G = b[10] - a[10]
+            for row in results:
+                player_name = row[0]
+                diff_OUTS = row[1]
+                diff_R = row[2]
+                diff_H = row[3]
+                diff_BB = row[4]
+                diff_SLG = round(row[5], 3)
+                diff_HR = row[6]
+                diff_SO = row[7]
+                diff_G = row[8]
 
                 diff_AB = diff_H + diff_OUTS
+
                 ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
-                era = round(diff_R / diff_OUTS * 27, 2) if diff_OUTS else 0
-                avg = round(diff_H / diff_AB, 3) if diff_H else 0
-                walkrate = round((diff_BB / (diff_AB + diff_BB)) * 100, 1) if (diff_AB + diff_BB) else 0
-                obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) else 0
-                hrrate = round((diff_HR / diff_AB) * 100, 1) if diff_AB else 0
-                slg = diff_SLG
+                era = round(diff_R / diff_OUTS * 27, 2) if diff_R > 0 else 0
+                avg = round(diff_H / diff_AB, 3) if diff_H > 0 else 0
+
+                walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
+                walkrate *= 100
+                walkrate = round(walkrate, 1)
+
+                obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
+                hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
+                hrrate *= 100
+                hrrate = round(hrrate, 1)
+
+                slg = diff_SLG if diff_AB > 0 else 0
                 ops = round(obp + slg, 3)
-                krate = round((diff_SO / diff_AB) * 100, 1) if diff_AB else 0
-                whip = round((diff_BB + diff_H) / diff_OUTS * 3, 3) if diff_OUTS else 0
-                ipg = round(ip / diff_G, 3) if diff_G > 0 else 0
+
+                krate = diff_SO / diff_AB if diff_AB > 0 else 0
+                krate *= 100
+                krate = round(krate, 1)
+
+                whip = (diff_BB + diff_H) / diff_OUTS * 3 if diff_OUTS > 0 else 0
+                whip = round(whip, 3)
+
+                ipg = round(float(ip / diff_G), 3) if diff_G > 0 else 0
 
                 data.append([
                     player_name, diff_G, ip, ipg, era, avg, obp, slg, ops,
                     diff_BB, walkrate, diff_HR, hrrate, diff_SO, krate, whip
                 ])
 
-            columns = ["Player Name", "G", "IP", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS", "BB", "BB%", "HR", "HR%", "K", "K%", "WHIP"]
+            columns = [
+                "Player Name", "G", "IP", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS",
+                "BB", "BB%", "HR", "HR%", "K", "K%", "WHIP"
+            ]
+
             df = pd.DataFrame(data, columns=columns)
             df = df.sort_values(by="ERA")
 
             fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
             ax.axis("tight")
             ax.axis("off")
-            table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
+            table = ax.table(
+                cellText=df.values,
+                colLabels=df.columns,
+                cellLoc="center",
+                loc="center",
+            )
+
             table.auto_set_font_size(False)
             table.set_fontsize(10)
             table.auto_set_column_width(col=list(range(len(df.columns))))
 
-            for (row, col), cell in table.get_celld().items():
+            cell_dict = table.get_celld()
+            for (row, col), cell in cell_dict.items():
                 if row == 0 or col == 0:
                     cell.set_text_props(weight="bold")
-                cell.set_height(1 / (len(df) + 1))
+
+            row_height = 1 / len(df)
+            for (row, col), cell in cell_dict.items():
+                cell.set_height(row_height)
 
             buffer = BytesIO()
-            plt.savefig(buffer, format="png", bbox_inches="tight", dpi=300)
+            plt.savefig(buffer, format="png", bbox_inches="tight")
             buffer.seek(0)
             plt.close(fig)
 
@@ -228,6 +221,37 @@ class RankedPitchStats(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
+
+    def fetch_comparison_data(self, discord_id):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        a.PLAYERNAME,
+                        b.outs - a.outs,
+                        b.r - a.r,
+                        b.h - a.h,
+                        b.bb - a.bb,
+                        CASE 
+                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
+                                (b.slg * (b.h + b.outs) - a.slg * (a.h + a.outs)) / ((b.h + b.outs) - (a.h + a.outs))
+                            ELSE 0
+                        END,
+                        b.HR - a.HR,
+                        b.SO - a.SO,
+                        b.G - a.G
+                    FROM rankedpitchstats a
+                    JOIN rankedpitchstats b
+                    ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s
+                    AND b.DISCORDID = %s
+                    AND a.TIMING = 'before'
+                    AND b.TIMING = 'after';
+                """, (discord_id, discord_id))
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Fetch Error: {e}")
+            return []
 
 async def setup(bot):
     connection = bot.connection
