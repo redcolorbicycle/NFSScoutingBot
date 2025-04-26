@@ -136,6 +136,8 @@ class RankedBatStats(commands.Cog):
         data = []
         for row in results:
             player_name, diff_AB, diff_H, diff_HR, diff_BB, diff_BASES, diff_SB, diff_SBA, diff_K = row
+
+            # Calculate advanced metrics
             avg = round(diff_H / diff_AB, 3) if diff_AB else 0
             walkrate = round((diff_BB / (diff_AB + diff_BB)) * 100, 1) if (diff_AB + diff_BB) else 0
             obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) else 0
@@ -144,23 +146,60 @@ class RankedBatStats(commands.Cog):
             ops = round(obp + slg, 3)
             sbrate = round((diff_SB / diff_SBA) * 100, 1) if (diff_SBA > 0 and diff_SB > 0) else 0
             krate = round((diff_K / diff_AB) * 100, 1) if diff_AB else 0
-            data.append([player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp, diff_HR, hrrate, slg, ops, diff_SB, sbrate])
 
-        columns = ["Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP", "HR", "HR%", "SLG", "OPS", "SB", "SB%"]
+            data.append([
+                player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
+                diff_HR, hrrate, slg, ops, diff_SB, sbrate
+            ])
+
+        columns = [
+            "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
+            "HR", "HR%", "SLG", "OPS", "SB", "SB%"
+        ]
+
+        # Build DataFrame
         df = pd.DataFrame(data, columns=columns)
+
+        # Sort by OPS descending
         df = df.sort_values(by="OPS", ascending=False)
 
-        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
+        # Start plotting
+        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # dynamic figure size
+        ax.axis("tight")
         ax.axis("off")
-        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
+
+        # Draw table
+        table = ax.table(
+            cellText=df.values,
+            colLabels=df.columns,
+            cellLoc="center",
+            loc="center",
+        )
+
+        # Adjust table styling
         table.auto_set_font_size(False)
-        table.set_fontsize(10)
+        table.set_fontsize(10)  # Match your old font size
         table.auto_set_column_width(col=list(range(len(df.columns))))
+
+        # Bolding first row (header) and first column (Player Name)
+        cell_dict = table.get_celld()
+        for (row, col), cell in cell_dict.items():
+            if row == 0 or col == 0:
+                cell.set_text_props(weight="bold")
+
+        # Set dynamic row height
+        row_height = 1 / (len(df) + 1)  # +1 to account for header row
+        for (row, col), cell in cell_dict.items():
+            cell.set_height(row_height)
+
+        # Save as image
         buffer = BytesIO()
-        plt.savefig(buffer, format="png", bbox_inches="tight")
+        plt.savefig(buffer, format="png", bbox_inches="tight", dpi=300)
         buffer.seek(0)
         plt.close(fig)
+
         return buffer
+
 
     @commands.command()
     async def rankedbat(self, ctx):
