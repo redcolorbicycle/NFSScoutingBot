@@ -68,8 +68,9 @@ class RankedPitchStats(commands.Cog):
                 if raw_data[i] == "...":
                     continue
                 if raw_data[i][0].isupper() or (raw_data[i][0:2] == "0." and raw_data[i][2].isalpha()):
+                    if newrow and len(newrow) == 9:
+                        data.append(newrow)
                     newrow = [raw_data[i]]
-                    continue
                 elif len(newrow) == 1:
                     if "." in raw_data[i]:
                         integer_part, decimal_part = raw_data[i].split(".")
@@ -80,11 +81,14 @@ class RankedPitchStats(commands.Cog):
                             newrow.append(integer_part * 3 + 2)
                         else:
                             newrow.append(integer_part * 3)
+                    else:
+                        newrow.append(raw_data[i])
                 else:
                     newrow.append(raw_data[i])
-                    data.append(newrow)
-            print(f"[{timing}] Parsed rows: {data}")
+            if newrow and len(newrow) == 9:
+                data.append(newrow)
 
+            print(f"[{timing}] Parsed {len(data)} rows. Example rows: {data[:2]}")
 
             with self.connection.cursor() as cursor:
                 for row in data:
@@ -93,7 +97,7 @@ class RankedPitchStats(commands.Cog):
                             DISCORDID, PLAYERNAME, OUTS, R, H, BB, SLG, HR, SO, TIMING, G
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
-                    """, (discord_id, *row, timing))
+                    """, (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], timing, row[8]))
                 self.connection.commit()
         except Exception as e:
             self.connection.rollback()
@@ -179,7 +183,7 @@ class RankedPitchStats(commands.Cog):
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
                 extracted_data = await asyncio.to_thread(self.parse_image, image_data)
-                timing = "before" if i <= 1 else "after"
+                timing = "before" if i in [0, 1] else "after"
                 await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
 
             await ctx.send(f"✅ Data updated for {discord_id}!")
