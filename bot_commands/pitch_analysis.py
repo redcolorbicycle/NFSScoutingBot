@@ -122,7 +122,9 @@ class RankedPitchStats(commands.Cog):
                 timing = "before" if i <= 1 else "after"
                 await asyncio.to_thread(self.process_insert, data, discord_id, timing)
 
-            await ctx.send("Data has been updated!")
+            discord_id = ctx.author.id
+
+            await ctx.send(f"Data has been updated for {discord_id}!")
         except Exception as e:
             await ctx.send(f"Error occurred: {e}")
 
