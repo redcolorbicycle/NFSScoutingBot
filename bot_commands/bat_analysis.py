@@ -286,10 +286,10 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
         # Set custom y-axis limits per metric
         ylim_dict = {
-            'avg': 0.5,
-            'slg': 0.5,
-            'obp': 0.5,
-            'ops': 1.2
+            'avg': 0.35,
+            'slg': 0.55,
+            'obp': 0.45,
+            'ops': 1.1
         }
         plt.ylim(0, ylim_dict.get(metric.lower(), 1))
 
