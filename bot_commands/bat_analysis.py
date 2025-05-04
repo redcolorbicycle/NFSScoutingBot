@@ -284,14 +284,16 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         plt.xlabel("Submission Order")
         plt.ylabel(metric.upper())
 
-        # Set custom y-axis limits per metric
+        # Custom min & max y-axis limits for each metric
         ylim_dict = {
-            'avg': 0.35,
-            'slg': 0.55,
-            'obp': 0.45,
-            'ops': 1.1
+            'avg': (0.1, 0.35),
+            'slg': (0.1, 0.55),
+            'obp': (0.1, 0.45),
+            'ops': (0.25, 1.0)
         }
-        plt.ylim(0, ylim_dict.get(metric.lower(), 1))
+
+        ymin, ymax = ylim_dict.get(metric.lower(), (0, 1))
+        plt.ylim(ymin, ymax)
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.grid(True)
@@ -301,7 +303,6 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         buffer.seek(0)
         plt.close()
         return buffer
-
 
     @commands.command()
     async def rankedavg(self, ctx):
