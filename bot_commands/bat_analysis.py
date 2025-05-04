@@ -279,10 +279,20 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         x_labels = [f"#{i+1}" for i in range(len(timestamps))]
         for name, values in player_data.items():
             plt.plot(x_labels, values, marker='o', label=name)
+
         plt.title(f"{metric.upper()} over last 4 uploads")
         plt.xlabel("Submission Order")
         plt.ylabel(metric.upper())
-        plt.ylim(0, 2)
+
+        # Set custom y-axis limits per metric
+        ylim_dict = {
+            'avg': 0.6,
+            'slg': 0.7,
+            'obp': 0.7,
+            'ops': 1.4
+        }
+        plt.ylim(0, ylim_dict.get(metric.lower(), 1))
+
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.grid(True)
 
@@ -291,6 +301,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         buffer.seek(0)
         plt.close()
         return buffer
+
 
     @commands.command()
     async def rankedavg(self, ctx):
