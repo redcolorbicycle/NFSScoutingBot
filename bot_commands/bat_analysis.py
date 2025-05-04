@@ -235,11 +235,15 @@ class RankedBatStats(commands.Cog):
             for ts in timestamps:
                 with self.connection.cursor() as cursor:
                     cursor.execute("""
-                        SELECT PLAYERNAME, SUM(H), SUM(BB), SUM(SLG * AB), SUM(AB)
-                        FROM rankedbatstats
-                        WHERE DISCORDID = %s AND submission_time = %s
-                        GROUP BY PLAYERNAME;
-                    """, (discord_id, ts))
+                        SELECT a.PLAYERNAME, b.H - a.H AS H, b.BB - a.BB AS BB,
+                               b.SLG * b.AB - a.SLG * a.AB AS BASES, b.AB - a.AB AS AB
+                        FROM rankedbatstats a
+                        JOIN rankedbatstats b
+                        ON a.PLAYERNAME = b.PLAYERNAME AND a.submission_time = b.submission_time
+                        WHERE a.DISCORDID = %s AND b.DISCORDID = %s
+                          AND a.TIMING = 'before' AND b.TIMING = 'after'
+                          AND a.submission_time = %s;
+                    """, (discord_id, discord_id, ts))
                     rows = cursor.fetchall()
 
                 current_players = set(name for name, *_ in rows)
@@ -264,6 +268,7 @@ class RankedBatStats(commands.Cog):
         except Exception as e:
             print(f"Fetch metric trend error: {e}")
             return [], {}
+
 
     def plot_metric_trend(self, timestamps, player_data, metric):
         plt.figure(figsize=(12, 6))
