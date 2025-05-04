@@ -118,6 +118,21 @@ class RankedBatStats(commands.Cog):
         except Exception as e:
             await ctx.send(f"⚠️ Error: {e}")
 
+    @commands.command()
+    async def rankedbat(self, ctx):
+        discord_id = ctx.author.id
+        try:
+            results = await asyncio.to_thread(self.fetch_comparison_data, discord_id)
+            if not results:
+                await ctx.send("No matching records found.")
+                return
+            buffer = await asyncio.to_thread(self.create_comparison_plot, results)
+            file = discord.File(fp=buffer, filename="stats_comparison.png")
+            await ctx.send(file=file)
+        except Exception as e:
+            await ctx.send(f"⚠️ Error comparing stats: {e}")
+
+
     def fetch_comparison_data(self, discord_id):
         try:
             with self.connection.cursor() as cursor:
