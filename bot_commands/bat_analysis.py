@@ -6,6 +6,7 @@ from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from datetime import datetime
 
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -52,16 +53,7 @@ class RankedBatStats(commands.Cog):
             print(f"OCR Error: {e}")
             return ""
 
-    def delete_user_data(self, discord_id):
-        try:
-            with self.connection.cursor() as cursor:
-                cursor.execute("DELETE FROM rankedbatstats WHERE DISCORDID = %s;", (discord_id,))
-            self.connection.commit()
-        except Exception as e:
-            self.connection.rollback()
-            print(f"Delete Error: {e}")
-
-    def process_insert(self, raw_data, discord_id, timing):
+    def process_insert(self, raw_data, discord_id, timing, submission_time):
         try:
             data, newrow = [], []
             for i in range(len(raw_data)):
@@ -78,14 +70,31 @@ class RankedBatStats(commands.Cog):
                 for row in data:
                     cursor.execute("""
                         INSERT INTO rankedbatstats (
-                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, K, HR, SB, SBPCT, TIMING
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
-                    """, (discord_id, *row, timing))
+                            DISCORDID, PLAYERNAME, AB, H, BB, SLG, K, HR, SB, SBPCT, TIMING, submission_time
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (DISCORDID, PLAYERNAME, TIMING, submission_time) DO NOTHING;
+                    """, (discord_id, *row, timing, submission_time))
                 self.connection.commit()
         except Exception as e:
             self.connection.rollback()
             print(f"Insert Error: {e}")
+
+    def trim_old_submissions(self, discord_id):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    DELETE FROM rankedbatstats
+                    WHERE (DISCORDID, submission_time) NOT IN (
+                        SELECT DISCORDID, submission_time FROM rankedbatstats
+                        WHERE DISCORDID = %s
+                        ORDER BY submission_time DESC
+                        LIMIT 4
+                    );
+                """, (discord_id,))
+            self.connection.commit()
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Trim Error: {e}")
 
     @commands.command()
     async def batters(self, ctx):
@@ -98,15 +107,13 @@ class RankedBatStats(commands.Cog):
         await ctx.send(f"Processing for {discord_id}...")
 
         try:
-            await asyncio.to_thread(self.delete_user_data, discord_id)
-
+            submission_time = datetime.now()
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
                 extracted_data = await asyncio.to_thread(self.parse_image, image_data)
                 timing = "before" if i <= 1 else "after"
-                await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
-            discord_id = ctx.author.id
-
+                await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing, submission_time)
+            await asyncio.to_thread(self.trim_old_submissions, discord_id)
             await ctx.send(f"✅ Data updated for {discord_id}!")
         except Exception as e:
             await ctx.send(f"⚠️ Error: {e}")
@@ -126,7 +133,10 @@ class RankedBatStats(commands.Cog):
                     FROM rankedbatstats a
                     JOIN rankedbatstats b ON a.PLAYERNAME = b.PLAYERNAME
                     WHERE a.DISCORDID = %s AND b.DISCORDID = %s
-                    AND a.TIMING = 'before' AND b.TIMING = 'after';
+                    AND a.TIMING = 'before' AND b.TIMING = 'after'
+                    AND a.submission_time = b.submission_time
+                    ORDER BY b.submission_time DESC
+                    LIMIT 1;
                 """, (discord_id, discord_id))
                 return cursor.fetchall()
         except Exception as e:
@@ -138,7 +148,6 @@ class RankedBatStats(commands.Cog):
         for row in results:
             player_name, diff_AB, diff_H, diff_HR, diff_BB, diff_BASES, diff_SB, diff_SBA, diff_K = row
 
-            # Calculate advanced metrics
             avg = round(diff_H / diff_AB, 3) if diff_AB else 0
             walkrate = round((diff_BB / (diff_AB + diff_BB)) * 100, 1) if (diff_AB + diff_BB) else 0
             obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) else 0
@@ -158,18 +167,13 @@ class RankedBatStats(commands.Cog):
             "HR", "HR%", "SLG", "OPS", "SB", "SB%"
         ]
 
-        # Build DataFrame
         df = pd.DataFrame(data, columns=columns)
-
-        # Sort by OPS descending
         df = df.sort_values(by="OPS", ascending=False)
 
-        # Start plotting
-        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # dynamic figure size
+        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
         ax.axis("tight")
         ax.axis("off")
 
-        # Draw table
         table = ax.table(
             cellText=df.values,
             colLabels=df.columns,
@@ -177,23 +181,19 @@ class RankedBatStats(commands.Cog):
             loc="center",
         )
 
-        # Adjust table styling
         table.auto_set_font_size(False)
-        table.set_fontsize(10)  # Match your old font size
+        table.set_fontsize(10)
         table.auto_set_column_width(col=list(range(len(df.columns))))
 
-        # Bolding first row (header) and first column (Player Name)
         cell_dict = table.get_celld()
         for (row, col), cell in cell_dict.items():
             if row == 0 or col == 0:
                 cell.set_text_props(weight="bold")
 
-        # Set dynamic row height
-        row_height = 1 / (len(df) + 1)  # +1 to account for header row
+        row_height = 1 / (len(df) + 1)
         for (row, col), cell in cell_dict.items():
             cell.set_height(row_height)
 
-        # Save as image
         buffer = BytesIO()
         plt.savefig(buffer, format="png", bbox_inches="tight", dpi=300)
         buffer.seek(0)
@@ -201,20 +201,105 @@ class RankedBatStats(commands.Cog):
 
         return buffer
 
+    def fetch_metric_trend(self, discord_id, metric):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT DISTINCT submission_time
+                    FROM rankedbatstats
+                    WHERE DISCORDID = %s
+                    ORDER BY submission_time DESC
+                    LIMIT 4;
+                """, (discord_id,))
+                timestamps = [row[0] for row in cursor.fetchall()][::-1]
+
+            player_data = {}
+            for ts in timestamps:
+                with self.connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT PLAYERNAME, SUM(H), SUM(BB), SUM(SLG * AB), SUM(AB)
+                        FROM rankedbatstats
+                        WHERE DISCORDID = %s AND submission_time = %s
+                        GROUP BY PLAYERNAME;
+                    """, (discord_id, ts))
+                    rows = cursor.fetchall()
+
+                current_players = set(name for name, *_ in rows)
+                for name, h, bb, total_bases, ab in rows:
+                    value = 0
+                    if ab:
+                        if metric == "avg":
+                            value = round(h / ab, 3)
+                        elif metric == "obp":
+                            value = round((h + bb) / (ab + bb), 3) if (ab + bb) else 0
+                        elif metric == "slg":
+                            value = round(total_bases / ab, 3)
+                        elif metric == "ops":
+                            obp = round((h + bb) / (ab + bb), 3) if (ab + bb) else 0
+                            slg = round(total_bases / ab, 3)
+                            value = round(obp + slg, 3)
+                    player_data.setdefault(name, []).append(value)
+                for name in player_data:
+                    if name not in current_players:
+                        player_data[name].append(None)
+            return timestamps, player_data
+        except Exception as e:
+            print(f"Fetch metric trend error: {e}")
+            return [], {}
+
+    def plot_metric_trend(self, timestamps, player_data, metric):
+        plt.figure(figsize=(12, 6))
+        x_labels = [f"#{i+1}" for i in range(len(timestamps))]
+        for name, values in player_data.items():
+            plt.plot(x_labels, values, marker='o', label=name)
+        plt.title(f"{metric.upper()} over last 4 uploads")
+        plt.xlabel("Submission Order")
+        plt.ylabel(metric.upper())
+        plt.ylim(0, 2)
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.grid(True)
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight', dpi=300)
+        buffer.seek(0)
+        plt.close()
+        return buffer
 
     @commands.command()
-    async def rankedbat(self, ctx):
-        discord_id = ctx.author.id
-        try:
-            results = await asyncio.to_thread(self.fetch_comparison_data, discord_id)
-            if not results:
-                await ctx.send("No matching records found.")
-                return
-            buffer = await asyncio.to_thread(self.create_comparison_plot, results)
-            file = discord.File(fp=buffer, filename="stats_comparison.png")
-            await ctx.send(file=file)
-        except Exception as e:
-            await ctx.send(f"⚠️ Error comparing stats: {e}")
+    async def rankedavg(self, ctx):
+        timestamps, player_data = await asyncio.to_thread(self.fetch_metric_trend, ctx.author.id, "avg")
+        if not player_data:
+            await ctx.send("No data to plot AVG.")
+            return
+        buffer = await asyncio.to_thread(self.plot_metric_trend, timestamps, player_data, "avg")
+        await ctx.send(file=discord.File(fp=buffer, filename="rankedavg.png"))
+
+    @commands.command()
+    async def rankedobp(self, ctx):
+        timestamps, player_data = await asyncio.to_thread(self.fetch_metric_trend, ctx.author.id, "obp")
+        if not player_data:
+            await ctx.send("No data to plot OBP.")
+            return
+        buffer = await asyncio.to_thread(self.plot_metric_trend, timestamps, player_data, "obp")
+        await ctx.send(file=discord.File(fp=buffer, filename="rankedobp.png"))
+
+    @commands.command()
+    async def rankedslg(self, ctx):
+        timestamps, player_data = await asyncio.to_thread(self.fetch_metric_trend, ctx.author.id, "slg")
+        if not player_data:
+            await ctx.send("No data to plot SLG.")
+            return
+        buffer = await asyncio.to_thread(self.plot_metric_trend, timestamps, player_data, "slg")
+        await ctx.send(file=discord.File(fp=buffer, filename="rankedslg.png"))
+
+    @commands.command()
+    async def rankedops(self, ctx):
+        timestamps, player_data = await asyncio.to_thread(self.fetch_metric_trend, ctx.author.id, "ops")
+        if not player_data:
+            await ctx.send("No data to plot OPS.")
+            return
+        buffer = await asyncio.to_thread(self.plot_metric_trend, timestamps, player_data, "ops")
+        await ctx.send(file=discord.File(fp=buffer, filename="rankedops.png"))
 
 async def setup(bot):
     connection = bot.connection
