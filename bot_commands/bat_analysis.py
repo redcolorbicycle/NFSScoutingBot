@@ -84,12 +84,16 @@ class RankedBatStats(commands.Cog):
             with self.connection.cursor() as cursor:
                 cursor.execute("""
                     DELETE FROM rankedbatstats
-                    WHERE (DISCORDID, submission_time) NOT IN (
-                        SELECT DISCORDID, submission_time FROM rankedbatstats
-                        WHERE DISCORDID = %s
-                        ORDER BY submission_time DESC
-                        LIMIT 4
-                    );
+WHERE DISCORDID = %s AND submission_time NOT IN (
+    SELECT submission_time FROM (
+        SELECT DISTINCT submission_time
+        FROM rankedbatstats
+        WHERE DISCORDID = %s
+        ORDER BY submission_time DESC
+        LIMIT 4
+    ) AS recent_times
+);
+
                 """, (discord_id,))
             self.connection.commit()
         except Exception as e:
