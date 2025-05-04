@@ -137,22 +137,25 @@ class RankedBatStats(commands.Cog):
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT a.PLAYERNAME,
-                        b.AB - a.AB, b.H - a.H, b.HR - a.HR, b.BB - a.BB,
-                        b.SLG * b.AB - a.SLG * a.AB, b.SB - a.SB,
-                        CASE WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN
-                            ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) -
-                            ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
-                        ELSE 0 END,
-                        b.K - a.K
-                    FROM rankedbatstats a
-                    JOIN rankedbatstats b ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
-                    AND a.TIMING = 'before' AND b.TIMING = 'after'
-                    AND a.submission_time = b.submission_time
-                    ORDER BY b.submission_time DESC
-                    LIMIT 1;
-                """, (discord_id, discord_id))
+    SELECT a.PLAYERNAME,
+        b.AB - a.AB, b.H - a.H, b.HR - a.HR, b.BB - a.BB,
+        b.SLG * b.AB - a.SLG * a.AB, b.SB - a.SB,
+        CASE WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN
+            ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) -
+            ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
+        ELSE 0 END,
+        b.K - a.K
+    FROM rankedbatstats a
+    JOIN rankedbatstats b 
+        ON a.PLAYERNAME = b.PLAYERNAME 
+        AND a.submission_time = b.submission_time
+    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
+      AND a.TIMING = 'before' AND b.TIMING = 'after'
+      AND a.submission_time = (
+          SELECT MAX(submission_time) FROM rankedbatstats WHERE DISCORDID = %s
+      );
+""", (discord_id, discord_id, discord_id))
+
                 return cursor.fetchall()
         except Exception as e:
             print(f"Fetch Error: {e}")
