@@ -57,7 +57,7 @@ class PlayerCommands(commands.Cog):
                 """
                 SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
                        SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                       Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats
+                       Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats, source
                 FROM Player
                 WHERE Name = %s
                 """,
@@ -70,7 +70,7 @@ class PlayerCommands(commands.Cog):
                 (
                     name, club, sp1_name, sp1_skills, sp2_name, sp2_skills,
                     sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name, sp5_skills,
-                    nerf, pr, last_updated, nerf_updated, team_name, charbats, toolbats
+                    nerf, pr, last_updated, nerf_updated, team_name, charbats, toolbats, source
                 ) = player
 
                 details = (
@@ -86,6 +86,7 @@ class PlayerCommands(commands.Cog):
                     f"**Nerf Last Updated**: {nerf_updated}\n"
                     f"**Charisma Bats**: {charbats}\n"
                     f"**5 Tool Bats**: {toolbats}\n"
+                    f"**Source**: {source}\n"
                 )
 
                 await ctx.send(details)
@@ -126,6 +127,7 @@ class PlayerCommands(commands.Cog):
                 "teamdeck": "",
                 "charbats": 0,
                 "toolbats": 0,
+                "source": "",
             }
 
             # Parse arguments with shlex
@@ -161,9 +163,9 @@ class PlayerCommands(commands.Cog):
                         Name, Club_Name, SP1_Name, SP1_Skills,
                         SP2_Name, SP2_Skills, SP3_Name, SP3_Skills,
                         SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
-                        Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats
+                        Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats, source
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s, %s, %s, %s)
                     """,
                     (
                         name,
@@ -634,6 +636,7 @@ class PlayerCommands(commands.Cog):
                 "sp5s": "sp5_skills",
                 "char": "charbats",
                 "tool": "toolbats",
+                "source": "source",
             }
 
             # Parse the key-value arguments using shlex.split
@@ -716,6 +719,7 @@ class PlayerCommands(commands.Cog):
             "PR": 9999,
             "charbats": 10,
             "toolbats": 10,
+            "source": "",
         }, inplace=True)
 
         df["charbats"] = df["charbats"].astype(int)
@@ -748,9 +752,9 @@ class PlayerCommands(commands.Cog):
                             SP1_name, SP1_skills, SP2_name, SP2_skills,
                             SP3_name, SP3_skills, SP4_name, SP4_skills,
                             SP5_name, SP5_skills, Nerf, PR, team_name,
-                            charbats, toolbats, last_updated
+                            charbats, toolbats, source, last_updated
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
                         ON CONFLICT (Name) DO UPDATE SET
                             Club_Name = EXCLUDED.Club_Name,
                             SP1_name = CASE WHEN EXCLUDED.SP1_name IS NOT NULL THEN EXCLUDED.SP1_name ELSE Player.SP1_name END,
@@ -768,6 +772,7 @@ class PlayerCommands(commands.Cog):
                             team_name = CASE WHEN EXCLUDED.team_name IS NOT NULL THEN EXCLUDED.team_name ELSE Player.team_name END,
                             charbats = CASE WHEN EXCLUDED.charbats <> 10 THEN EXCLUDED.charbats ELSE Player.charbats END,
                             toolbats = CASE WHEN EXCLUDED.toolbats <> 10 THEN EXCLUDED.toolbats ELSE Player.toolbats END,
+                            source = CASE WHEN EXCLUDED.source IS NOT NULL THEN EXCLUDED.source ELSE Player.source END,
                             last_updated = CURRENT_DATE
                         """,
                         (
@@ -783,6 +788,7 @@ class PlayerCommands(commands.Cog):
                             row.get("Team_Name", ""),
                             row["charbats"],
                             row["toolbats"],
+                            row.get("source", ""),
                         )
                     )
                 except Exception as row_error:
