@@ -182,7 +182,7 @@ class ClubCommands(commands.Cog):
                 cursor.execute(
                     """
                     SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, last_updated, charbats, toolbats
+                    sp5_skills, Nerf, PR, last_updated, charbats, toolbats, source
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -208,6 +208,7 @@ class ClubCommands(commands.Cog):
                         player[12],  # PR
                         player[14],  # Char
                         player[15],  # Tool
+                        player[16],
                         player[13],  # Last Updated
                     )
                     for player in players
@@ -216,7 +217,7 @@ class ClubCommands(commands.Cog):
                 # Define new column headers
                 columns = [
                     "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
-                    "Nerf", "PR", "Char", "Tool", "Last Updated"
+                    "Nerf", "PR", "Char", "Tool", "Source", "Last Updated"
                 ]
 
                 # Create a DataFrame from the processed data

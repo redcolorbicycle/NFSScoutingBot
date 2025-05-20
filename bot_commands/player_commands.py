@@ -185,6 +185,7 @@ class PlayerCommands(commands.Cog):
                         defaults["teamdeck"],
                         defaults["charbats"],
                         defaults["toolbats"],
+                        defaults["source"],
                     ),
                 )
                 self.connection.commit()
