@@ -17,12 +17,10 @@ class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
+        self.banned_user_ids = {965282028943736893, 1155995827102302218}  # Add more IDs as needed
+
 
     async def cog_check(self, ctx):
-        """
-        Restrict commands to users with specific roles
-        Only users with the specified roles can call the commands.
-        """
         # List of allowed roles
         allowed_roles = [
             "TooDank Leaders", "Vice", "TokyoDrift Leaders", "NFS Ops", "NFS OG Leaders", 
@@ -31,25 +29,34 @@ class ClubCommands(commands.Cog):
             "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad", "M16 Recruit", "TooDankFast"
         ]
         
-        # Check if the user has at least one of the allowed roles
         user_roles = [role.name for role in ctx.author.roles]
+
+        # ❌ Block banned users
+        if ctx.author.id in self.banned_user_ids:
+            return False  # Block all commands in this cog
+
+        # ✅ Allow if user has any of the allowed roles
         return any(role in allowed_roles for role in user_roles)
+
     
 
     @commands.command()
-    @commands.is_owner()  # Optional: restrict to bot owner
-    async def forceban(self, ctx, user_id: int, *, reason: str = "No reason provided"):
-        """Force ban a user by ID, bypassing role restrictions."""
-        try:
-            user = await self.bot.fetch_user(user_id)
-            await ctx.guild.ban(user, reason=reason)
-            await ctx.send(f"✅ Banned {user.name} ({user.id}) for: {reason}")
-        except discord.NotFound:
-            await ctx.send(f"❌ User with ID {user_id} not found.")
-        except discord.Forbidden:
-            await ctx.send("❌ I do not have permission to ban this user.")
-        except Exception as e:
-            await ctx.send(f"❌ An error occurred: {e}")
+    @commands.has_permissions(administrator=True)
+    async def blockcommands(self, ctx, user_id: int):
+        """Ban a user from using ClubCommands."""
+        self.banned_user_ids.add(user_id)
+        await ctx.send(f"🚫 User with ID {user_id} has been banned from using these commands.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def unblockcommands(self, ctx, user_id: int):
+        """Unban a user from using ClubCommands."""
+        if user_id in self.banned_user_ids:
+            self.banned_user_ids.remove(user_id)
+            await ctx.send(f"✅ User with ID {user_id} is now allowed to use these commands.")
+        else:
+            await ctx.send("User was not banned.")
+
 
 
 
