@@ -17,7 +17,7 @@ class ClubCommands(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
         self.connection = connection
-        self.banned_user_ids = {965282028943736893, 1155995827102302218}  # Add more IDs as needed
+        self.banned_user_ids = {965282028943736893}  # Add more IDs as needed
 
 
     async def cog_check(self, ctx):
@@ -37,27 +37,6 @@ class ClubCommands(commands.Cog):
 
         # ✅ Allow if user has any of the allowed roles
         return any(role in allowed_roles for role in user_roles)
-
-    
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def blockcommands(self, ctx, user_id: int):
-        """Ban a user from using ClubCommands."""
-        self.banned_user_ids.add(user_id)
-        await ctx.send(f"🚫 User with ID {user_id} has been banned from using these commands.")
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def unblockcommands(self, ctx, user_id: int):
-        """Unban a user from using ClubCommands."""
-        if user_id in self.banned_user_ids:
-            self.banned_user_ids.remove(user_id)
-            await ctx.send(f"✅ User with ID {user_id} is now allowed to use these commands.")
-        else:
-            await ctx.send("User was not banned.")
-
-
 
 
 
