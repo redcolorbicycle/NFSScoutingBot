@@ -34,6 +34,23 @@ class ClubCommands(commands.Cog):
         # Check if the user has at least one of the allowed roles
         user_roles = [role.name for role in ctx.author.roles]
         return any(role in allowed_roles for role in user_roles)
+    
+
+    @commands.command()
+    @commands.is_owner()  # Optional: restrict to bot owner
+    async def forceban(self, ctx, user_id: int, *, reason: str = "No reason provided"):
+        """Force ban a user by ID, bypassing role restrictions."""
+        try:
+            user = await self.bot.fetch_user(user_id)
+            await ctx.guild.ban(user, reason=reason)
+            await ctx.send(f"✅ Banned {user.name} ({user.id}) for: {reason}")
+        except discord.NotFound:
+            await ctx.send(f"❌ User with ID {user_id} not found.")
+        except discord.Forbidden:
+            await ctx.send("❌ I do not have permission to ban this user.")
+        except Exception as e:
+            await ctx.send(f"❌ An error occurred: {e}")
+
 
 
 
