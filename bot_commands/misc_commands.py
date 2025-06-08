@@ -189,6 +189,22 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def wtf(self, ctx):
+        """
+        wtf
+        """
+        try:
+            
+
+            image_path = "assets/wtf.jpg"  # Adjust this path as needed
+            file = discord.File(image_path, filename="wtf.jpg")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def respondtostevie2(self, ctx):
         """
         Respond to stevie
