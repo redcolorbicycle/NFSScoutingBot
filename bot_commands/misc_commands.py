@@ -237,8 +237,8 @@ class MiscCommands(commands.Cog):
         try:
             
 
-            image_path = "assets/dankbrewski.jpg"  # Adjust this path as needed
-            file = discord.File(image_path, filename="dankbrewski.jpg")
+            image_path = "assets/dankbrewski.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="dankbrewski.gif")
             await ctx.send(file=file)
             #await ctx.send(file=file)
 
