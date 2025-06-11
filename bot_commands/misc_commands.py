@@ -118,29 +118,6 @@ class MiscCommands(commands.Cog):
 
 
     @commands.command()
-    async def randomcolor(self, ctx):
-        """
-        Generate a random color and return an image of that color.
-        """
-        try:
-            # Generate a random color
-            random_color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
-            rgb_color = tuple(int(random_color[i:i+2], 16) for i in (1, 3, 5))  # Convert HEX to RGB
-
-            # Create an image with the random color
-            img = Image.new('RGB', (256, 256), rgb_color)
-            buffer = BytesIO()
-            img.save(buffer, format="PNG")
-            buffer.seek(0)
-
-            # Send the image with the HEX code
-            file = discord.File(fp=buffer, filename="random_color.png")
-            await ctx.send(f"Here is your random color: {random_color}", file=file)
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-
-    @commands.command()
     async def delete_bot_messages(self, ctx, limit: int = 10):
         """Delete recent messages sent by the bot in the 'lounge' channel."""
         lounge_channel = discord.utils.get(ctx.guild.channels, name="bot-functions")  # Find the "lounge" channel
@@ -236,6 +213,22 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def sunbro(self, ctx):
+        """
+        Respond to stevie
+        """
+        try:
+            
+
+            image_path = "assets/sunbro.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="sunbro.gif")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
     @commands.Cog.listener()
     async def on_message(self, message):
         """
@@ -250,17 +243,7 @@ class MiscCommands(commands.Cog):
             except Exception as e:
                 await message.channel.send(f"An error occurred: {e}")
 
-    @commands.command()
-    async def sunbot(self, ctx):
-        """Sends a list of everyday commands."""
-        message = (
-            "**Everyday commands for everybody:**\n"
-            "`!cmboost` - Pulls up the contact master table\n"
-            "`!fivetoolboost` - Pulls up the five tool table\n"
-            "`!fivetoolcalculator conbase congi powbase powgi eyebase eyegi spdbase spdgi fldbase fldgi fivetoolgoal supremeornot`\n"
-            "Example: `!fivetoolcalculator 79 19 79 19 78 17 60 12 50 8 100 yes`\n"
-        )
-        await ctx.send(message)
+    
 
 
     @commands.command()
