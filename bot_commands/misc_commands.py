@@ -229,6 +229,22 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def dankbrewski(self, ctx):
+        """
+        Respond to stevie
+        """
+        try:
+            
+
+            image_path = "assets/dankbrewski.jpg"  # Adjust this path as needed
+            file = discord.File(image_path, filename="dankbrewski.jpg")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
     @commands.Cog.listener()
     async def on_message(self, message):
         """
@@ -242,8 +258,6 @@ class MiscCommands(commands.Cog):
                     await self.respondtostevie(ctx)
             except Exception as e:
                 await message.channel.send(f"An error occurred: {e}")
-
-    
 
 
     @commands.command()
