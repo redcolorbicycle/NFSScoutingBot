@@ -212,8 +212,8 @@ class MiscCommands(commands.Cog):
         try:
             
 
-            image_path = "assets/stares-motherfuckerly.mp4"  # Adjust this path as needed
-            file = discord.File(image_path, filename="stares-motherfuckerly.mp4")
+            image_path = "assets/stare.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="stare.gif")
             await ctx.send(file=file)
             #await ctx.send(file=file)
 
@@ -228,23 +228,10 @@ class MiscCommands(commands.Cog):
         try:
             
 
-            image_path = "assets/skeletor-running-away.mp4"  # Adjust this path as needed
-            file = discord.File(image_path, filename="skeletor-running-away.mp4")
+            image_path = "assets/run.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="run.gif")
             await ctx.send(file=file)
             #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    async def shohei(self, ctx):
-        """
-        Respond to stevie
-        """
-        try:
-            image_path = "assets/shohei400.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="shohei400.gif")
-            await ctx.send(file=file)
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
