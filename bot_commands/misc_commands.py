@@ -293,7 +293,7 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
-    commands.command()
+    @commands.command()
     async def fu(self, ctx):
         """
         Respond to stevie
