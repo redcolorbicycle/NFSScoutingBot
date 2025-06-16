@@ -311,9 +311,6 @@ class MiscCommands(commands.Cog):
 
     @commands.command()
     async def miltown(self, ctx):
-        """
-        
-        """
         try:
             
 
