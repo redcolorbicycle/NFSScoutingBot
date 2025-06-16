@@ -294,7 +294,7 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     commands.command()
-    async def fuckyou(self, ctx):
+    async def fu(self, ctx):
         """
         Respond to stevie
         """
