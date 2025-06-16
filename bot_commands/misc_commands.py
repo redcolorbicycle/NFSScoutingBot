@@ -312,7 +312,7 @@ class MiscCommands(commands.Cog):
     @commands.command()
     async def miltown(self, ctx):
         """
-        Respond to stevie
+        
         """
         try:
             
