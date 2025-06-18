@@ -283,7 +283,7 @@ class MiscCommands(commands.Cog):
         Respond to stevie with a random boom gif
         """
         try:
-            gif_choices = ["assets/boom.gif", "assets/boom2.gif"]
+            gif_choices = ["assets/boom.gif", "assets/boom2.gif", "assets/boom3.gif"]
             image_path = random.choice(gif_choices)
 
             if not os.path.isfile(image_path):
