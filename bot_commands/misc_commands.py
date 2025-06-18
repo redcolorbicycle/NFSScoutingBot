@@ -280,15 +280,18 @@ class MiscCommands(commands.Cog):
     @commands.command()
     async def boom(self, ctx):
         """
-        Respond to stevie
+        Respond to stevie with a random boom gif
         """
         try:
-            
+            gif_choices = ["assets/boom.gif", "assets/boom2.gif"]
+            image_path = random.choice(gif_choices)
 
-            image_path = "assets/boom.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="boom.gif")
+            if not os.path.isfile(image_path):
+                await ctx.send("The selected image file was not found.")
+                return
+
+            file = discord.File(image_path, filename=os.path.basename(image_path))
             await ctx.send(file=file)
-            #await ctx.send(file=file)
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
