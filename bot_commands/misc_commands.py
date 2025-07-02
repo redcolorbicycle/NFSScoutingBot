@@ -345,9 +345,7 @@ class MiscCommands(commands.Cog):
 
             message = (
                 f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
-                f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
-                f"**GRAND SLAM!! FIVE WINS BY {magnified_name}!! AND HE SWEEPS {opponent_clean} RIGHT OUT OF THE PLAYOFFS!**\n"
-                f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
+                f"**GRAND SLAM!! FIVE WINS FOR {magnified_name}!! AND HE SWEEPS {opponent_clean} RIGHT OUT OF THE PLAYOFFS!**\n"
                 f"{siren} {siren} {siren} {siren} {siren} {siren}"
             )
             await ctx.send(message)
