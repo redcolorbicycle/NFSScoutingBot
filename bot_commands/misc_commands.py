@@ -332,6 +332,20 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def five(self, ctx):
+        """
+        Celebrate a grand slam
+        """
+        try:
+            siren = "🚨"
+            username = ctx.author.display_name  # Or .name for just username without nickname
+            message = f"{siren} {siren} {siren}\n\nGRAND SLAM BY {username.upper()}\n\n{siren} {siren} {siren}"
+            await ctx.send(message)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
+    @commands.command()
     async def miltown(self, ctx):
         try:
             
