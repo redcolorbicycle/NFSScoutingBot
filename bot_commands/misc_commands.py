@@ -341,7 +341,7 @@ class MiscCommands(commands.Cog):
             siren = "🚨"
             username = ctx.author.display_name.upper()
             magnified_name = ''.join(username.upper())
-            opponent_clean = opponent.strip()
+            opponent_clean = opponent.strip().upper()
 
             message = (
                 f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
