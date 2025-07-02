@@ -340,13 +340,15 @@ class MiscCommands(commands.Cog):
         try:
             siren = "🚨"
             username = ctx.author.display_name.upper()
-            magnified_name = ' '.join(username.upper())
+            magnified_name = ''.join(username.upper())
             opponent_clean = opponent.strip()
 
             message = (
-                f"{siren} {siren} {siren}\n"
-                f"**GRAND SLAM BY {magnified_name}! And he sweeps {opponent_clean} RIGHT OUT of the playoffs!**\n"
-                f"{siren} {siren} {siren}"
+                f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
+                f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
+                f"**GRAND SLAM!! FIVE WINS BY {magnified_name}!! AND HE SWEEPS {opponent_clean} RIGHT OUT OF THE PLAYOFFS!**\n"
+                f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
+                f"{siren} {siren} {siren} {siren} {siren} {siren}"
             )
             await ctx.send(message)
         except Exception as e:
