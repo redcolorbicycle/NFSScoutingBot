@@ -332,17 +332,29 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def five(self, ctx):
+    async def five(self, ctx, *, opponent: str):
         """
-        Celebrate a grand slam
+        Celebrate a grand slam with bold text and a custom sweep message.
+        Usage: !five [opponent]
         """
         try:
             siren = "🚨"
-            username = ctx.author.display_name  # Or .name for just username without nickname
-            message = f"{siren} {siren} {siren}\n\nGRAND SLAM BY {username.upper()}\n\n{siren} {siren} {siren}"
+            username = ctx.author.display_name.upper()
+            magnified_name = ' '.join(username.upper())
+            opponent_clean = opponent.strip()
+
+            message = (
+                f"{siren} {siren} {siren}\n"
+                f"**GRAND SLAM BY {magnified_name}! And he sweeps {opponent_clean} RIGHT OUT of the playoffs!**\n"
+                f"{siren} {siren} {siren}"
+            )
             await ctx.send(message)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
+
+
+
 
 
     @commands.command()
