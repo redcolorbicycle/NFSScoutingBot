@@ -217,12 +217,12 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
             data.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
-                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc_plus
+                slg, ops, diff_SB, sbrate, round(rc_per_pa, 2), wrc_plus
             ])
 
         columns = [
             "Player Name", "AB", "Avg", "BB%", "K%", "HR%", "OBP", "SLG", "OPS",
-            "SB", "SB%", "RC", "RC/PA", "wRC+"
+            "SB", "SB%", "RC/PA", "wRC+"
         ]
 
         df = pd.DataFrame(data, columns=columns)
