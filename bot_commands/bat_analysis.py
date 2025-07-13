@@ -191,8 +191,10 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             wrc = round(0.7 * diff_BB + diff_BASES, 2)
             wrc_per_pa = round(wrc / denom, 3) if denom else 0
 
-            total_wrc += wrc
-            total_pa += denom
+            if player_name.lower() != "team record":
+                total_wrc += wrc
+                total_pa += denom
+
 
             intermediate_rows.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
@@ -207,7 +209,11 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
                 slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, pa
             ) = row
 
-            wrc_plus = round((wrc_per_pa / league_wrc_per_pa) * 100) if league_wrc_per_pa else 100
+            if player_name.lower() == "team record":
+                wrc_plus = 100
+            else:
+                wrc_plus = round((wrc_per_pa / league_wrc_per_pa) * 100) if league_wrc_per_pa else 100
+
 
             data.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
