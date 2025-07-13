@@ -179,14 +179,21 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             sbrate = round((diff_SB / diff_SBA) * 100, 1) if (diff_SBA > 0 and diff_SB > 0) else 0
             krate = round((diff_K / diff_AB) * 100, 1) if diff_AB else 0
 
+            cs   = max(diff_SBA - diff_SB, 0)                        # don’t allow negatives
+            denom = diff_AB + diff_BB
+            rc   = round(
+                       ((diff_H + diff_BB - cs) *
+                        (diff_BASES + (0.55 * diff_SB))) / denom, 2
+                   ) if denom else 0
+
             data.append([
                 player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
-                diff_HR, hrrate, slg, ops, diff_SB, sbrate
+                diff_HR, hrrate, slg, ops, diff_SB, sbrate, rc
             ])
 
         columns = [
             "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
-            "HR", "HR%", "SLG", "OPS", "SB", "SB%"
+            "HR", "HR%", "SLG", "OPS", "SB", "SB%", "RC"
         ]
 
         df = pd.DataFrame(data, columns=columns)
