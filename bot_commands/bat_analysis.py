@@ -167,6 +167,9 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
     def create_comparison_plot(self, results):
         data = []
+        total_wrc, total_pa = 0, 0
+        intermediate_rows = []  # Temp store per-player rows
+
         for row in results:
             player_name, diff_AB, diff_H, diff_HR, diff_BB, diff_BASES, diff_SB, diff_SBA, diff_K = row
 
@@ -179,24 +182,41 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             sbrate = round((diff_SB / diff_SBA) * 100, 1) if (diff_SBA > 0 and diff_SB > 0) else 0
             krate = round((diff_K / diff_AB) * 100, 1) if diff_AB else 0
 
-            cs   = max(diff_SBA - diff_SB, 0)                        # don’t allow negatives
+            cs = max(diff_SBA - diff_SB, 0)
             denom = diff_AB + diff_BB
-            rc   = round(
-                       ((diff_H + diff_BB - cs) *
-                        (diff_BASES + (0.55 * diff_SB))) / denom, 2
-                   ) if denom else 0
-            
+            rc = round(((diff_H + diff_BB - cs) * (diff_BASES + (0.55 * diff_SB))) / denom, 2) if denom else 0
             rc_per_pa = round(rc / denom, 3) if denom else 0
 
+            # Approximate wRC using 0.7 * BB + TB
+            wrc = round(0.7 * diff_BB + diff_BASES, 2)
+            wrc_per_pa = round(wrc / denom, 3) if denom else 0
+
+            total_wrc += wrc
+            total_pa += denom
+
+            intermediate_rows.append([
+                player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, denom
+            ])
+
+        league_wrc_per_pa = round(total_wrc / total_pa, 3) if total_pa else 0
+
+        for row in intermediate_rows:
+            (
+                player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, pa
+            ) = row
+
+            wrc_plus = round((wrc_per_pa / league_wrc_per_pa) * 100) if league_wrc_per_pa else 100
 
             data.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
-                slg, ops, diff_SB, sbrate, rc, rc_per_pa
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc_plus
             ])
 
         columns = [
-            "Player Name", "AB", "Avg", "BB%", "K%", 
-            "HR%", "OBP", "SLG", "OPS", "SB", "SB%", "RC", "RC/PA"
+            "Player Name", "AB", "Avg", "BB%", "K%", "HR%", "OBP", "SLG", "OPS",
+            "SB", "SB%", "RC", "RC/PA", "wRC+"
         ]
 
         df = pd.DataFrame(data, columns=columns)
@@ -232,6 +252,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         plt.close(fig)
 
         return buffer
+
 
     def fetch_metric_trend(self, discord_id, metric):
         try:
