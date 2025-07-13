@@ -184,12 +184,12 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
             cs = max(diff_SBA - diff_SB, 0)
             denom = diff_AB + diff_BB
-            rc = round(((diff_H + diff_BB - cs) * (diff_BASES + (0.55 * diff_SB))) / denom, 2) if denom else 0
+            rc = (((diff_H + diff_BB - cs) * (diff_BASES + (0.55 * diff_SB))) / denom, 2) if denom else 0
             rc_per_pa = round(rc / denom, 3) if denom else 0
 
             # Approximate wRC using 0.7 * BB + TB
-            wrc = round(0.7 * diff_BB + diff_BASES, 2)
-            wrc_per_pa = round(wrc / denom, 3) if denom else 0
+            wrc = (0.7 * diff_BB + diff_BASES, 2)
+            wrc_per_pa = (wrc / denom, 3) if denom else 0
 
             if player_name.lower() != "team record":
                 total_wrc += wrc
@@ -201,7 +201,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
                 slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, denom
             ])
 
-        league_wrc_per_pa = round(total_wrc / total_pa, 3) if total_pa else 0
+        league_wrc_per_pa = (total_wrc / total_pa, 3) if total_pa else 0
 
         for row in intermediate_rows:
             (
