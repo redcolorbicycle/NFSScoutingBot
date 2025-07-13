@@ -352,13 +352,34 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def five(self, ctx):
+        try:
+            
 
+            image_path = "assets/five.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="five.gif")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
 
-
-
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def miltown(self, ctx):
+    async def four(self, ctx):
+        try:
+            
+
+            image_path = "assets/miltown.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="miltown.gif")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def three(self, ctx):
         try:
             
 
