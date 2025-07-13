@@ -185,15 +185,18 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
                        ((diff_H + diff_BB - cs) *
                         (diff_BASES + (0.55 * diff_SB))) / denom, 2
                    ) if denom else 0
+            
+            rc_per_pa = round(rc / denom, 3) if denom else 0
+
 
             data.append([
-                player_name, diff_AB, avg, diff_BB, walkrate, diff_K, krate, obp,
-                diff_HR, hrrate, slg, ops, diff_SB, sbrate, rc
+                player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa
             ])
 
         columns = [
-            "Player Name", "AB", "Avg", "BB", "BB%", "K", "K%", "OBP",
-            "HR", "HR%", "SLG", "OPS", "SB", "SB%", "RC"
+            "Player Name", "AB", "Avg", "BB%", "K%", 
+            "HR%", "OBP", "SLG", "OPS", "SB", "SB%", "RC", "RC/PA"
         ]
 
         df = pd.DataFrame(data, columns=columns)
