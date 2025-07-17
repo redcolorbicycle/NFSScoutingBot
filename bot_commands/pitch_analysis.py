@@ -178,12 +178,12 @@ class RankedPitchStats(commands.Cog):
                 ipg = round(float(ip / diff_G), 3) if diff_G > 0 else 0
 
                 data.append([
-                    player_name, diff_G, ipg, era, avg, obp, slg, ops,
+                    player_name, diff_G, ip, ipg, era, avg, obp, slg, ops,
                     walkrate, hrrate,krate, whip
                 ])
 
             columns = [
-                "Player Name", "G", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS",
+                "Player Name", "G", "IP", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS",
                 "BB%", "HR%", "K%", "WHIP"
             ]
 

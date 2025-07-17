@@ -216,12 +216,12 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
 
             data.append([
-                player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
+                player_name, diff_AB, avg, walkrate, krate, diff_HR, hrrate, obp,
                 slg, ops, diff_SB, sbrate, round(rc_per_pa, 4), wrc_plus
             ])
 
         columns = [
-            "Player Name", "AB", "Avg", "BB%", "K%", "HR%", "OBP", "SLG", "OPS",
+            "Player Name", "AB", "Avg", "BB%", "K%", "HR", "HR%", "OBP", "SLG", "OPS",
             "SB", "SB%", "RC/PA", "wRC+"
         ]
 
