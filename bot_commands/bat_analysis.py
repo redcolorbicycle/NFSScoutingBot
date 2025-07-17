@@ -198,7 +198,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
             intermediate_rows.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
-                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, denom
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, denom, diff_HR
             ])
 
         league_wrc_per_pa = total_wrc / total_pa if total_pa else 0
@@ -206,7 +206,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         for row in intermediate_rows:
             (
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
-                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, pa
+                slg, ops, diff_SB, sbrate, rc, rc_per_pa, wrc, wrc_per_pa, pa, diff_HR
             ) = row
 
             if player_name.lower() == "team record":
