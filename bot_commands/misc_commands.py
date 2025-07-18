@@ -351,7 +351,7 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def five(self, ctx, *, opponent: str):
+    async def rekt(self, ctx, *, opponent: str):
         """
         Celebrate a grand slam with bold text and a custom sweep message.
         Usage: !five [opponent]
@@ -366,6 +366,27 @@ class MiscCommands(commands.Cog):
                 f"{siren} {siren} {siren} {siren} {siren} {siren}\n"
                 f"**GRAND SLAM!! FIVE WINS FOR {magnified_name}!! AND HE SWEEPS {opponent_clean} RIGHT OUT OF THE PLAYOFFS!**\n"
                 f"{siren} {siren} {siren} {siren} {siren} {siren}"
+            )
+            await ctx.send(message)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
+    async def swept(self, ctx, *, opponent: str):
+        """
+        Celebrate a grand slam with bold text and a custom sweep message.
+        Usage: !five [opponent]
+        """
+        try:
+            siren = "🚨"
+            username = ctx.author.display_name.upper()
+            magnified_name = ''.join(username.upper())
+            opponent_clean = opponent.strip().upper()
+
+            message = (
+                f"{siren} {siren} \n"
+                f"**{magnified_name} has swept {opponent_clean} !**\n"
+                f"{siren} {siren}"
             )
             await ctx.send(message)
         except Exception as e:
