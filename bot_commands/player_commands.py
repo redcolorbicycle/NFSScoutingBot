@@ -24,7 +24,7 @@ class PlayerCommands(commands.Cog):
         """
         # List of allowed roles
         allowed_roles = [
-            "TooDank Leaders", "Vice", "TokyoDrift Leaders", "NFS Ops", "NFS OG Leaders", 
+            "TooDank Leaders", "Vice", "NFS Ops", "NFS OG Leaders", 
             "NeedForSpeed Leaders", "M16Speed Spy Daddies", "GoldyLeads", "Burnout Leaders", 
             "Dugout Leads", "Kerchoo Leaders", "Rush Hour Leaders", "Speed Bump Leaders", 
             "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad", "M16 Recruit", "TooDankFast"
