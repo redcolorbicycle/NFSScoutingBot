@@ -393,28 +393,28 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def shame(self, ctx, *, opponent: str):
+    async def shame(self, ctx, *, opponent: discord.Member):
         """
         SHAME
-        Usage: !shame [opponent]
+        Usage: !shame @opponent
         """
         try:
             siren = "🚨"
             image_path = "assets/shame.gif"
-            opponent_clean = opponent.strip().upper()
 
-            # First send the GIF
             await ctx.send(file=discord.File(image_path, filename="shame.gif"))
 
-            # Then send the message
             message = (
                 f"{siren} {siren} \n"
-                f"**SHAME ON @{opponent_clean} !**\n"
+                f"**SHAME ON {opponent.mention}!**\n"
+                f"**SHAME ON {opponent.mention}!**\n"
+                f"**Go sit in the corner. Daddy MK is very disappointed.**\n"
                 f"{siren} {siren}"
             )
             await ctx.send(message)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
 
 
     @commands.command()
