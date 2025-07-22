@@ -505,6 +505,26 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def flag(self, ctx):
+        """
+        Send the Pitching Coordinator image
+        """
+        try:
+            # Fixed path to the image
+            image_path = "assets/flag.jpg"  # Adjust this path as needed
+
+            # Check if the image exists
+            if not os.path.isfile(image_path):
+                await ctx.send("The fixed image file was not found.")
+                return
+
+            # Send the image
+            file = discord.File(image_path, filename="flag.jpg")
+            await ctx.send(file=file)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def mrpboost(self, ctx):
         """
         Send the Mr Perfect image
