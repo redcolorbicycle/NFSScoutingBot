@@ -393,6 +393,26 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def shame(self, ctx, *, opponent: str):
+        """
+        SHAME
+        Usage: !five [opponent]
+        """
+        try:
+            siren = "🚨"
+            
+            opponent_clean = opponent.strip().upper()
+
+            message = (
+                f"{siren} {siren} \n"
+                f"**SHAME ON @{opponent_clean} !**\n"
+                f"{siren} {siren}"
+            )
+            await ctx.send(message)
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def five(self, ctx):
         try:
             
