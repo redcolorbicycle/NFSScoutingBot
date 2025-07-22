@@ -396,25 +396,26 @@ class MiscCommands(commands.Cog):
     async def shame(self, ctx, *, opponent: str):
         """
         SHAME
-        Usage: !five [opponent]
+        Usage: !shame [opponent]
         """
         try:
             siren = "🚨"
-            image_path = "assets/shame.gif"  # Adjust this path as needed
+            image_path = "assets/shame.gif"
             opponent_clean = opponent.strip().upper()
-            file = discord.File(image_path, filename="shame.gif")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
 
+            # First send the GIF
+            await ctx.send(file=discord.File(image_path, filename="shame.gif"))
+
+            # Then send the message
             message = (
                 f"{siren} {siren} \n"
                 f"**SHAME ON @{opponent_clean} !**\n"
                 f"{siren} {siren}"
             )
-            await ctx.send(file=file)
             await ctx.send(message)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
+
 
     @commands.command()
     async def five(self, ctx):
