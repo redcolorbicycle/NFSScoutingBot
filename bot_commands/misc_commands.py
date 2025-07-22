@@ -400,14 +400,18 @@ class MiscCommands(commands.Cog):
         """
         try:
             siren = "🚨"
-            
+            image_path = "assets/shame.gif"  # Adjust this path as needed
             opponent_clean = opponent.strip().upper()
+            file = discord.File(image_path, filename="shame.gif")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
 
             message = (
                 f"{siren} {siren} \n"
                 f"**SHAME ON @{opponent_clean} !**\n"
                 f"{siren} {siren}"
             )
+            await ctx.send(file=file)
             await ctx.send(message)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
