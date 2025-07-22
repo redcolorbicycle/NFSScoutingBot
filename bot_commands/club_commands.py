@@ -452,6 +452,46 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def clearclub(self, ctx, club_name: str):
+        """Remove all players from the specified club by setting their Club_Name to 'no club'."""
+        club_name = club_name.lower()
+
+        try:
+            with self.connection.cursor() as cursor:
+                # Check if the club exists
+                cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+                existing_club = cursor.fetchone()
+
+                if not existing_club:
+                    await ctx.send(f"No club found with the name '{club_name}'.")
+                    return
+
+                # Check if the club has any players
+                cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (club_name,))
+                player_count = cursor.fetchone()[0]
+
+                if player_count == 0:
+                    await ctx.send(f"No players are currently in the club '{club_name}'.")
+                    return
+
+                # Update all players to 'no club'
+                cursor.execute(
+                    """
+                    UPDATE Player
+                    SET Club_Name = 'no club'
+                    WHERE Club_Name = %s
+                    """,
+                    (club_name,),
+                )
+
+                self.connection.commit()
+                await ctx.send(f"✅ Cleared {player_count} players from '{club_name}' and set them to 'no club'.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"An error occurred: {e}")
+
+
 
     @commands.command()
     async def scoutclubtrial(self, ctx, club_name: str):
