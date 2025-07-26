@@ -767,6 +767,70 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"❌ Error deleting battles: {e}")
 
+    @commands.command()
+    async def scoutmatchup(self, ctx, opponent_club: str, battle_date: str):
+        """
+        Show all player matchups and team summary vs a defending club on a specific date.
+        Usage: !scoutmatchup <defending club> <dd/mm/yyyy>
+        Example: !scoutmatchup flogrown 24/07/2025
+        """
+        opponent_club = opponent_club.lower()
+
+        try:
+            # Parse the date
+            parsed_date = pd.to_datetime(battle_date, dayfirst=True).date()
+
+            with self.connection.cursor() as cursor:
+                # 1️⃣ Fetch individual player matchups
+                cursor.execute(
+                    """
+                    SELECT player_name, home_club, wins, nonwins
+                    FROM GoldyBattles
+                    WHERE LOWER(opponent_club) = %s AND battle_date = %s
+                    ORDER BY home_club, wins DESC
+                    """,
+                    (opponent_club, parsed_date)
+                )
+                matchups = cursor.fetchall()
+
+                if not matchups:
+                    await ctx.send(f"No matchups found against `{opponent_club}` on `{parsed_date}`.")
+                    return
+
+                # 2️⃣ Format individual player lines
+                lines = []
+                team_totals = {}  # home_club → [total_wins, total_nonwins]
+                for player_name, home_club, wins, nonwins in matchups:
+                    total = wins + nonwins
+                    winrate = wins / total if total > 0 else 0
+                    lines.append(
+                        f"🏅 **{player_name}** ({home_club}) — {wins}W / {nonwins}NW → **{winrate:.0%}**"
+                    )
+
+                    if home_club not in team_totals:
+                        team_totals[home_club] = [0, 0]
+                    team_totals[home_club][0] += wins
+                    team_totals[home_club][1] += nonwins
+
+                # 3️⃣ Format team-level summary
+                summary_lines = []
+                for team, (w, nw) in sorted(team_totals.items(), key=lambda x: -x[1][0]):
+                    total = w + nw
+                    wr = w / total if total > 0 else 0
+                    summary_lines.append(f"🏟️ `{team}` — {w}W / {nw}NW → **{wr:.0%}**")
+
+                # Send messages
+                await ctx.send(f"📋 Matchups vs `{opponent_club}` on {parsed_date}:")
+                await ctx.send("\n".join(lines))
+
+                await ctx.send(f"\n📊 **Team Summary:**")
+                await ctx.send("\n".join(summary_lines))
+
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"❌ Error retrieving matchup: {e}")
+
+
 
 
 
