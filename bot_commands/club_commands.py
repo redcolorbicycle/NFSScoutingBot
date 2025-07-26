@@ -608,6 +608,97 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command()
+    async def uploadbattles(self, ctx):
+        """
+        Upload battle records from an Excel file to the GoldyBattles table.
+        Expected columns: Player Name or Name, PR, Attacking Club, Defending Club, Date, Wins, Non Wins
+        """
+        if not ctx.message.attachments:
+            await ctx.send("Please attach an Excel file (.xlsx) to upload battle data.")
+            return
+
+        attachment = ctx.message.attachments[0]
+        if not attachment.filename.endswith(".xlsx"):
+            await ctx.send("Only Excel (.xlsx) files are supported.")
+            return
+
+        try:
+            # Read file into pandas
+            file_bytes = await attachment.read()
+            df = pd.read_excel(BytesIO(file_bytes))
+
+            # Normalize column names
+            df.columns = [col.strip().lower() for col in df.columns]
+
+            # Handle aliasing for player_name
+            if "player name" in df.columns:
+                df.rename(columns={"player name": "player_name"}, inplace=True)
+            elif "name" in df.columns:
+                df.rename(columns={"name": "player_name"}, inplace=True)
+
+            # Rename other known columns
+            rename_map = {
+                "pr": "pr",
+                "attacking club": "home_club",
+                "defending club": "opponent_club",
+                "date": "battle_date",
+                "wins": "wins",
+                "non wins": "nonwins"
+            }
+            df.rename(columns=rename_map, inplace=True)
+
+            # Check for required columns
+            required_cols = ["player_name", "pr", "home_club", "opponent_club", "battle_date", "wins", "nonwins"]
+            for col in required_cols:
+                if col not in df.columns:
+                    await ctx.send(f"Missing column: `{col}`")
+                    return
+
+            # Drop rows without player name or date
+            df.dropna(subset=["player_name", "battle_date"], inplace=True)
+
+            # Parse dates in dd/mm/yy format
+            df["battle_date"] = pd.to_datetime(df["battle_date"], dayfirst=True).dt.date
+
+            insert_query = """
+                INSERT INTO GoldyBattles (
+                    player_name, pr, home_club, opponent_club, battle_date, wins, nonwins
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (player_name, battle_date)
+                DO UPDATE SET
+                    pr = EXCLUDED.pr,
+                    home_club = EXCLUDED.home_club,
+                    opponent_club = EXCLUDED.opponent_club,
+                    wins = EXCLUDED.wins,
+                    nonwins = EXCLUDED.nonwins;
+            """
+
+            inserted = 0
+            with self.connection.cursor() as cursor:
+                for _, row in df.iterrows():
+                    cursor.execute(
+                        insert_query,
+                        (
+                            row["player_name"].strip().lower(),
+                            int(row["pr"]) if not pd.isna(row["pr"]) else None,
+                            row["home_club"],
+                            row["opponent_club"],
+                            row["battle_date"],
+                            int(row["wins"]) if not pd.isna(row["wins"]) else 0,
+                            int(row["nonwins"]) if not pd.isna(row["nonwins"]) else 0,
+                        )
+                    )
+                    inserted += 1
+                self.connection.commit()
+
+            await ctx.send(f"✅ Uploaded {inserted} battle records to `GoldyBattles`.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"❌ Upload failed: {e}")
+
+
 
 
 
