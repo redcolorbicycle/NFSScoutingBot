@@ -698,6 +698,47 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"❌ Upload failed: {e}")
 
+    @commands.command()
+    async def winratevs(self, ctx, *, opponent_club: str):
+        """
+        Show daily win rate against a given defending club.
+        Usage: !winratevs <club name>
+        """
+        opponent_club = opponent_club.lower()
+
+        try:
+            with self.connection.cursor() as cursor:
+                query = """
+                    SELECT battle_date,
+                        SUM(wins) AS total_wins,
+                        SUM(nonwins) AS total_nonwins
+                    FROM GoldyBattles
+                    WHERE LOWER(opponent_club) = %s
+                    GROUP BY battle_date
+                    ORDER BY battle_date;
+                """
+                cursor.execute(query, (opponent_club,))
+                rows = cursor.fetchall()
+
+                if not rows:
+                    await ctx.send(f"No battle records found against '{opponent_club}'.")
+                    return
+
+                # Format the results
+                lines = []
+                for date, wins, nonwins in rows:
+                    total = wins + nonwins
+                    winrate = wins / total if total > 0 else 0
+                    lines.append(f"📅 {date}: **{winrate:.2%}** ({wins}W / {nonwins}L)")
+
+                message = f"🎯 **Win Rate vs `{opponent_club}` by Date:**\n" + "\n".join(lines)
+                await ctx.send(message)
+
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"❌ Error fetching win rate: {e}")
+
+
 
 
 
