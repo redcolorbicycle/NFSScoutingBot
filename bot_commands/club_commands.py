@@ -699,7 +699,7 @@ class ClubCommands(commands.Cog):
             await ctx.send(f"❌ Upload failed: {e}")
 
     @commands.command()
-    async def winratevs(self, ctx, *, opponent_club: str):
+    async def scoutwinrate(self, ctx, *, opponent_club: str):
         """
         Show daily win rate against a given defending club.
         Usage: !winratevs <club name>
@@ -737,6 +737,36 @@ class ClubCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"❌ Error fetching win rate: {e}")
+
+    @commands.command()
+    async def deletebattles(self, ctx, battle_date: str, home_club: str):
+        """
+        Delete all GoldyBattles for a given date and home club.
+        Usage: !deletebattles <dd/mm/yy> <home club>
+        Example: !deletebattles 26/07/25 goldyleads
+        """
+        home_club = home_club.lower()
+
+        try:
+            # Parse the date in dd/mm/yy format
+            parsed_date = pd.to_datetime(battle_date, dayfirst=True).date()
+
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM GoldyBattles
+                    WHERE battle_date = %s AND LOWER(home_club) = %s
+                    """,
+                    (parsed_date, home_club)
+                )
+                deleted_count = cursor.rowcount
+                self.connection.commit()
+
+            await ctx.send(f"🗑️ Deleted {deleted_count} records for `{home_club}` on `{parsed_date}`.")
+        except Exception as e:
+            self.connection.rollback()
+            await ctx.send(f"❌ Error deleting battles: {e}")
+
 
 
 
