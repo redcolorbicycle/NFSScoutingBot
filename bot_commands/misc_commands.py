@@ -117,25 +117,6 @@ class MiscCommands(commands.Cog):
             await ctx.send(answer)  
 
 
-    @commands.command()
-    async def delete_bot_messages(self, ctx, limit: int = 10):
-        """Delete recent messages sent by the bot in the 'lounge' channel."""
-        lounge_channel = discord.utils.get(ctx.guild.channels, name="bot-functions")  # Find the "lounge" channel
-        if not lounge_channel:
-            await ctx.send("The 'lounge' channel does not exist.")
-            return
-
-        try:
-            deleted_count = 0
-            async for message in lounge_channel.history(limit=limit):
-                if message.author == self.bot.user:  # Check if the message was sent by the bot
-                    await message.delete()
-                    deleted_count += 1
-            await ctx.send(f"Deleted {deleted_count} recent messages sent by the bot in 'lounge'.")
-        except discord.Forbidden:
-            await ctx.send("I don't have permission to delete messages in the 'lounge' channel.")
-        except discord.HTTPException as e:
-            await ctx.send(f"Failed to delete messages: {e}")
 
     @commands.command()
     async def list_channels(self, ctx):
@@ -213,37 +194,7 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
-    @commands.command()
-    async def sunbro(self, ctx):
-        """
-        Respond to stevie
-        """
-        try:
-            
-
-            image_path = "assets/sunbro.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="sunbro.gif")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    async def dankbrewski(self, ctx):
-        """
-        Respond to stevie
-        """
-        try:
-            
-
-            image_path = "assets/dankbrewski.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="dankbrewski.gif")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
+    
 
     @commands.command()
     async def stevie(self, ctx):
@@ -351,6 +302,20 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def commands(self, ctx):
+        """
+        Lists all available command names (no descriptions).
+        """
+        try:
+            command_names = [command.name for command in self.bot.commands if not command.hidden]
+            command_names.sort()
+            command_list = "\n".join(f"!{name}" for name in command_names)
+            await ctx.send(f"**Available Commands:**\n{command_list}")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
+    @commands.command()
     async def rekt(self, ctx, *, opponent: str):
         """
         Celebrate a grand slam with bold text and a custom sweep message.
@@ -430,18 +395,6 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
-    @commands.command()
-    async def four(self, ctx):
-        try:
-            
-
-            image_path = "assets/miltown.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="miltown.gif")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
     async def jfc(self, ctx):
@@ -455,46 +408,6 @@ class MiscCommands(commands.Cog):
 
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    async def three(self, ctx):
-        try:
-            
-
-            image_path = "assets/miltown.gif"  # Adjust this path as needed
-            file = discord.File(image_path, filename="miltown.gif")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    async def metro(self, ctx):
-        try:
-            
-
-            image_path = "assets/metro.jpg"  # Adjust this path as needed
-            file = discord.File(image_path, filename="metro.jpg")
-            await ctx.send(file=file)
-            #await ctx.send(file=file)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        """
-        Listen for messages and respond to specific ones.
-        """
-
-        if message.content == "yabbadabbadobadee":
-            try:
-                ctx = await self.bot.get_context(message)
-                if ctx.command is None:
-                    await self.respondtostevie(ctx)
-            except Exception as e:
-                await message.channel.send(f"An error occurred: {e}")
 
 
     @commands.command()
@@ -556,20 +469,6 @@ class MiscCommands(commands.Cog):
             await ctx.send(file=file)
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
-
-    @commands.command()
-    async def toolswebpage(self, ctx):
-        """
-        Send Murph's webpage
-        """
-        try:
-            await ctx.send("https://9inningstools.app/")
-            return
-        except Exception as e:
-            await ctx.send(f"An error occured: {e}")
-
-
-
 
 
     
