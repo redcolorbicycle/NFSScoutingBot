@@ -314,7 +314,7 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
-    @commands.command(name="commands")
+    @commands.command()
     async def filtered(self, ctx):
         """
         Lists only selected commands.
