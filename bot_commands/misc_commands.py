@@ -302,7 +302,7 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def commands(self, ctx):
+    async def listcommands(self, ctx):
         """
         Lists all available command names (no descriptions).
         """
