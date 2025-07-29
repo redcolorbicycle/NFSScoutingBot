@@ -314,6 +314,26 @@ class MiscCommands(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
+    @commands.command(name="commands")
+    async def filtered(self, ctx):
+        """
+        Lists only selected commands.
+        """
+        try:
+            selected_commands = [
+                "!cmboost",
+                "!fivetoolboost",
+                "!fivetoolcalculator",
+                "!mrpboost",
+                "!pcoboost",
+                "!trainers"
+            ]
+            command_list = "\n".join(selected_commands)
+            await ctx.send(f"**Available Commands:**\n{command_list}")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+
 
     @commands.command()
     async def rekt(self, ctx, *, opponent: str):
