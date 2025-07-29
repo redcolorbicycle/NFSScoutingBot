@@ -444,6 +444,19 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def jfc(self, ctx):
+        try:
+            
+
+            image_path = "assets/jfc.jpg"  # Adjust this path as needed
+            file = discord.File(image_path, filename="jfc.jpg")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def three(self, ctx):
         try:
             
