@@ -302,6 +302,22 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def cursed(self, ctx):
+        """
+        cursed
+        """
+        try:
+            
+
+            image_path = "assets/cursed.webm"  # Adjust this path as needed
+            file = discord.File(image_path, filename="cursed.webm")
+            await ctx.send(file=file)
+            #await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def goldskilltrainers(self, ctx):
         """
         Respond to stevie
@@ -342,6 +358,7 @@ class MiscCommands(commands.Cog):
                 "!fivetoolcalculator",
                 "!mrpboost",
                 "!pcoboost",
+                "!goldskilltrainers",
                 "!trainers"
             ]
             command_list = "\n".join(selected_commands)
