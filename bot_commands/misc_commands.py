@@ -309,8 +309,8 @@ class MiscCommands(commands.Cog):
         try:
             
 
-            image_path = "assets/cursed.webm"  # Adjust this path as needed
-            file = discord.File(image_path, filename="cursed.webm")
+            image_path = "assets/cursed.gif"  # Adjust this path as needed
+            file = discord.File(image_path, filename="cursed.gif")
             await ctx.send(file=file)
             #await ctx.send(file=file)
 
