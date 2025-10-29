@@ -267,7 +267,7 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
-    async def clickit(self, ctx):
+    async def click(self, ctx):
         """
         click
         """
