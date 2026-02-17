@@ -248,6 +248,25 @@ class MiscCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
     @commands.command()
+    async def cyclopssweep(self, ctx):
+        """
+        Respond to stevie with a random boom gif
+        """
+        try:
+            gif_choices = ["assets/cyclopssweep.gif"]
+            image_path = random.choice(gif_choices)
+
+            if not os.path.isfile(image_path):
+                await ctx.send("The selected image file was not found.")
+                return
+
+            file = discord.File(image_path, filename=os.path.basename(image_path))
+            await ctx.send(file=file)
+
+        except Exception as e:
+            await ctx.send(f"An error occurred: {e}")
+
+    @commands.command()
     async def sweep(self, ctx):
         """
         Respond to stevie with a random boom gif
