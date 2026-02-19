@@ -1,11 +1,14 @@
+import time
 import discord
 from discord.ext import commands
 import asyncio
 import requests
-from io import BytesIO
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
+
+from bot_commands.utils import render_table_image
+from bot_commands.constants import ALLOWED_ANALYST_IDS
+
 
 class RankedPitchStats(commands.Cog):
     def __init__(self, bot, connection):
@@ -15,16 +18,7 @@ class RankedPitchStats(commands.Cog):
         self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
 
     async def cog_check(self, ctx):
-        allowed_user_ids = [
-            355004588186796035, 327567846567575554, 249243533246988292,
-            1209287557121318974, 635463073712570385, 237066640448159746,
-            460950294893690880, 1231605248041156653, 698184128478314566,
-            958512461500276736, 629122681261785118, 143909682237538304,
-            1145543271330881599, 1091901514848678061, 536258698461577236,
-            1042374780550135868, 200767106453733386, 617029165597720592,
-            308760445160783882, 788709027570778123, 789922571834884107, 1062838877527756980, 812515320664162324, 703051352141725810, 807822868020199435, 1150787076581752913, 1155995827102302218, 911330343741702194, 693621768853782569, 976439679903748096, 114602366652776450
-        ]
-        return ctx.author.id in allowed_user_ids
+        return ctx.author.id in ALLOWED_ANALYST_IDS
 
     def parse_image(self, image_data):
         try:
@@ -35,14 +29,17 @@ class RankedPitchStats(commands.Cog):
             response = requests.post(self.endpoint, headers=headers, data=image_data)
             if response.status_code == 202:
                 operation_location = response.headers["Operation-Location"]
-                import time
                 while True:
                     result_response = requests.get(operation_location, headers=headers)
                     if result_response.status_code != 200:
                         return ""
                     result = result_response.json()
                     if result.get("status") == "succeeded":
-                        return [line["text"] for read_result in result["analyzeResult"]["readResults"] for line in read_result["lines"]]
+                        return [
+                            line["text"]
+                            for read_result in result["analyzeResult"]["readResults"]
+                            for line in read_result["lines"]
+                        ]
                     elif result.get("status") == "failed":
                         return ""
                     time.sleep(1)
@@ -51,6 +48,10 @@ class RankedPitchStats(commands.Cog):
         except Exception as e:
             print(f"OCR Error: {e}")
             return ""
+
+    def _looks_like_row_start(self, s):
+        """Return True if a string looks like the start of a new player row."""
+        return s[0].isupper() or (s[0:2] == "0." and s[2].isalpha())
 
     def delete_user_data(self, discord_id):
         try:
@@ -63,32 +64,31 @@ class RankedPitchStats(commands.Cog):
 
     def process_insert(self, raw_data, discord_id, timing):
         try:
-            data = []
-            newrow = []
+            ocr_rows, current_row = [], []
 
             for i in range(len(raw_data)):
                 if raw_data[i] == "...":
                     continue
-                if raw_data[i][0].isupper() or (raw_data[i][0:2] == "0." and raw_data[i][2].isalpha()):
-                    newrow = [raw_data[i]]
+                if self._looks_like_row_start(raw_data[i]):
+                    current_row = [raw_data[i]]
                     continue
-                elif len(newrow) == 1:
+                elif len(current_row) == 1:
                     if "." in raw_data[i]:
                         integer_part, decimal_part = raw_data[i].split(".")
                         integer_part = int(integer_part)
                         if decimal_part == "1":
-                            newrow.append(integer_part * 3 + 1)
+                            current_row.append(integer_part * 3 + 1)
                         elif decimal_part == "2":
-                            newrow.append(integer_part * 3 + 2)
+                            current_row.append(integer_part * 3 + 2)
                         else:
-                            newrow.append(integer_part * 3)
+                            current_row.append(integer_part * 3)
                 else:
-                    newrow.append(raw_data[i])
-                    data.append(newrow)
-                    print(newrow)
+                    current_row.append(raw_data[i])
+                    ocr_rows.append(current_row)
+                    print(current_row)
 
             with self.connection.cursor() as cursor:
-                for row in data:
+                for row in ocr_rows:
                     cursor.execute("""
                         INSERT INTO rankedpitchstats (
                             DISCORDID, PLAYERNAME, OUTS, R, H, BB, SLG, HR, SO, TIMING, G
@@ -96,7 +96,7 @@ class RankedPitchStats(commands.Cog):
                         ON CONFLICT (DISCORDID, PLAYERNAME, TIMING) DO NOTHING;
                     """, (discord_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], timing, row[8]))
                 self.connection.commit()
-            print(f"Inserted {len(data)} rows into the database.")
+            print(f"Inserted {len(ocr_rows)} rows into the database.")
         except Exception as e:
             self.connection.rollback()
             print(f"Insert Error: {e}")
@@ -117,12 +117,9 @@ class RankedPitchStats(commands.Cog):
 
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
-                data = await asyncio.to_thread(self.parse_image, image_data)
-
+                extracted_data = await asyncio.to_thread(self.parse_image, image_data)
                 timing = "before" if i <= 1 else "after"
-                await asyncio.to_thread(self.process_insert, data, discord_id, timing)
-
-            discord_id = ctx.author.id
+                await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
 
             await ctx.send(f"Data has been updated for {discord_id}!")
         except Exception as e:
@@ -140,87 +137,35 @@ class RankedPitchStats(commands.Cog):
 
             data = []
             for row in results:
-                player_name = row[0]
-                diff_OUTS = row[1]
-                diff_R = row[2]
-                diff_H = row[3]
-                diff_BB = row[4]
-                diff_SLG = round(row[5], 3)
-                diff_HR = row[6]
-                diff_SO = row[7]
-                diff_G = row[8]
-
+                player_name, diff_OUTS, diff_R, diff_H, diff_BB, diff_SLG, diff_HR, diff_SO, diff_G = row
+                diff_SLG = round(diff_SLG, 3)
                 diff_AB = diff_H + diff_OUTS
 
                 ip = diff_OUTS // 3 + (diff_OUTS % 3) / 10
                 era = round(diff_R / diff_OUTS * 27, 2) if diff_R > 0 else 0
                 avg = round(diff_H / diff_AB, 3) if diff_H > 0 else 0
-
-                walkrate = round(diff_BB / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
-                walkrate *= 100
-                walkrate = round(walkrate, 1)
-
+                walkrate = round((diff_BB / (diff_AB + diff_BB)) * 100, 1) if (diff_AB + diff_BB) > 0 else 0
                 obp = round((diff_H + diff_BB) / (diff_AB + diff_BB), 3) if (diff_AB + diff_BB) > 0 else 0
-                hrrate = round(diff_HR / diff_AB, 3) if diff_AB > 0 else 0
-                hrrate *= 100
-                hrrate = round(hrrate, 1)
-
+                hrrate = round((diff_HR / diff_AB) * 100, 1) if diff_AB > 0 else 0
                 slg = diff_SLG if diff_AB > 0 else 0
                 ops = round(obp + slg, 3)
-
-                krate = diff_SO / diff_AB if diff_AB > 0 else 0
-                krate *= 100
-                krate = round(krate, 1)
-
-                whip = (diff_BB + diff_H) / diff_OUTS * 3 if diff_OUTS > 0 else 0
-                whip = round(whip, 3)
-
+                krate = round((diff_SO / diff_AB) * 100, 1) if diff_AB > 0 else 0
+                whip = round((diff_BB + diff_H) / diff_OUTS * 3, 3) if diff_OUTS > 0 else 0
                 ipg = round(float(ip / diff_G), 3) if diff_G > 0 else 0
 
                 data.append([
                     player_name, diff_G, ip, ipg, era, avg, obp, slg, ops,
-                    walkrate, hrrate,krate, whip
+                    walkrate, hrrate, krate, whip
                 ])
 
             columns = [
                 "Player Name", "G", "IP", "AVG IP/G", "ERA", "AVG", "OBP", "SLG", "OPS",
                 "BB%", "HR%", "K%", "WHIP"
             ]
-
             df = pd.DataFrame(data, columns=columns)
             df = df.sort_values(by="ERA")
-
-            fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
-            ax.axis("tight")
-            ax.axis("off")
-            table = ax.table(
-                cellText=df.values,
-                colLabels=df.columns,
-                cellLoc="center",
-                loc="center",
-            )
-
-            table.auto_set_font_size(False)
-            table.set_fontsize(10)
-            table.auto_set_column_width(col=list(range(len(df.columns))))
-
-            cell_dict = table.get_celld()
-            for (row, col), cell in cell_dict.items():
-                if row == 0 or col == 0:
-                    cell.set_text_props(weight="bold")
-
-            row_height = 1 / len(df)
-            for (row, col), cell in cell_dict.items():
-                cell.set_height(row_height)
-
-            buffer = BytesIO()
-            plt.savefig(buffer, format="png", bbox_inches="tight")
-            buffer.seek(0)
-            plt.close(fig)
-
-            file = discord.File(fp=buffer, filename="stats_comparison.png")
-            await ctx.send(file=file)
-
+            buffer = render_table_image(df)
+            await ctx.send(file=discord.File(fp=buffer, filename="stats_comparison.png"))
         except Exception as e:
             await ctx.send(f"Error comparing stats: {e}")
 
@@ -228,14 +173,14 @@ class RankedPitchStats(commands.Cog):
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT 
+                    SELECT
                         a.PLAYERNAME,
                         b.outs - a.outs,
                         b.r - a.r,
                         b.h - a.h,
                         b.bb - a.bb,
-                        CASE 
-                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN 
+                        CASE
+                            WHEN (b.h + b.outs) - (a.h + a.outs) != 0 THEN
                                 (b.slg * (b.h + b.outs) - a.slg * (a.h + a.outs)) / ((b.h + b.outs) - (a.h + a.outs))
                             ELSE 0
                         END,
@@ -244,16 +189,15 @@ class RankedPitchStats(commands.Cog):
                         b.G - a.G
                     FROM rankedpitchstats a
                     JOIN rankedpitchstats b
-                    ON a.PLAYERNAME = b.PLAYERNAME
-                    WHERE a.DISCORDID = %s
-                    AND b.DISCORDID = %s
-                    AND a.TIMING = 'before'
-                    AND b.TIMING = 'after';
+                        ON a.PLAYERNAME = b.PLAYERNAME
+                    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
+                      AND a.TIMING = 'before' AND b.TIMING = 'after';
                 """, (discord_id, discord_id))
                 return cursor.fetchall()
         except Exception as e:
             print(f"Fetch Error: {e}")
             return []
+
 
 async def setup(bot):
     connection = bot.connection
