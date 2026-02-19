@@ -1,14 +1,10 @@
 from discord.ext import commands
 import pandas as pd
-import matplotlib.pyplot as plt
 from io import BytesIO
 import shlex
 import discord
-import pandas as pd
-import psycopg2
-from urllib.parse import urlparse
-import os
-import asyncio
+
+from bot_commands.constants import LEADERSHIP_ROLES, UPLOAD_TEMPLATE
 
 
 class PlayerCommands(commands.Cog):
@@ -16,33 +12,17 @@ class PlayerCommands(commands.Cog):
         self.bot = bot
         self.connection = connection
 
-
     async def cog_check(self, ctx):
-        """
-        Restrict commands to users with specific roles.
-        Only users with the specified roles can call the commands.
-        """
-        # List of allowed roles
-        allowed_roles = [
-            "TooDank Leaders", "Vice", "NFS Ops", "NFS OG Leaders", 
-            "NeedForSpeed Leaders", "M16Speed Spy Daddies", "GoldyLeads", "Burnout Leaders", 
-            "Dugout Leads", "Kerchoo Leaders", "Rush Hour Leaders", "Speed Bump Leaders", 
-            "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad", "M16 Recruit", "TooDankFast"
-        ]
-        
-        # Check if the user has at least one of the allowed roles
+        """Restrict commands to users with specific roles."""
         user_roles = [role.name for role in ctx.author.roles]
-        return any(role in allowed_roles for role in user_roles)
-    
+        return any(role in LEADERSHIP_ROLES for role in user_roles)
+
 
     @commands.command()
     async def excel(self, ctx):
-        # Path to your preformatted Excel file
-        file_path = "uploadtemplate.xlsx"
-        
-        # Send the file to the user
+        """Send the upload template Excel file."""
         try:
-            await ctx.send(file=discord.File(file_path, filename="uploadtemplate.xlsx"))
+            await ctx.send(file=discord.File(UPLOAD_TEMPLATE, filename=UPLOAD_TEMPLATE))
         except Exception as e:
             await ctx.send(f"Error: Could not send the file. {e}")
 
@@ -55,7 +35,7 @@ class PlayerCommands(commands.Cog):
             cursor = self.connection.cursor()
             cursor.execute(
                 """
-                SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills, 
+                SELECT Name, Club_Name, SP1_Name, SP1_Skills, SP2_Name, SP2_Skills,
                        SP3_Name, SP3_Skills, SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
                        Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats, source
                 FROM Player
@@ -88,7 +68,6 @@ class PlayerCommands(commands.Cog):
                     f"**5 Tool Bats**: {toolbats}\n"
                     f"**Source**: {source}\n"
                 )
-
                 await ctx.send(details)
             else:
                 await ctx.send(f"No player found with the name '{player_name}'.")
@@ -99,29 +78,21 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def addplayer(self, ctx, name: str, *, args: str = ""):
-        """
-        Add a new player to the database using the first argument as the name and optional keyword arguments.
-        """
+        """Add a new player to the database."""
         name = name.lower()
         if "$" in name:
             await ctx.send("Please replace $ with S. If the player already exists, replace it with @.")
             return
-        args = args.replace("“", '"').replace("”", '"')
+        args = args.replace("\u201c", '"').replace("\u201d", '"')
 
         try:
-            # Default values
             defaults = {
                 "club": "no club",
-                "sp1name": "",
-                "sp1skills": "",
-                "sp2name": "",
-                "sp2skills": "",
-                "sp3name": "",
-                "sp3skills": "",
-                "sp4name": "",
-                "sp4skills": "",
-                "sp5name": "",
-                "sp5skills": "",
+                "sp1name": "", "sp1skills": "",
+                "sp2name": "", "sp2skills": "",
+                "sp3name": "", "sp3skills": "",
+                "sp4name": "", "sp4skills": "",
+                "sp5name": "", "sp5skills": "",
                 "nerf": "",
                 "pr": 9999,
                 "teamdeck": "",
@@ -130,33 +101,22 @@ class PlayerCommands(commands.Cog):
                 "source": "",
             }
 
-            # Parse arguments with shlex
-            provided_args = {}
             if args:
-                parsed_args = shlex.split(args)
-                for arg in parsed_args:
+                for arg in shlex.split(args):
                     key, value = map(str.strip, arg.split("=", 1))
-                    provided_args[key.lower()] = value.lower()
+                    defaults[key.lower()] = value.lower()
 
-            # Merge with defaults
-            for key in defaults.keys():
-                if key in provided_args:
-                    defaults[key] = provided_args[key]
-
-            # Validate PR
             defaults["pr"] = int(defaults["pr"])
             defaults["charbats"] = int(defaults["charbats"])
             defaults["toolbats"] = int(defaults["toolbats"])
-            cursor = self.connection.cursor()
 
-            # Check if the player already exists
+            cursor = self.connection.cursor()
             cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
             existing_player = cursor.fetchone()
 
             if existing_player:
                 await ctx.send(f"The player '{name}' already exists in the database. No changes made.")
             else:
-                # Insert the player with all arguments
                 cursor.execute(
                     """
                     INSERT INTO Player (
@@ -165,21 +125,17 @@ class PlayerCommands(commands.Cog):
                         SP4_Name, SP4_Skills, SP5_Name, SP5_Skills,
                         Nerf, PR, last_updated, nerf_updated, team_name, charbats, toolbats, source
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE, CURRENT_DATE, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                            CURRENT_DATE, CURRENT_DATE, %s, %s, %s, %s)
                     """,
                     (
                         name,
                         defaults["club"],
-                        defaults["sp1name"],
-                        defaults["sp1skills"],
-                        defaults["sp2name"],
-                        defaults["sp2skills"],
-                        defaults["sp3name"],
-                        defaults["sp3skills"],
-                        defaults["sp4name"],
-                        defaults["sp4skills"],
-                        defaults["sp5name"],
-                        defaults["sp5skills"],
+                        defaults["sp1name"], defaults["sp1skills"],
+                        defaults["sp2name"], defaults["sp2skills"],
+                        defaults["sp3name"], defaults["sp3skills"],
+                        defaults["sp4name"], defaults["sp4skills"],
+                        defaults["sp5name"], defaults["sp5skills"],
                         defaults["nerf"],
                         defaults["pr"],
                         defaults["teamdeck"],
@@ -200,31 +156,25 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updatenerf(self, ctx, player_name: str, new_nerf: str):
-        """Update the nerf value for a player and set the nerf last updated date."""
+        """Update the nerf value for a player."""
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if player:
-                    # Update the nerf value and nerf_updated date
-                    cursor.execute(
-                        """
-                        UPDATE Player
-                        SET Nerf = %s, nerf_updated = CURRENT_DATE
-                        WHERE Name = %s
-                        """,
-                        (new_nerf, player_name),
-                    )
-                    self.connection.commit()
-                    await self.scoutplayer(ctx, player_name)
-                else:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                cursor.execute(
+                    "UPDATE Player SET Nerf = %s, nerf_updated = CURRENT_DATE WHERE Name = %s",
+                    (new_nerf, player_name),
+                )
+                self.connection.commit()
+                await self.scoutplayer(ctx, player_name)
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
     @commands.command()
     @commands.has_role("M16Speed Spy Daddies")
@@ -233,17 +183,14 @@ class PlayerCommands(commands.Cog):
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if player:
-                    # Delete the player
-                    cursor.execute("DELETE FROM Player WHERE Name = %s", (player_name,))
-                    self.connection.commit()
-                    await ctx.send(f"Player '{player_name}' has been deleted from the database.")
-                else:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
+                    return
+
+                cursor.execute("DELETE FROM Player WHERE Name = %s", (player_name,))
+                self.connection.commit()
+                await ctx.send(f"Player '{player_name}' has been deleted from the database.")
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -251,41 +198,24 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updatesp(self, ctx, player_name: str, sp_number: int, sp_name: str, sp_skills: str):
-        """
-
-        Args:
-            player_name: The name of the player whose SP to edit.
-            sp_number: The SP number (1 to 5) to edit.
-            sp_name: The new name for the SP.
-            sp_skills: The new skills for the SP.
-        """
+        """Update a player's special player skill slot."""
         player_name = player_name.lower()
         try:
-            # Validate SP number
             if sp_number < 1 or sp_number > 5:
                 await ctx.send("Invalid SP number. Please specify a number from 1 to 5.")
                 return
 
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Determine the column names for the specified SP
-                sp_name_column = f"SP{sp_number}_Name"
-                sp_skills_column = f"SP{sp_number}_Skills"
+                sp_name_col = f"SP{sp_number}_Name"
+                sp_skills_col = f"SP{sp_number}_Skills"
 
-                # Update the SP details for the player
                 cursor.execute(
-                    f"""
-                    UPDATE Player
-                    SET {sp_name_column} = %s, {sp_skills_column} = %s
-                    WHERE Name = %s
-                    """,
+                    f"UPDATE Player SET {sp_name_col} = %s, {sp_skills_col} = %s WHERE Name = %s",
                     (sp_name, sp_skills, player_name),
                 )
                 self.connection.commit()
@@ -297,30 +227,17 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updatepr(self, ctx, player_name: str, new_pr: int):
-        """
-        Update a player's PR (Power Rating).
-        Args:
-            player_name: The name of the player whose PR to update.
-            new_pr: The new PR value.
-        """
+        """Update a player's PR (Power Rating)."""
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Update the PR value for the player
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET PR = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
+                    "UPDATE Player SET PR = %s, last_updated = CURRENT_DATE WHERE Name = %s",
                     (new_pr, player_name),
                 )
                 self.connection.commit()
@@ -329,53 +246,33 @@ class PlayerCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
     async def updateprs(self, ctx, *, args: str = ""):
-        """Update the PRs of players.
-        Args must be in pairs: player_name PR_value player_name PR_value ...
-        """
+        """Update PRs for multiple players. Args must be pairs: player_name PR_value ..."""
         try:
-            # Split the arguments
             parsed_args = shlex.split(args)
 
-            # Validate input
             if len(parsed_args) % 2 != 0:
                 await ctx.send("Error: Arguments must be in pairs: player_name PR_value.")
                 return
 
-            updates = []  # List to hold (player_name, PR_value) pairs
+            updates = []
             for i in range(0, len(parsed_args), 2):
-                player_name = parsed_args[i].lower()  # Player name
+                player_name = parsed_args[i].lower()
                 try:
-                    pr_value = int(parsed_args[i + 1])  # PR value
+                    pr_value = int(parsed_args[i + 1])
                 except ValueError:
                     await ctx.send(f"Error: '{parsed_args[i + 1]}' is not a valid integer for PR value.")
                     return
-
                 updates.append((player_name, pr_value))
 
-            # Begin database transaction
             with self.connection.cursor() as cursor:
                 for player_name, pr_value in updates:
-                    # Check if the player exists
-                    cursor.execute(
-                        """
-                        SELECT Name
-                        FROM Player
-                        WHERE Name = %s
-                        """,
-                        (player_name,),
-                    )
-                    player = cursor.fetchone()
-
-                    if player:
-                        # Update the PR value
+                    cursor.execute("SELECT Name FROM Player WHERE Name = %s", (player_name,))
+                    if cursor.fetchone():
                         cursor.execute(
-                            """
-                            UPDATE Player
-                            SET PR = %s
-                            WHERE Name = %s
-                            """,
+                            "UPDATE Player SET PR = %s WHERE Name = %s",
                             (pr_value, player_name),
                         )
                         await ctx.send(f"Updated PR for **{player_name}** to **{pr_value}**.")
@@ -391,30 +288,17 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updatechar(self, ctx, player_name: str, new_char: int):
-        """
-        Update a player's char bats.
-        Args:
-            player_name: The name of the player whose PR to update.
-            new_char: The new number of char bats
-        """
+        """Update a player's charisma bats count."""
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Update the PR value for the player
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET charbats = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
+                    "UPDATE Player SET charbats = %s, last_updated = CURRENT_DATE WHERE Name = %s",
                     (new_char, player_name),
                 )
                 self.connection.commit()
@@ -426,30 +310,17 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updatetool(self, ctx, player_name: str, new_tool: int):
-        """
-        Update a player's tool bats.
-        Args:
-            player_name: The name of the player whose PR to update.
-            new_tool: The new number of tool bats
-        """
+        """Update a player's five-tool bats count."""
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Update the PR value for the player
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET toolbats = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
+                    "UPDATE Player SET toolbats = %s, last_updated = CURRENT_DATE WHERE Name = %s",
                     (new_tool, player_name),
                 )
                 self.connection.commit()
@@ -457,35 +328,24 @@ class PlayerCommands(commands.Cog):
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
-    
-    
+
 
     @commands.command()
     async def updateclub(self, ctx, player_name: str, new_club: str):
-        """Change a player's club and update both Player and Club tables."""
+        """Change a player's club."""
         player_name = player_name.lower()
         new_club = new_club.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Get the current club of the player
-                current_club = player[1]  # Assuming Club_Name is the second column in the Player table
-
-                # Check if the new club exists, create it if not
                 cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (new_club,))
-                new_club_entry = cursor.fetchone()
-
-                if not new_club_entry:
+                if not cursor.fetchone():
                     cursor.execute("INSERT INTO Club (Club_Name) VALUES (%s)", (new_club,))
 
-                # Update the player's club
                 cursor.execute(
                     "UPDATE Player SET Club_Name = %s WHERE Name = %s",
                     (new_club, player_name),
@@ -499,30 +359,17 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def updateteamdeck(self, ctx, player_name: str, new_team_name: str):
-        """
-        Change the team name of a player.
-        Args:
-            player_name: The name of the player whose team name to update.
-            new_team_name: The new team name.
-        """
+        """Change the team deck assignment of a player."""
         player_name = player_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (player_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{player_name}'.")
                     return
 
-                # Update the team name for the player
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET team_name = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
+                    "UPDATE Player SET team_name = %s, last_updated = CURRENT_DATE WHERE Name = %s",
                     (new_team_name, player_name),
                 )
                 self.connection.commit()
@@ -534,39 +381,23 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def renameplayer(self, ctx, old_name: str, new_name: str):
-        """
-        Rename a player in the database.
-        Args:
-            old_name: The current name of the player to rename.
-            new_name: The new name for the player.
-        """
+        """Rename a player in the database."""
         old_name = old_name.lower()
         new_name = new_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the player with the old name exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (old_name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{old_name}'.")
                     return
 
-                # Check if the new name already exists
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (new_name,))
-                new_name_player = cursor.fetchone()
-
-                if new_name_player:
+                if cursor.fetchone():
                     await ctx.send(f"The name '{new_name}' is already taken by another player.")
                     return
 
-                # Update the player's name
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET Name = %s, last_updated = CURRENT_DATE
-                    WHERE Name = %s
-                    """,
+                    "UPDATE Player SET Name = %s, last_updated = CURRENT_DATE WHERE Name = %s",
                     (new_name, old_name),
                 )
                 self.connection.commit()
@@ -578,14 +409,12 @@ class PlayerCommands(commands.Cog):
 
     @commands.command()
     async def listplayers(self, ctx):
-        """List the bottom 10 most recently added players and the total number of players in the database."""
+        """List the 10 most recently added players and the total count."""
         try:
             with self.connection.cursor() as cursor:
-                # Fetch the total number of clubs
                 cursor.execute("SELECT COUNT(*) FROM Player")
-                total_clubs = cursor.fetchone()[0]
+                total_players = cursor.fetchone()[0]
 
-                # Fetch the bottom 10 most recently added clubs
                 cursor.execute(
                     """
                     SELECT Name
@@ -596,10 +425,9 @@ class PlayerCommands(commands.Cog):
                 players = cursor.fetchall()
 
                 if players:
-                    # Format the recent clubs list
-                    playerlist = "\n".join([club[0] for club in players])
+                    playerlist = "\n".join([p[0] for p in players])
                     await ctx.send(
-                        f"**Total Players in the Database:** {total_clubs}\n\n"
+                        f"**Total Players in the Database:** {total_players}\n\n"
                         f"**10 Most Recently Added Players:**\n{playerlist}"
                     )
                 else:
@@ -613,34 +441,26 @@ class PlayerCommands(commands.Cog):
     async def updateplayer(self, ctx, name: str, *, args: str = ""):
         """
         Update multiple attributes of a player in a single command.
-        Example usage:
-        !updateplayer John club=NewClubName nerf=NewNerfValue pr=9000 bat=NewBatSkill teamdeck=NewTeamDeck
+        Example: !updateplayer John club=NewClub nerf=yes pr=9000
         """
         name = name.lower()
-        args = args.replace("“", '"').replace("”", '"')  # Replace smart quotes
+        args = args.replace("\u201c", '"').replace("\u201d", '"')
         try:
-            # Define a mapping from user-friendly keys to SQL column names
             column_mapping = {
                 "club": "club_name",
                 "nerf": "nerf",
                 "pr": "pr",
                 "teamdeck": "team_name",
-                "sp1n": "sp1_name",
-                "sp1s": "sp1_skills",
-                "sp2n": "sp2_name",
-                "sp2s": "sp2_skills",
-                "sp3n": "sp3_name",
-                "sp3s": "sp3_skills",
-                "sp4n": "sp4_name",
-                "sp4s": "sp4_skills",
-                "sp5n": "sp5_name",
-                "sp5s": "sp5_skills",
+                "sp1n": "sp1_name", "sp1s": "sp1_skills",
+                "sp2n": "sp2_name", "sp2s": "sp2_skills",
+                "sp3n": "sp3_name", "sp3s": "sp3_skills",
+                "sp4n": "sp4_name", "sp4s": "sp4_skills",
+                "sp5n": "sp5_name", "sp5s": "sp5_skills",
                 "char": "charbats",
                 "tool": "toolbats",
                 "source": "source",
             }
 
-            # Parse the key-value arguments using shlex.split
             updates = {}
             if args:
                 for arg in shlex.split(args):
@@ -649,11 +469,10 @@ class PlayerCommands(commands.Cog):
                     if key in column_mapping:
                         updates[column_mapping[key]] = value.lower()
 
-            # Validate and construct the SQL query
             update_query_parts = []
             update_values = []
             for column, value in updates.items():
-                if column == "pr":  # Convert PR to integer
+                if column == "pr":
                     try:
                         value = int(value)
                     except ValueError:
@@ -666,19 +485,15 @@ class PlayerCommands(commands.Cog):
                 await ctx.send("No valid updates provided.")
                 return
 
-            # Add the player's name to the query
-            update_query = ", ".join(update_query_parts)
             update_values.append(name)
 
-            # Execute the update query
             with self.connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM Player WHERE Name = %s", (name,))
-                player = cursor.fetchone()
-
-                if not player:
+                if not cursor.fetchone():
                     await ctx.send(f"No player found with the name '{name}'.")
                     return
 
+                update_query = ", ".join(update_query_parts)
                 cursor.execute(
                     f"UPDATE Player SET {update_query}, last_updated = CURRENT_DATE WHERE Name = %s",
                     update_values,
@@ -690,147 +505,121 @@ class PlayerCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-
-    async def upload_to_database(self, file_stream):
-        # Read the Excel file
-        df = pd.read_excel(file_stream, engine="openpyxl")
-
-        # Format the names properly
-        df["Name"] = df["Name"].astype(str)
-        df["Name"] = df["Name"].str.lower().str.replace(" ", "")
-        df["Club_Name"] = df["Club_Name"].fillna("no club")
-        df["Club_Name"] = df["Club_Name"].str.lower()
-        # Remove spaces in Club_Name only for rows where Club_Name is not "no club"
-        df.loc[df["Club_Name"] != "no club", "Club_Name"] = df["Club_Name"].str.replace(" ", "", regex=False)
-
-        # Optional columns filled with defaults
+    def _normalize_player_df(self, df):
+        """Normalize column types and fill defaults for a player upload DataFrame."""
+        df["Name"] = df["Name"].astype(str).str.lower().str.replace(" ", "")
+        df["Club_Name"] = df["Club_Name"].fillna("no club").astype(str).str.lower()
+        df.loc[df["Club_Name"] != "no club", "Club_Name"] = (
+            df["Club_Name"].str.replace(" ", "", regex=False)
+        )
         df.fillna({
-            "SP1_name": "",
-            "SP1_skills": "",
-            "SP2_name": "",
-            "SP2_skills": "",
-            "SP3_name": "",
-            "SP3_skills": "",
-            "SP4_name": "",
-            "SP4_skills": "",
-            "SP5_name": "",
-            "SP5_skills": "",
+            "SP1_name": "", "SP1_skills": "",
+            "SP2_name": "", "SP2_skills": "",
+            "SP3_name": "", "SP3_skills": "",
+            "SP4_name": "", "SP4_skills": "",
+            "SP5_name": "", "SP5_skills": "",
             "Team_Name": "",
-            "Nerf":"",
+            "Nerf": "",
             "PR": 9999,
             "charbats": 10,
             "toolbats": 10,
             "source": "",
         }, inplace=True)
-
         df["charbats"] = df["charbats"].astype(int)
         df["toolbats"] = df["toolbats"].astype(int)
+        return df
 
+    def _ensure_club_exists(self, cursor, club_name):
+        """Insert the club if it doesn't already exist."""
+        cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO Club (Club_Name) VALUES (%s)", (club_name,))
+
+    def _upsert_player_row(self, cursor, row):
+        """Insert or update a single player row."""
+        cursor.execute(
+            """
+            INSERT INTO Player (
+                Name, Club_Name,
+                SP1_name, SP1_skills, SP2_name, SP2_skills,
+                SP3_name, SP3_skills, SP4_name, SP4_skills,
+                SP5_name, SP5_skills, Nerf, PR, team_name,
+                charbats, toolbats, source, last_updated
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
+            ON CONFLICT (Name) DO UPDATE SET
+                Club_Name = EXCLUDED.Club_Name,
+                SP1_name  = CASE WHEN EXCLUDED.SP1_name  IS NOT NULL THEN EXCLUDED.SP1_name  ELSE Player.SP1_name  END,
+                SP1_skills= CASE WHEN EXCLUDED.SP1_skills IS NOT NULL THEN EXCLUDED.SP1_skills ELSE Player.SP1_skills END,
+                SP2_name  = CASE WHEN EXCLUDED.SP2_name  IS NOT NULL THEN EXCLUDED.SP2_name  ELSE Player.SP2_name  END,
+                SP2_skills= CASE WHEN EXCLUDED.SP2_skills IS NOT NULL THEN EXCLUDED.SP2_skills ELSE Player.SP2_skills END,
+                SP3_name  = CASE WHEN EXCLUDED.SP3_name  IS NOT NULL THEN EXCLUDED.SP3_name  ELSE Player.SP3_name  END,
+                SP3_skills= CASE WHEN EXCLUDED.SP3_skills IS NOT NULL THEN EXCLUDED.SP3_skills ELSE Player.SP3_skills END,
+                SP4_name  = CASE WHEN EXCLUDED.SP4_name  IS NOT NULL THEN EXCLUDED.SP4_name  ELSE Player.SP4_name  END,
+                SP4_skills= CASE WHEN EXCLUDED.SP4_skills IS NOT NULL THEN EXCLUDED.SP4_skills ELSE Player.SP4_skills END,
+                SP5_name  = CASE WHEN EXCLUDED.SP5_name  IS NOT NULL THEN EXCLUDED.SP5_name  ELSE Player.SP5_name  END,
+                SP5_skills= CASE WHEN EXCLUDED.SP5_skills IS NOT NULL THEN EXCLUDED.SP5_skills ELSE Player.SP5_skills END,
+                Nerf      = CASE WHEN EXCLUDED.Nerf      IS NOT NULL THEN EXCLUDED.Nerf      ELSE Player.Nerf      END,
+                PR        = CASE WHEN EXCLUDED.PR <> 9999            THEN EXCLUDED.PR        ELSE Player.PR        END,
+                team_name = CASE WHEN EXCLUDED.team_name IS NOT NULL THEN EXCLUDED.team_name ELSE Player.team_name END,
+                charbats  = CASE WHEN EXCLUDED.charbats  <> 10       THEN EXCLUDED.charbats  ELSE Player.charbats  END,
+                toolbats  = CASE WHEN EXCLUDED.toolbats  <> 10       THEN EXCLUDED.toolbats  ELSE Player.toolbats  END,
+                source    = CASE WHEN EXCLUDED.source    IS NOT NULL THEN EXCLUDED.source    ELSE Player.source    END,
+                last_updated = CURRENT_DATE
+            """,
+            (
+                row["Name"], row["Club_Name"],
+                row.get("SP1_name", ""), row.get("SP1_skills", ""),
+                row.get("SP2_name", ""), row.get("SP2_skills", ""),
+                row.get("SP3_name", ""), row.get("SP3_skills", ""),
+                row.get("SP4_name", ""), row.get("SP4_skills", ""),
+                row.get("SP5_name", ""), row.get("SP5_skills", ""),
+                row["Nerf"], row["PR"], row.get("Team_Name", ""),
+                row["charbats"], row["toolbats"], row.get("source", ""),
+            )
+        )
+
+    async def upload_to_database(self, file_stream):
+        """Parse an Excel file and upsert all player rows into the database."""
+        df = pd.read_excel(file_stream, engine="openpyxl")
+        df = self._normalize_player_df(df)
+
+        cursor = self.connection.cursor()
         try:
-            cursor = self.connection.cursor()
-
             for _, row in df.iterrows():
                 try:
-                    # Ensure the club exists or insert it
-                    club_name = row["Club_Name"].lower()
-                    cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                    club_exists = cursor.fetchone()
-
-                    if not club_exists:
-                        cursor.execute(
-                            """
-                            INSERT INTO Club (Club_Name)
-                            VALUES (%s)
-                            """,
-                            (club_name,)
-                        )
-
-                    # Insert or update the player data
-                    cursor.execute(
-                        """
-                        INSERT INTO Player (
-                            Name, Club_Name,
-                            SP1_name, SP1_skills, SP2_name, SP2_skills,
-                            SP3_name, SP3_skills, SP4_name, SP4_skills,
-                            SP5_name, SP5_skills, Nerf, PR, team_name,
-                            charbats, toolbats, source, last_updated
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_DATE)
-                        ON CONFLICT (Name) DO UPDATE SET
-                            Club_Name = EXCLUDED.Club_Name,
-                            SP1_name = CASE WHEN EXCLUDED.SP1_name IS NOT NULL THEN EXCLUDED.SP1_name ELSE Player.SP1_name END,
-                            SP1_skills = CASE WHEN EXCLUDED.SP1_skills IS NOT NULL THEN EXCLUDED.SP1_skills ELSE Player.SP1_skills END,
-                            SP2_name = CASE WHEN EXCLUDED.SP2_name IS NOT NULL THEN EXCLUDED.SP2_name ELSE Player.SP2_name END,
-                            SP2_skills = CASE WHEN EXCLUDED.SP2_skills IS NOT NULL THEN EXCLUDED.SP2_skills ELSE Player.SP2_skills END,
-                            SP3_name = CASE WHEN EXCLUDED.SP3_name IS NOT NULL THEN EXCLUDED.SP3_name ELSE Player.SP3_name END,
-                            SP3_skills = CASE WHEN EXCLUDED.SP3_skills IS NOT NULL THEN EXCLUDED.SP3_skills ELSE Player.SP3_skills END,
-                            SP4_name = CASE WHEN EXCLUDED.SP4_name IS NOT NULL THEN EXCLUDED.SP4_name ELSE Player.SP4_name END,
-                            SP4_skills = CASE WHEN EXCLUDED.SP4_skills IS NOT NULL THEN EXCLUDED.SP4_skills ELSE Player.SP4_skills END,
-                            SP5_name = CASE WHEN EXCLUDED.SP5_name IS NOT NULL THEN EXCLUDED.SP5_name ELSE Player.SP5_name END,
-                            SP5_skills = CASE WHEN EXCLUDED.SP5_skills IS NOT NULL THEN EXCLUDED.SP5_skills ELSE Player.SP5_skills END,
-                            Nerf = CASE WHEN EXCLUDED.Nerf IS NOT NULL THEN EXCLUDED.Nerf ELSE Player.Nerf END,
-                            PR = CASE WHEN EXCLUDED.PR <> 9999 THEN EXCLUDED.PR ELSE Player.PR END,
-                            team_name = CASE WHEN EXCLUDED.team_name IS NOT NULL THEN EXCLUDED.team_name ELSE Player.team_name END,
-                            charbats = CASE WHEN EXCLUDED.charbats <> 10 THEN EXCLUDED.charbats ELSE Player.charbats END,
-                            toolbats = CASE WHEN EXCLUDED.toolbats <> 10 THEN EXCLUDED.toolbats ELSE Player.toolbats END,
-                            source = CASE WHEN EXCLUDED.source IS NOT NULL THEN EXCLUDED.source ELSE Player.source END,
-                            last_updated = CURRENT_DATE
-                        """,
-                        (
-                            row["Name"],
-                            club_name,
-                            row.get("SP1_name", ""), row.get("SP1_skills", ""),
-                            row.get("SP2_name", ""), row.get("SP2_skills", ""),
-                            row.get("SP3_name", ""), row.get("SP3_skills", ""),
-                            row.get("SP4_name", ""), row.get("SP4_skills", ""),
-                            row.get("SP5_name", ""), row.get("SP5_skills", ""),
-                            row["Nerf"],
-                            row["PR"],
-                            row.get("Team_Name", ""),
-                            row["charbats"],
-                            row["toolbats"],
-                            row.get("source", ""),
-                        )
-                    )
+                    self._ensure_club_exists(cursor, row["Club_Name"])
+                    self._upsert_player_row(cursor, row)
                 except Exception as row_error:
                     print(f"Error processing row: {row.to_dict()} - {row_error}")
-
-            self.connection.commit()  # Commit after processing all rows
+            self.connection.commit()
         except Exception as db_error:
-            self.connection.rollback()  # Rollback on any database error
-            raise db_error  # Rethrow for higher-level handling
+            self.connection.rollback()
+            raise db_error
         finally:
             cursor.close()
 
 
-
     @commands.command()
     async def upload(self, ctx):
-        # Check if a file is attached
+        """Upload player data from an attached Excel file."""
         if len(ctx.message.attachments) == 0:
             await ctx.send("Please attach an Excel file with the command!")
             return
 
-        # Notify that the upload is starting
         message = await ctx.send("Data is uploading. Please do not interrupt.")
-
-        # Get the attached file
         attachment = ctx.message.attachments[0]
         file_stream = BytesIO()
         await attachment.save(file_stream)
         file_stream.seek(0)
 
         try:
-            # Pass the file stream to the upload_to_database function
             await self.upload_to_database(file_stream)
-
-            # Notify completion
             await message.edit(content="Data successfully uploaded to the database! You can scout now.")
         except Exception as e:
             await message.edit(content=f"Error: {e}")
 
 
-
 async def setup(bot):
-    connection = bot.connection  # Retrieve the connection from the bot instance
+    connection = bot.connection
     await bot.add_cog(PlayerCommands(bot, connection))

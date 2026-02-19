@@ -1,3 +1,4 @@
+import time
 import discord
 from discord.ext import commands
 import asyncio
@@ -8,6 +9,10 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
+from bot_commands.utils import render_table_image
+from bot_commands.constants import ALLOWED_ANALYST_IDS
+
+
 class RankedBatStats(commands.Cog):
     def __init__(self, bot, connection):
         self.bot = bot
@@ -16,16 +21,7 @@ class RankedBatStats(commands.Cog):
         self.endpoint = os.getenv('AZURE_ENDPOINT') + '/vision/v3.2/read/analyze'
 
     async def cog_check(self, ctx):
-        allowed_user_ids = [
-            355004588186796035, 327567846567575554, 249243533246988292,
-            1209287557121318974, 635463073712570385, 237066640448159746,
-            460950294893690880, 1231605248041156653, 698184128478314566,
-            958512461500276736, 629122681261785118, 143909682237538304,
-            1145543271330881599, 1091901514848678061, 536258698461577236,
-            1042374780550135868, 200767106453733386, 617029165597720592,
-            308760445160783882, 788709027570778123, 789922571834884107, 1062838877527756980, 812515320664162324, 703051352141725810, 807822868020199435, 1150787076581752913, 1155995827102302218, 911330343741702194, 693621768853782569, 976439679903748096, 114602366652776450
-        ]
-        return ctx.author.id in allowed_user_ids
+        return ctx.author.id in ALLOWED_ANALYST_IDS
 
     def parse_image(self, image_data):
         try:
@@ -36,14 +32,17 @@ class RankedBatStats(commands.Cog):
             response = requests.post(self.endpoint, headers=headers, data=image_data)
             if response.status_code == 202:
                 operation_location = response.headers["Operation-Location"]
-                import time
                 while True:
                     result_response = requests.get(operation_location, headers=headers)
                     if result_response.status_code != 200:
                         return ""
                     result = result_response.json()
                     if result.get("status") == "succeeded":
-                        return [line["text"] for read_result in result["analyzeResult"]["readResults"] for line in read_result["lines"]]
+                        return [
+                            line["text"]
+                            for read_result in result["analyzeResult"]["readResults"]
+                            for line in read_result["lines"]
+                        ]
                     elif result.get("status") == "failed":
                         return ""
                     time.sleep(1)
@@ -53,21 +52,25 @@ class RankedBatStats(commands.Cog):
             print(f"OCR Error: {e}")
             return ""
 
+    def _looks_like_row_start(self, s):
+        """Return True if a string looks like the start of a new player row."""
+        return s[0].isupper() or (s[0:2] == "0." and s[2].isalpha())
+
     def process_insert(self, raw_data, discord_id, timing, submission_time):
         try:
-            data, newrow = [], []
+            ocr_rows, current_row = [], []
             for i in range(len(raw_data)):
-                if raw_data[i][0].isupper() or (raw_data[i][0:2] == "0." and raw_data[i][2].isalpha()):
-                    newrow = [raw_data[i]]
+                if self._looks_like_row_start(raw_data[i]):
+                    current_row = [raw_data[i]]
                     continue
-                elif len(newrow) in [1, 2, 3, 4, 5, 6, 7]:
-                    newrow.append(raw_data[i])
-                if len(newrow) == 8:
-                    newrow.append("0" if newrow[-1] == "0" else raw_data[i + 1])
-                    data.append(newrow)
-                    newrow = []
+                elif len(current_row) in [1, 2, 3, 4, 5, 6, 7]:
+                    current_row.append(raw_data[i])
+                if len(current_row) == 8:
+                    current_row.append("0" if current_row[-1] == "0" else raw_data[i + 1])
+                    ocr_rows.append(current_row)
+                    current_row = []
             with self.connection.cursor() as cursor:
-                for row in data:
+                for row in ocr_rows:
                     cursor.execute("""
                         INSERT INTO rankedbatstats (
                             DISCORDID, PLAYERNAME, AB, H, BB, SLG, K, HR, SB, SBPCT, TIMING, submission_time
@@ -84,17 +87,16 @@ class RankedBatStats(commands.Cog):
             with self.connection.cursor() as cursor:
                 cursor.execute("""
                     DELETE FROM rankedbatstats
-WHERE DISCORDID = %s AND submission_time NOT IN (
-    SELECT submission_time FROM (
-        SELECT DISTINCT submission_time
-        FROM rankedbatstats
-        WHERE DISCORDID = %s
-        ORDER BY submission_time DESC
-        LIMIT 4
-    ) AS recent_times
-);
-
-                """, (discord_id,))
+                    WHERE DISCORDID = %s AND submission_time NOT IN (
+                        SELECT submission_time FROM (
+                            SELECT DISTINCT submission_time
+                            FROM rankedbatstats
+                            WHERE DISCORDID = %s
+                            ORDER BY submission_time DESC
+                            LIMIT 4
+                        ) AS recent_times
+                    );
+                """, (discord_id, discord_id))
             self.connection.commit()
         except Exception as e:
             self.connection.rollback()
@@ -131,44 +133,40 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
                 await ctx.send("No matching records found.")
                 return
             buffer = await asyncio.to_thread(self.create_comparison_plot, results)
-            file = discord.File(fp=buffer, filename="stats_comparison.png")
-            await ctx.send(file=file)
+            await ctx.send(file=discord.File(fp=buffer, filename="stats_comparison.png"))
         except Exception as e:
             await ctx.send(f"⚠️ Error comparing stats: {e}")
-
 
     def fetch_comparison_data(self, discord_id):
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute("""
-    SELECT a.PLAYERNAME,
-        b.AB - a.AB, b.H - a.H, b.HR - a.HR, b.BB - a.BB,
-        b.SLG * b.AB - a.SLG * a.AB, b.SB - a.SB,
-        CASE WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN
-            ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) -
-            ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
-        ELSE 0 END,
-        b.K - a.K
-    FROM rankedbatstats a
-    JOIN rankedbatstats b 
-        ON a.PLAYERNAME = b.PLAYERNAME 
-        AND a.submission_time = b.submission_time
-    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
-      AND a.TIMING = 'before' AND b.TIMING = 'after'
-      AND a.submission_time = (
-          SELECT MAX(submission_time) FROM rankedbatstats WHERE DISCORDID = %s
-      );
-""", (discord_id, discord_id, discord_id))
-
+                    SELECT a.PLAYERNAME,
+                        b.AB - a.AB, b.H - a.H, b.HR - a.HR, b.BB - a.BB,
+                        b.SLG * b.AB - a.SLG * a.AB, b.SB - a.SB,
+                        CASE WHEN b.SBPCT > 0 AND a.SBPCT > 0 THEN
+                            ROUND((CAST(b.SB AS FLOAT) / CAST(b.SBPCT AS FLOAT)) * 100) -
+                            ROUND((CAST(a.SB AS FLOAT) / CAST(a.SBPCT AS FLOAT)) * 100)
+                        ELSE 0 END,
+                        b.K - a.K
+                    FROM rankedbatstats a
+                    JOIN rankedbatstats b
+                        ON a.PLAYERNAME = b.PLAYERNAME
+                        AND a.submission_time = b.submission_time
+                    WHERE a.DISCORDID = %s AND b.DISCORDID = %s
+                      AND a.TIMING = 'before' AND b.TIMING = 'after'
+                      AND a.submission_time = (
+                          SELECT MAX(submission_time) FROM rankedbatstats WHERE DISCORDID = %s
+                      );
+                """, (discord_id, discord_id, discord_id))
                 return cursor.fetchall()
         except Exception as e:
             print(f"Fetch Error: {e}")
             return []
 
     def create_comparison_plot(self, results):
-        data = []
+        intermediate_rows = []
         total_wrc, total_pa = 0, 0
-        intermediate_rows = []  # Temp store per-player rows
 
         for row in results:
             player_name, diff_AB, diff_H, diff_HR, diff_BB, diff_BASES, diff_SB, diff_SBA, diff_K = row
@@ -187,14 +185,12 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             rc = ((diff_H + diff_BB - cs) * (diff_BASES + (0.55 * diff_SB))) / denom if denom else 0
             rc_per_pa = rc / denom if denom else 0
 
-            # Approximate wRC using 0.7 * BB + TB
             wrc = 0.7 * diff_BB + diff_BASES
             wrc_per_pa = wrc / denom if denom else 0
 
             if player_name.lower() != "team record":
                 total_wrc += wrc
                 total_pa += denom
-
 
             intermediate_rows.append([
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
@@ -203,6 +199,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
 
         league_wrc_per_pa = total_wrc / total_pa if total_pa else 0
 
+        data = []
         for row in intermediate_rows:
             (
                 player_name, diff_AB, avg, walkrate, krate, hrrate, obp,
@@ -214,7 +211,6 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             else:
                 wrc_plus = round((wrc_per_pa / league_wrc_per_pa) * 100) if league_wrc_per_pa else 100
 
-
             data.append([
                 player_name, diff_AB, avg, walkrate, krate, diff_HR, hrrate, obp,
                 slg, ops, diff_SB, sbrate, round(rc_per_pa, 4), wrc_plus
@@ -224,41 +220,9 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             "Player Name", "AB", "Avg", "BB%", "K%", "HR", "HR%", "OBP", "SLG", "OPS",
             "SB", "SB%", "RC/PA", "wRC+"
         ]
-
         df = pd.DataFrame(data, columns=columns)
         df = df.sort_values(by="OPS", ascending=False)
-
-        fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))
-        ax.axis("tight")
-        ax.axis("off")
-
-        table = ax.table(
-            cellText=df.values,
-            colLabels=df.columns,
-            cellLoc="center",
-            loc="center",
-        )
-
-        table.auto_set_font_size(False)
-        table.set_fontsize(10)
-        table.auto_set_column_width(col=list(range(len(df.columns))))
-
-        cell_dict = table.get_celld()
-        for (row, col), cell in cell_dict.items():
-            if row == 0 or col == 0:
-                cell.set_text_props(weight="bold")
-
-        row_height = 1 / (len(df) + 1)
-        for (row, col), cell in cell_dict.items():
-            cell.set_height(row_height)
-
-        buffer = BytesIO()
-        plt.savefig(buffer, format="png", bbox_inches="tight", dpi=300)
-        buffer.seek(0)
-        plt.close(fig)
-
-        return buffer
-
+        return render_table_image(df, dpi=300)
 
     def fetch_metric_trend(self, discord_id, metric):
         try:
@@ -310,8 +274,13 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             print(f"Fetch metric trend error: {e}")
             return [], {}
 
-
     def plot_metric_trend(self, timestamps, player_data, metric):
+        ylim_dict = {
+            'avg': (0.1, 0.35),
+            'slg': (0.1, 0.55),
+            'obp': (0.1, 0.45),
+            'ops': (0.25, 1.0),
+        }
         plt.figure(figsize=(12, 6))
         x_labels = [f"#{i+1}" for i in range(len(timestamps))]
         for name, values in player_data.items():
@@ -320,18 +289,8 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
         plt.title(f"{metric.upper()} over last 4 uploads")
         plt.xlabel("Submission Order")
         plt.ylabel(metric.upper())
-
-        # Custom min & max y-axis limits for each metric
-        ylim_dict = {
-            'avg': (0.1, 0.35),
-            'slg': (0.1, 0.55),
-            'obp': (0.1, 0.45),
-            'ops': (0.25, 1.0)
-        }
-
         ymin, ymax = ylim_dict.get(metric.lower(), (0, 1))
         plt.ylim(ymin, ymax)
-
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.grid(True)
 
@@ -376,6 +335,7 @@ WHERE DISCORDID = %s AND submission_time NOT IN (
             return
         buffer = await asyncio.to_thread(self.plot_metric_trend, timestamps, player_data, "ops")
         await ctx.send(file=discord.File(fp=buffer, filename="rankedops.png"))
+
 
 async def setup(bot):
     connection = bot.connection

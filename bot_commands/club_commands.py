@@ -1,16 +1,11 @@
 from discord.ext import commands
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
 from io import BytesIO
 import discord
 import shlex
-from bot_commands.player_commands import PlayerCommands
-import matplotlib
-import re
 
-
-
+from bot_commands.utils import render_table_image, send_paginated_table
+from bot_commands.constants import LEADERSHIP_ROLES, ROWS_PER_PAGE
 
 
 class ClubCommands(commands.Cog):
@@ -19,25 +14,13 @@ class ClubCommands(commands.Cog):
         self.connection = connection
         self.banned_user_ids = {965282028943736893}  # Add more IDs as needed
 
-
     async def cog_check(self, ctx):
-        # List of allowed roles
-        allowed_roles = [
-            "TooDank Leaders", "Vice", "NFS Ops", "NFS OG Leaders", 
-            "NeedForSpeed Leaders", "M16Speed Spy Daddies", "GoldyLeads", "Burnout Leaders", 
-            "Dugout Leads", "Kerchoo Leaders", "Rush Hour Leaders", "Speed Bump Leaders", 
-            "ImOnSpeed Leaders", "NFS_NoLimits Leaders", "Scout Squad", "M16 Recruit", "TooDankFast"
-        ]
-        
         user_roles = [role.name for role in ctx.author.roles]
 
-        # ❌ Block banned users
         if ctx.author.id in self.banned_user_ids:
-            return False  # Block all commands in this cog
+            return False
 
-        # ✅ Allow if user has any of the allowed roles
-        return any(role in allowed_roles for role in user_roles)
-
+        return any(role in LEADERSHIP_ROLES for role in user_roles)
 
 
     @commands.command()
@@ -47,19 +30,14 @@ class ClubCommands(commands.Cog):
             cursor = self.connection.cursor()
             club_name = club_name.lower()
 
-            # Check if the club already exists
             cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
             existing_club = cursor.fetchone()
 
             if existing_club:
                 await ctx.send(f"The club '{club_name}' already exists in the database.")
             else:
-                # Insert a new club
                 cursor.execute(
-                    """
-                    INSERT INTO Club (Club_Name)
-                    VALUES (%s)
-                    """,
+                    "INSERT INTO Club (Club_Name) VALUES (%s)",
                     (club_name,),
                 )
                 self.connection.commit()
@@ -78,28 +56,20 @@ class ClubCommands(commands.Cog):
         new_name = new_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the club with the old name exists
                 cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (old_name,))
-                existing_club = cursor.fetchone()
-
-                if not existing_club:
+                if not cursor.fetchone():
                     await ctx.send(f"No club found with the name '{old_name}'.")
                     return
 
-                # Check if the new name already exists
                 cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (new_name,))
-                new_name_club = cursor.fetchone()
-
-                if new_name_club:
+                if cursor.fetchone():
                     await ctx.send(f"The name '{new_name}' is already taken by another club.")
                     return
 
-                # Rename the club
                 cursor.execute(
                     "UPDATE Club SET Club_Name = %s WHERE Club_Name = %s",
                     (new_name, old_name),
                 )
-
                 self.connection.commit()
                 await ctx.send(f"Renamed club '{old_name}' to '{new_name}' and updated all associated players.")
         except Exception as e:
@@ -113,15 +83,11 @@ class ClubCommands(commands.Cog):
         club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Check if the club exists
                 cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                club = cursor.fetchone()
-
-                if not club:
+                if not cursor.fetchone():
                     await ctx.send(f"No club found with the name '{club_name}'.")
                     return
 
-                # Check if the club has players
                 cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (club_name,))
                 player_count = cursor.fetchone()[0]
 
@@ -129,7 +95,6 @@ class ClubCommands(commands.Cog):
                     await ctx.send(f"The club '{club_name}' cannot be deleted because it has {player_count} players.")
                     return
 
-                # Delete the club
                 cursor.execute("DELETE FROM Club WHERE Club_Name = %s", (club_name,))
                 self.connection.commit()
                 await ctx.send(f"Club '{club_name}' has been successfully deleted.")
@@ -140,14 +105,12 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     async def listclubs(self, ctx):
-        """List the bottom 10 most recently added clubs and the total number of clubs in the database."""
+        """List the 10 most recently added clubs and the total count."""
         try:
             with self.connection.cursor() as cursor:
-                # Fetch the total number of clubs
                 cursor.execute("SELECT COUNT(*) FROM Club")
                 total_clubs = cursor.fetchone()[0]
 
-                # Fetch the bottom 10 most recently added clubs
                 cursor.execute(
                     """
                     SELECT Club_Name
@@ -158,7 +121,6 @@ class ClubCommands(commands.Cog):
                 recent_clubs = cursor.fetchall()
 
                 if recent_clubs:
-                    # Format the recent clubs list
                     club_list = "\n".join([club[0] for club in recent_clubs])
                     await ctx.send(
                         f"**Total Clubs in the Database:** {total_clubs}\n\n"
@@ -171,21 +133,17 @@ class ClubCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-
     @commands.command()
     async def scoutclub(self, ctx, club_name: str):
-        """
-        Fetch player details for a specific club and return them as a table image.
-        """
+        """Fetch player details for a club and return as a table image."""
         club_name = club_name.lower()
-
         try:
             with self.connection.cursor() as cursor:
-                # Fetch player details for the club
                 cursor.execute(
                     """
-                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, last_updated, charbats, toolbats, source
+                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills,
+                           sp4_name, sp4_skills, sp5_name, sp5_skills, Nerf, PR,
+                           last_updated, charbats, toolbats, source
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -196,90 +154,33 @@ class ClubCommands(commands.Cog):
                 if not players:
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
-                    
 
-                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
                 processed_players = [
                     (
-                        player[0],  # Name
-                        f"{player[1]} ({player[2]})",  # SP1 Info
-                        f"{player[3]} ({player[4]})",  # SP2 Info
-                        f"{player[5]} ({player[6]})",  # SP3 Info
-                        f"{player[7]} ({player[8]})",  # SP4 Info
-                        f"{player[9]} ({player[10]})",  # SP5 Info
+                        player[0],
+                        f"{player[1]} ({player[2]})",   # SP1
+                        f"{player[3]} ({player[4]})",   # SP2
+                        f"{player[5]} ({player[6]})",   # SP3
+                        f"{player[7]} ({player[8]})",   # SP4
+                        f"{player[9]} ({player[10]})",  # SP5
                         player[11],  # Nerf
                         player[12],  # PR
                         player[14],  # Char
                         player[15],  # Tool
-                        player[16],
+                        player[16],  # Source
                         player[13],  # Last Updated
                     )
                     for player in players
                 ]
 
-                # Define new column headers
-                columns = [
-                    "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
-                    "Nerf", "PR", "Char", "Tool", "Source", "Last Updated"
-                ]
-
-                # Create a DataFrame from the processed data
+                columns = ["Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
+                           "Nerf", "PR", "Char", "Tool", "Source", "Last Updated"]
                 df = pd.DataFrame(processed_players, columns=columns)
-                df = df.sort_values(by = "PR")
+                df = df.sort_values(by="PR")
 
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(24, len(df) * 0.5 + 1))  # Dynamic height based on rows
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
-                )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(10)
-                table.auto_set_column_width(col=list(range(len(df.columns))))
-
-                # Apply conditional formatting for PR column
-                cell_dict = table.get_celld()
-                pr_index = columns.index("PR")  # Find the index of the PR column
-                for (row, col), cell in cell_dict.items():
-                    if col == pr_index and row > 0:  # Exclude header row
-                        pr_value = df.iloc[row - 1, pr_index]  # Get PR value
-                        if pr_value <= 50:
-                            cell.set_facecolor("#FF0000")  # Sharp red for top 50
-                        elif pr_value <= 200:
-                            cell.set_facecolor("#FFA500")  # Orange for 51-200
-                        elif pr_value <= 500:
-                            cell.set_facecolor("#FFFF00")  # Yellow for 200-500
-                        elif pr_value <= 1000:
-                            cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
-                        elif pr_value <= 2000:
-                            cell.set_facecolor("#D397F8")  # Purple for 1001-2000
-
-                for (row, col), cell in cell_dict.items():
-                    if row == 0 or col == 0:
-                        cell.set_text_props(weight="bold")
-
-
-                    #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
-                row_height = 1 / len(df)  # Divide the figure height by the number of rows
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(row_height)  # Set height dynamically
-
-                # Save the table as an image in memory
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight")
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="club_table.png")
+                buffer = render_table_image(df, pr_col_index=columns.index("PR"))
                 await ctx.send("Applebee's 🍎")
-                await ctx.send(file=file)
+                await ctx.send(file=discord.File(fp=buffer, filename="club_table.png"))
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
@@ -287,13 +188,10 @@ class ClubCommands(commands.Cog):
 
     @commands.command()
     async def scoutclubez(self, ctx, club_name: str):
-        """
-        Fetch player details for a specific club and return them as a table image.
-        """
+        """Fetch simplified player details for a club as a table image."""
         club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Fetch player details for the club
                 cursor.execute(
                     """
                     SELECT Name, Nerf, PR, charbats, toolbats, last_updated, nerf_updated, team_name
@@ -308,73 +206,25 @@ class ClubCommands(commands.Cog):
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
 
-                # Create a DataFrame from the fetched data
-                columns = ["Name", "Nerf", "PR", "Char", "Tool", "Last Updated", "Nerf Updated",
-                        "Team Deck"]
+                columns = ["Name", "Nerf", "PR", "Char", "Tool", "Last Updated", "Nerf Updated", "Team Deck"]
                 df = pd.DataFrame(players, columns=columns)
-                df = df.sort_values(by = "PR")
+                df = df.sort_values(by="PR")
 
-                # Plot the table using matplotlib
-                fig, ax = plt.subplots(figsize=(5, len(df) * 2 + 1))  # Increase width and dynamic height
-                ax.axis("tight")
-                ax.axis("off")
-                table = ax.table(
-                    cellText=df.values,
-                    colLabels=df.columns,
-                    cellLoc="center",
-                    loc="center",
+                buffer = render_table_image(
+                    df, figwidth=5, figheight_per_row=2, fontsize=20, dpi=200,
+                    pr_col_index=columns.index("PR"),
                 )
-
-                # Adjust table style
-                table.auto_set_font_size(False)
-                table.set_fontsize(20)  # Increase font size for better readability
-                table.auto_set_column_width(col=list(range(len(df.columns))))  # Ensure all columns fit
-                
-                cell_dict = table.get_celld()
-                pr_index = columns.index("PR")  # Find the index of the PR column
-                for (row, col), cell in cell_dict.items():
-                    if col == pr_index and row > 0:  # Exclude header row
-                        pr_value = df.iloc[row - 1, pr_index]  # Get PR value
-                        if pr_value <= 50:
-                            cell.set_facecolor("#FF0000")  # Sharp red for top 50
-                        elif pr_value <= 200:
-                            cell.set_facecolor("#FFA500")  # Orange for 51-200
-                        elif pr_value <= 500:
-                            cell.set_facecolor("#FFFF00")  # Yellow for 200-500
-                        elif pr_value <= 1000:
-                            cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
-                        elif pr_value <= 2000:
-                            cell.set_facecolor("#D397F8")  # Purple for 1001-2000
-
-                for (row, col), cell in cell_dict.items():
-                    if row == 0 or col == 0:
-                        cell.set_text_props(weight="bold")
-                            
-                    #cell.set_height(0.1)  # Adjust the row height (experiment with values for desired size)
-                row_height = 1 / len(df)  # Divide the figure height by the number of rows
-                for (row, col), cell in cell_dict.items():
-                    cell.set_height(row_height)  # Set height dynamically
-
-                # Save the table as an image in memory with minimal borders
-                buffer = BytesIO()
-                plt.savefig(buffer, format="png", bbox_inches="tight", pad_inches=0.1, dpi=200)  # Adjust DPI for higher quality
-                buffer.seek(0)
-                plt.close(fig)
-
-                # Send the image to Discord
-                file = discord.File(fp=buffer, filename="club_table.png")
-                await ctx.send(file=file)
+                await ctx.send(file=discord.File(fp=buffer, filename="club_table.png"))
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
 
     @commands.command()
-    async def scoutclubtext(self, ctx, club_name:str):
+    async def scoutclubtext(self, ctx, club_name: str):
         club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
-                # Fetch player details for the club
                 cursor.execute(
                     """
                     SELECT Name, Nerf, PR, team_name
@@ -389,22 +239,16 @@ class ClubCommands(commands.Cog):
                 if not players:
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
-                
-                player_details = "\n".join(
+
+            player_details = "\n".join(
                 f"**Name**: {player[0]}, **Nerf**: {player[1]}, **PR**: {player[2]}, **Team**: {player[3]}"
                 for player in players
             )
-
-            # Create the response message
-            message = f"**Players in {club_name}:**\n{player_details}"
-
-            # Send the message
-            await ctx.send(message)
-
-                
+            await ctx.send(f"**Players in {club_name}:**\n{player_details}")
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
     @commands.command()
     async def addtoclub(self, ctx, club_name: str, *, args: str = ""):
@@ -412,20 +256,13 @@ class ClubCommands(commands.Cog):
         club_name = club_name.lower()
         try:
             with self.connection.cursor() as cursor:
-
-                # Process player names from `args`
                 if args:
-                    parsed_args = shlex.split(args)  # Split the player names
+                    parsed_args = shlex.split(args)
 
                     for player_name in parsed_args:
                         player_name = player_name.lower()
-                        # Check if the player exists
                         cursor.execute(
-                            """
-                            SELECT Name
-                            FROM Player
-                            WHERE Name = %s
-                            """,
+                            "SELECT Name FROM Player WHERE Name = %s",
                             (player_name,),
                         )
                         player = cursor.fetchone()
@@ -452,22 +289,18 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
 
+
     @commands.command()
     async def clearclub(self, ctx, club_name: str):
         """Remove all players from the specified club by setting their Club_Name to 'no club'."""
         club_name = club_name.lower()
-
         try:
             with self.connection.cursor() as cursor:
-                # Check if the club exists
                 cursor.execute("SELECT * FROM Club WHERE Club_Name = %s", (club_name,))
-                existing_club = cursor.fetchone()
-
-                if not existing_club:
+                if not cursor.fetchone():
                     await ctx.send(f"No club found with the name '{club_name}'.")
                     return
 
-                # Check if the club has any players
                 cursor.execute("SELECT COUNT(*) FROM Player WHERE Club_Name = %s", (club_name,))
                 player_count = cursor.fetchone()[0]
 
@@ -475,16 +308,10 @@ class ClubCommands(commands.Cog):
                     await ctx.send(f"No players are currently in the club '{club_name}'.")
                     return
 
-                # Update all players to 'no club'
                 cursor.execute(
-                    """
-                    UPDATE Player
-                    SET Club_Name = 'no club'
-                    WHERE Club_Name = %s
-                    """,
+                    "UPDATE Player SET Club_Name = 'no club' WHERE Club_Name = %s",
                     (club_name,),
                 )
-
                 self.connection.commit()
                 await ctx.send(f"✅ Cleared {player_count} players from '{club_name}' and set them to 'no club'.")
         except Exception as e:
@@ -492,21 +319,17 @@ class ClubCommands(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 
-
     @commands.command()
     async def scoutclubtrial(self, ctx, club_name: str):
-        """
-        Fetch player details for a specific club and return them as a paginated table image
-        """
+        """Fetch player details for a club as a paginated table image."""
         club_name = club_name.lower()
-        rows_per_page = 30  # Number of rows per page
         try:
             with self.connection.cursor() as cursor:
-                # Fetch player details for the club
                 cursor.execute(
                     """
-                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills, sp4_name, sp4_skills, sp5_name,
-                    sp5_skills, Nerf, PR, Most_Common_Batting_Skill, last_updated
+                    SELECT Name, sp1_name, sp1_skills, sp2_name, sp2_skills, sp3_name, sp3_skills,
+                           sp4_name, sp4_skills, sp5_name, sp5_skills, Nerf, PR,
+                           Most_Common_Batting_Skill, last_updated
                     FROM Player
                     WHERE Club_Name = %s
                     """,
@@ -518,15 +341,14 @@ class ClubCommands(commands.Cog):
                     await ctx.send(f"No players found for the club '{club_name}'.")
                     return
 
-                # Combine SP Name and Skills into single columns (SP1 Info, SP2 Info, etc.)
                 processed_players = [
                     (
-                        player[0],  # Name
-                        f"{player[1]} ({player[2]})",  # SP1 Info
-                        f"{player[3]} ({player[4]})",  # SP2 Info
-                        f"{player[5]} ({player[6]})",  # SP3 Info
-                        f"{player[7]} ({player[8]})",  # SP4 Info
-                        f"{player[9]} ({player[10]})",  # SP5 Info
+                        player[0],
+                        f"{player[1]} ({player[2]})",   # SP1
+                        f"{player[3]} ({player[4]})",   # SP2
+                        f"{player[5]} ({player[6]})",   # SP3
+                        f"{player[7]} ({player[8]})",   # SP4
+                        f"{player[9]} ({player[10]})",  # SP5
                         player[11],  # Nerf
                         player[12],  # PR
                         player[13],  # Batting Skill
@@ -535,78 +357,19 @@ class ClubCommands(commands.Cog):
                     for player in players
                 ]
 
-                # Define new column headers
-                columns = [
-                    "Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
-                    "Nerf", "PR", "Batting Skill", "Last Updated"
-                ]
-
-                # Create a DataFrame from the processed data
+                columns = ["Name", "SP1 Info", "SP2 Info", "SP3 Info", "SP4 Info", "SP5 Info",
+                           "Nerf", "PR", "Batting Skill", "Last Updated"]
                 df = pd.DataFrame(processed_players, columns=columns)
                 df = df.sort_values(by="PR")
 
-                # Paginate the table
-                total_pages = (len(df) + rows_per_page - 1) // rows_per_page
-                for page in range(total_pages):
-                    start = page * rows_per_page
-                    end = start + rows_per_page
-                    df_page = df.iloc[start:end]
-
-                    # Plot the table using matplotlib
-                    fig, ax = plt.subplots(figsize=(24, len(df_page) * 0.5 + 1))  # Dynamic height based on rows
-                    ax.axis("tight")
-                    ax.axis("off")
-                    table = ax.table(
-                        cellText=df_page.values,
-                        colLabels=df_page.columns,
-                        cellLoc="center",
-                        loc="center",
-                    )
-
-                    # Adjust table style
-                    table.auto_set_font_size(False)
-                    table.set_fontsize(10)
-                    table.auto_set_column_width(col=list(range(len(df_page.columns))))
-
-                    # Apply conditional formatting for PR column
-                    cell_dict = table.get_celld()
-                    pr_index = columns.index("PR")  # Find the index of the PR column
-                    for (row, col), cell in cell_dict.items():
-                        if col == pr_index and row > 0:  # Exclude header row
-                            pr_value = df_page.iloc[row - 1, pr_index]  # Get PR value
-                            if pr_value <= 50:
-                                cell.set_facecolor("#FF0000")  # Sharp red for top 50
-                            elif pr_value <= 200:
-                                cell.set_facecolor("#FFA500")  # Orange for 51-200
-                            elif pr_value <= 500:
-                                cell.set_facecolor("#FFFF00")  # Yellow for 200-500
-                            elif pr_value <= 1000:
-                                cell.set_facecolor("#ADD8E6")  # Light blue for 500-1000
-                            elif pr_value <= 2000:
-                                cell.set_facecolor("#D397F8")  # Purple for 1001-2000
-
-                    for (row, col), cell in cell_dict.items():
-                        if row == 0 or col == 0:
-                            cell.set_text_props(weight="bold")
-
-                        # Adjust the row height dynamically
-                        row_height = 1 / len(df_page)
-                        cell.set_height(row_height)
-
-                    # Save the table as an image in memory
-                    buffer = BytesIO()
-                    plt.savefig(buffer, format="png", bbox_inches="tight")
-                    buffer.seek(0)
-                    plt.close(fig)
-
-                    # Send the image to Discord
-                    file = discord.File(fp=buffer, filename=f"club_table_page_{page + 1}.png")
-                    await ctx.send(f"**Page {page + 1} of {total_pages}:**", file=file)
-
-                    buffer.close()
+                await send_paginated_table(
+                    ctx, df, rows_per_page=ROWS_PER_PAGE,
+                    pr_col_index=columns.index("PR"),
+                )
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"An error occurred: {e}")
+
 
     @commands.command()
     async def uploadbattles(self, ctx):
@@ -624,20 +387,16 @@ class ClubCommands(commands.Cog):
             return
 
         try:
-            # Read file into pandas
             file_bytes = await attachment.read()
             df = pd.read_excel(BytesIO(file_bytes))
 
-            # Normalize column names
             df.columns = [col.strip().lower() for col in df.columns]
 
-            # Handle aliasing for player_name
             if "player name" in df.columns:
                 df.rename(columns={"player name": "player_name"}, inplace=True)
             elif "name" in df.columns:
                 df.rename(columns={"name": "player_name"}, inplace=True)
 
-            # Rename other known columns
             rename_map = {
                 "pr": "pr",
                 "attacking club": "home_club",
@@ -648,17 +407,13 @@ class ClubCommands(commands.Cog):
             }
             df.rename(columns=rename_map, inplace=True)
 
-            # Check for required columns
             required_cols = ["player_name", "pr", "home_club", "opponent_club", "battle_date", "wins", "nonwins"]
             for col in required_cols:
                 if col not in df.columns:
                     await ctx.send(f"Missing column: `{col}`")
                     return
 
-            # Drop rows without player name or date
             df.dropna(subset=["player_name", "battle_date"], inplace=True)
-
-            # Parse dates in dd/mm/yy format
             df["battle_date"] = pd.to_datetime(df["battle_date"], dayfirst=True).dt.date
 
             insert_query = """
@@ -698,17 +453,18 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"❌ Upload failed: {e}")
 
+
     @commands.command()
     async def scoutwinrate(self, ctx, *, opponent_club: str):
         """
         Show daily win rate against a given defending club.
-        Usage: !winratevs <club name>
+        Usage: !scoutwinrate <club name>
         """
         opponent_club = opponent_club.lower()
-
         try:
             with self.connection.cursor() as cursor:
-                query = """
+                cursor.execute(
+                    """
                     SELECT battle_date,
                         SUM(wins) AS total_wins,
                         SUM(nonwins) AS total_nonwins
@@ -716,39 +472,35 @@ class ClubCommands(commands.Cog):
                     WHERE LOWER(opponent_club) = %s
                     GROUP BY battle_date
                     ORDER BY battle_date;
-                """
-                cursor.execute(query, (opponent_club,))
+                    """,
+                    (opponent_club,)
+                )
                 rows = cursor.fetchall()
 
                 if not rows:
                     await ctx.send(f"No battle records found against '{opponent_club}'.")
                     return
 
-                # Format the results
                 lines = []
                 for date, wins, nonwins in rows:
                     total = wins + nonwins
                     winrate = wins / total if total > 0 else 0
                     lines.append(f"📅 {date}: **{winrate:.2%}** ({wins}W / {nonwins}L)")
 
-                message = f"🎯 **Win Rate vs `{opponent_club}` by Date:**\n" + "\n".join(lines)
-                await ctx.send(message)
-
+                await ctx.send(f"🎯 **Win Rate vs `{opponent_club}` by Date:**\n" + "\n".join(lines))
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"❌ Error fetching win rate: {e}")
+
 
     @commands.command()
     async def deletebattles(self, ctx, battle_date: str, home_club: str):
         """
         Delete all GoldyBattles for a given date and home club.
         Usage: !deletebattles <dd/mm/yy> <home club>
-        Example: !deletebattles 26/07/25 goldyleads
         """
         home_club = home_club.lower()
-
         try:
-            # Parse the date in dd/mm/yy format
             parsed_date = pd.to_datetime(battle_date, dayfirst=True).date()
 
             with self.connection.cursor() as cursor:
@@ -767,21 +519,18 @@ class ClubCommands(commands.Cog):
             self.connection.rollback()
             await ctx.send(f"❌ Error deleting battles: {e}")
 
+
     @commands.command()
     async def scoutmatchup(self, ctx, opponent_club: str, battle_date: str):
         """
         Show all player matchups and team summary vs a defending club on a specific date.
         Usage: !scoutmatchup <defending club> <dd/mm/yyyy>
-        Example: !scoutmatchup flogrown 24/07/2025
         """
         opponent_club = opponent_club.lower()
-
         try:
-            # Parse the date
             parsed_date = pd.to_datetime(battle_date, dayfirst=True).date()
 
             with self.connection.cursor() as cursor:
-                # 1️⃣ Fetch individual player matchups
                 cursor.execute(
                     """
                     SELECT player_name, home_club, wins, nonwins
@@ -797,46 +546,34 @@ class ClubCommands(commands.Cog):
                     await ctx.send(f"No matchups found against `{opponent_club}` on `{parsed_date}`.")
                     return
 
-                # 2️⃣ Format individual player lines
                 lines = []
-                team_totals = {}  # home_club → [total_wins, total_nonwins]
+                team_totals = {}
                 for player_name, home_club, wins, nonwins in matchups:
                     total = wins + nonwins
                     winrate = wins / total if total > 0 else 0
                     lines.append(
                         f"🏅 **{player_name}** ({home_club}) — {wins}W / {nonwins}NW → **{winrate:.0%}**"
                     )
-
                     if home_club not in team_totals:
                         team_totals[home_club] = [0, 0]
                     team_totals[home_club][0] += wins
                     team_totals[home_club][1] += nonwins
 
-                # 3️⃣ Format team-level summary
                 summary_lines = []
                 for team, (w, nw) in sorted(team_totals.items(), key=lambda x: -x[1][0]):
                     total = w + nw
                     wr = w / total if total > 0 else 0
                     summary_lines.append(f"🏟️ `{team}` — {w}W / {nw}NW → **{wr:.0%}**")
 
-                # Send messages
                 await ctx.send(f"📋 Matchups vs `{opponent_club}` on {parsed_date}:")
                 await ctx.send("\n".join(lines))
-
-                await ctx.send(f"\n📊 **Team Summary:**")
+                await ctx.send("\n📊 **Team Summary:**")
                 await ctx.send("\n".join(summary_lines))
-
         except Exception as e:
             self.connection.rollback()
             await ctx.send(f"❌ Error retrieving matchup: {e}")
 
 
-
-
-
-
-
-
 async def setup(bot):
-    connection = bot.connection  # Retrieve the connection from the bot instance
+    connection = bot.connection
     await bot.add_cog(ClubCommands(bot, connection))
