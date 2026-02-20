@@ -507,7 +507,7 @@ class PlayerCommands(commands.Cog):
 
     def _normalize_player_df(self, df):
         """Normalize column types and fill defaults for a player upload DataFrame."""
-        df["Name"] = df["Name"].astype(str).str.lower().str.replace(" ", "")
+        df["Name"] = df["Name"].astype(str).str.lower().str.replace(" ", "").str.replace("$", "s")
         df["Club_Name"] = df["Club_Name"].fillna("no club").astype(str).str.lower()
         df.loc[df["Club_Name"] != "no club", "Club_Name"] = (
             df["Club_Name"].str.replace(" ", "", regex=False)
