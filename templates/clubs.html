@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %} — Clubs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Clubs <span class="badge bg-secondary fs-6">{{ clubs|length }}</span></h2>
+</div>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+  {% for c in clubs %}
+  <div class="col">
+    <a href="{{ url_for('club', club_name=c.club_name) }}" class="text-decoration-none">
+      <div class="card bg-dark border-secondary h-100 hover-card">
+        <div class="card-body">
+          <h6 class="card-title mb-1">{{ c.club_name }}</h6>
+          <p class="card-text text-muted small mb-0">{{ c.player_count }} player{{ 's' if c.player_count != 1 }}</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% else %}
+  <p class="text-muted">No clubs found.</p>
+  {% endfor %}
+</div>
+<style>.hover-card:hover { border-color: #6c757d !important; }</style>
+{% endblock %}

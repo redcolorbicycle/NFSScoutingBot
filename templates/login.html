@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %} — Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-4 col-sm-8">
+    <div class="card bg-dark border-secondary">
+      <div class="card-body p-4">
+        <h4 class="card-title mb-4">⚾ NFSBot Dashboard</h4>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label text-secondary">Password</label>
+            <input type="password" name="password" class="form-control" autofocus required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Enter</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

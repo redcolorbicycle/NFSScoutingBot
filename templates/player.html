@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %} — {{ p.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h2 class="mb-0">
+    {{ p.name }}
+    <span class="pr-badge ms-2" style="background:{{ pr_color(p.pr) }}">PR {{ p.pr }}</span>
+  </h2>
+  <div class="d-flex gap-2">
+    {% if p.club_name %}
+    <a href="{{ url_for('club', club_name=p.club_name) }}" class="btn btn-outline-secondary btn-sm">← {{ p.club_name }}</a>
+    {% endif %}
+    <a href="{{ url_for('edit_player', player_name=p.name) }}" class="btn btn-primary btn-sm">Edit</a>
+    <form method="post" action="{{ url_for('delete_player', player_name=p.name) }}" class="d-inline"
+          onsubmit="return confirm('Delete {{ p.name }}? This cannot be undone.')">
+      <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h6 class="card-title text-secondary text-uppercase small mb-3">Info</h6>
+        <table class="table table-dark table-sm mb-0">
+          <tr><th class="text-muted fw-normal" style="width:40%">Club</th><td>{{ p.club_name or '—' }}</td></tr>
+          <tr><th class="text-muted fw-normal">Team Deck</th><td>{{ p.team_name or '—' }}</td></tr>
+          <tr><th class="text-muted fw-normal">Nerf</th><td>{{ p.nerf or '—' }}</td></tr>
+          <tr><th class="text-muted fw-normal">Char Bats</th><td>{{ p.charbats }}</td></tr>
+          <tr><th class="text-muted fw-normal">Tool Bats</th><td>{{ p.toolbats }}</td></tr>
+          <tr><th class="text-muted fw-normal">Source</th><td>{{ p.source or '—' }}</td></tr>
+          <tr><th class="text-muted fw-normal">Last Updated</th><td>{{ p.last_updated }}</td></tr>
+          <tr><th class="text-muted fw-normal">Nerf Updated</th><td>{{ p.nerf_updated }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h6 class="card-title text-secondary text-uppercase small mb-3">Special Players</h6>
+        <table class="table table-dark table-sm mb-0">
+          <thead><tr><th style="width:10%">#</th><th style="width:35%">Name</th><th>Skills</th></tr></thead>
+          <tbody>
+            {% for i in range(1, 6) %}
+            {% set sp_name = p['sp' ~ i ~ '_name'] %}
+            {% set sp_skills = p['sp' ~ i ~ '_skills'] %}
+            <tr>
+              <td class="text-muted">SP{{ i }}</td>
+              <td>{{ sp_name or '—' }}</td>
+              <td class="text-muted small">{{ sp_skills or '' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

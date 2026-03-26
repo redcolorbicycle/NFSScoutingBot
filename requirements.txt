@@ -6,3 +6,5 @@ requests
 msrest
 azure-cognitiveservices-vision-computervision
 openpyxl
+flask
+gunicorn

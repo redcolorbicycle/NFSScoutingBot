@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %} — Edit {{ p.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Edit: {{ p.name }}</h2>
+  <a href="{{ url_for('player_detail', player_name=p.name) }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+
+<form method="post">
+  <div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+      <h6 class="card-title text-secondary text-uppercase small mb-3">Basic Info</h6>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Club</label>
+          <select name="club_name" class="form-select">
+            <option value="no club" {% if p.club_name == 'no club' %}selected{% endif %}>no club</option>
+            {% for c in clubs %}
+            <option value="{{ c }}" {% if p.club_name == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">PR</label>
+          <input type="number" name="pr" class="form-control" value="{{ p.pr }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Nerf</label>
+          <input type="text" name="nerf" class="form-control" value="{{ p.nerf or '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Team Deck</label>
+          <input type="text" name="team_name" class="form-control" value="{{ p.team_name or '' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Char Bats</label>
+          <input type="number" name="charbats" class="form-control" value="{{ p.charbats }}" min="0">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Tool Bats</label>
+          <input type="number" name="toolbats" class="form-control" value="{{ p.toolbats }}" min="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Source</label>
+          <input type="text" name="source" class="form-control" value="{{ p.source or '' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+      <h6 class="card-title text-secondary text-uppercase small mb-3">Special Players</h6>
+      <div class="row g-3">
+        {% for i in range(1, 6) %}
+        <div class="col-md-2">
+          <label class="form-label">SP{{ i }} Name</label>
+          <input type="text" name="sp{{ i }}_name" class="form-control form-control-sm"
+                 value="{{ p['sp' ~ i ~ '_name'] or '' }}">
+        </div>
+        <div class="col-md-10">
+          <label class="form-label">SP{{ i }} Skills</label>
+          <input type="text" name="sp{{ i }}_skills" class="form-control form-control-sm"
+                 value="{{ p['sp' ~ i ~ '_skills'] or '' }}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="{{ url_for('player_detail', player_name=p.name) }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
