@@ -1,11 +1,49 @@
 import random
 import os
+import time
+import requests
 from io import BytesIO
 
 import discord
 import matplotlib.pyplot as plt
 
 from bot_commands.constants import ASSETS, PR_COLORS, ROWS_PER_PAGE
+
+
+def parse_image(image_data, api_key, endpoint):
+    """Send image to Azure OCR and return a list of text lines."""
+    try:
+        headers = {
+            'Ocp-Apim-Subscription-Key': api_key,
+            'Content-Type': 'application/octet-stream'
+        }
+        response = requests.post(endpoint, headers=headers, data=image_data)
+        if response.status_code == 202:
+            operation_location = response.headers["Operation-Location"]
+            while True:
+                result_response = requests.get(operation_location, headers=headers)
+                if result_response.status_code != 200:
+                    return ""
+                result = result_response.json()
+                if result.get("status") == "succeeded":
+                    return [
+                        line["text"]
+                        for read_result in result["analyzeResult"]["readResults"]
+                        for line in read_result["lines"]
+                    ]
+                elif result.get("status") == "failed":
+                    return ""
+                time.sleep(1)
+        else:
+            return ""
+    except Exception as e:
+        print(f"OCR Error: {e}")
+        return ""
+
+
+def looks_like_row_start(s):
+    """Return True if a string looks like the start of a new player row."""
+    return s[0].isupper() or (s[0:2] == "0." and s[2].isalpha())
 
 
 async def send_asset(ctx, key: str) -> None:

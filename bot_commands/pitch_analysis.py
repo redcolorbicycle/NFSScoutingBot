@@ -1,12 +1,10 @@
-import time
 import discord
 from discord.ext import commands
 import asyncio
-import requests
 import pandas as pd
 import os
 
-from bot_commands.utils import render_table_image
+from bot_commands.utils import render_table_image, parse_image, looks_like_row_start
 from bot_commands.constants import ALLOWED_ANALYST_IDS
 
 
@@ -19,39 +17,6 @@ class RankedPitchStats(commands.Cog):
 
     async def cog_check(self, ctx):
         return ctx.author.id in ALLOWED_ANALYST_IDS
-
-    def parse_image(self, image_data):
-        try:
-            headers = {
-                'Ocp-Apim-Subscription-Key': self.api_key,
-                'Content-Type': 'application/octet-stream'
-            }
-            response = requests.post(self.endpoint, headers=headers, data=image_data)
-            if response.status_code == 202:
-                operation_location = response.headers["Operation-Location"]
-                while True:
-                    result_response = requests.get(operation_location, headers=headers)
-                    if result_response.status_code != 200:
-                        return ""
-                    result = result_response.json()
-                    if result.get("status") == "succeeded":
-                        return [
-                            line["text"]
-                            for read_result in result["analyzeResult"]["readResults"]
-                            for line in read_result["lines"]
-                        ]
-                    elif result.get("status") == "failed":
-                        return ""
-                    time.sleep(1)
-            else:
-                return ""
-        except Exception as e:
-            print(f"OCR Error: {e}")
-            return ""
-
-    def _looks_like_row_start(self, s):
-        """Return True if a string looks like the start of a new player row."""
-        return s[0].isupper() or (s[0:2] == "0." and s[2].isalpha())
 
     def delete_user_data(self, discord_id):
         try:
@@ -69,7 +34,7 @@ class RankedPitchStats(commands.Cog):
             for i in range(len(raw_data)):
                 if raw_data[i] == "...":
                     continue
-                if self._looks_like_row_start(raw_data[i]):
+                if looks_like_row_start(raw_data[i]):
                     current_row = [raw_data[i]]
                     continue
                 elif len(current_row) == 1:
@@ -85,7 +50,6 @@ class RankedPitchStats(commands.Cog):
                 else:
                     current_row.append(raw_data[i])
                     ocr_rows.append(current_row)
-                    print(current_row)
 
             with self.connection.cursor() as cursor:
                 for row in ocr_rows:
@@ -109,7 +73,6 @@ class RankedPitchStats(commands.Cog):
             return
 
         discord_id = ctx.author.id
-        await ctx.send(f"{discord_id}")
         await ctx.send("Please wait...")
 
         try:
@@ -117,7 +80,7 @@ class RankedPitchStats(commands.Cog):
 
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
-                extracted_data = await asyncio.to_thread(self.parse_image, image_data)
+                extracted_data = await asyncio.to_thread(parse_image, image_data, self.api_key, self.endpoint)
                 timing = "before" if i <= 1 else "after"
                 await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing)
 

@@ -1,15 +1,13 @@
-import time
 import discord
 from discord.ext import commands
 import asyncio
-import requests
 from io import BytesIO
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
-from bot_commands.utils import render_table_image
+from bot_commands.utils import render_table_image, parse_image, looks_like_row_start
 from bot_commands.constants import ALLOWED_ANALYST_IDS
 
 
@@ -23,44 +21,11 @@ class RankedBatStats(commands.Cog):
     async def cog_check(self, ctx):
         return ctx.author.id in ALLOWED_ANALYST_IDS
 
-    def parse_image(self, image_data):
-        try:
-            headers = {
-                'Ocp-Apim-Subscription-Key': self.api_key,
-                'Content-Type': 'application/octet-stream'
-            }
-            response = requests.post(self.endpoint, headers=headers, data=image_data)
-            if response.status_code == 202:
-                operation_location = response.headers["Operation-Location"]
-                while True:
-                    result_response = requests.get(operation_location, headers=headers)
-                    if result_response.status_code != 200:
-                        return ""
-                    result = result_response.json()
-                    if result.get("status") == "succeeded":
-                        return [
-                            line["text"]
-                            for read_result in result["analyzeResult"]["readResults"]
-                            for line in read_result["lines"]
-                        ]
-                    elif result.get("status") == "failed":
-                        return ""
-                    time.sleep(1)
-            else:
-                return ""
-        except Exception as e:
-            print(f"OCR Error: {e}")
-            return ""
-
-    def _looks_like_row_start(self, s):
-        """Return True if a string looks like the start of a new player row."""
-        return s[0].isupper() or (s[0:2] == "0." and s[2].isalpha())
-
     def process_insert(self, raw_data, discord_id, timing, submission_time):
         try:
             ocr_rows, current_row = [], []
             for i in range(len(raw_data)):
-                if self._looks_like_row_start(raw_data[i]):
+                if looks_like_row_start(raw_data[i]):
                     current_row = [raw_data[i]]
                     continue
                 elif len(current_row) in [1, 2, 3, 4, 5, 6, 7]:
@@ -116,7 +81,7 @@ class RankedBatStats(commands.Cog):
             submission_time = datetime.now()
             for i, attachment in enumerate(attachments):
                 image_data = await attachment.read()
-                extracted_data = await asyncio.to_thread(self.parse_image, image_data)
+                extracted_data = await asyncio.to_thread(parse_image, image_data, self.api_key, self.endpoint)
                 timing = "before" if i <= 1 else "after"
                 await asyncio.to_thread(self.process_insert, extracted_data, discord_id, timing, submission_time)
             await asyncio.to_thread(self.trim_old_submissions, discord_id)
